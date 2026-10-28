@@ -105,6 +105,8 @@ the module or the context file; the server adds them to every site context.
     (`contract-protocol.md`) and its `end`, as in `list`. An id that is not kept
     fails with the code `not_found`.
 
+  A call with neither or both of them fails with the code `capability`.
+
   Both can be in one plan: `list`, then `requestId` with the reference
   `$1.0.requestId` for the latest request.
 

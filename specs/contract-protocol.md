@@ -70,17 +70,17 @@ Every time in the contracts is the user's local time with its offset, in ISO
   result of a `forEach` step is an array with one entry for each item: the array
   of the results of its `do` steps. Results are kept small: summaries, not whole
   data sets.
-- `failure`: only when a step failed: the number of the top-level step (left out
-  for `invalid`), a `code` and a `message`. Codes: `capability` (the capability
-  threw), `reference` (a reference had no value), `declined` (the user said no),
-  `limit` (a limit of `contract-plan.md` or the round size was reached),
-  `invalid` (the plan failed the client's check before any step ran),
-  `cancelled` (the user cancelled the request), `interrupted` (the user added
-  text; Added text). For `capability`, the capability's own error code and
-  message are used when it gives them. When the failed step is a `forEach`,
-  `item` is the number of the failed item, from 0: the items before it are done,
-  the items after it did not run, and in the failed item, the `do` steps before
-  the failing one are done.
+- `failure`: only when a step failed: the number of the top-level step, from 1
+  as in references (left out for `invalid`), a `code` and a `message`. Codes:
+  `capability` (the capability threw), `reference` (a reference had no value),
+  `declined` (the user said no), `limit` (a limit of `contract-plan.md` or the
+  round size was reached), `invalid` (the plan failed the client's check before
+  any step ran), `cancelled` (the user cancelled the request), `interrupted`
+  (the user added text; Added text). For `capability`, the capability's own
+  error code and message are used when it gives them. When the failed step is a
+  `forEach`, `item` is the number of the failed item, from 0: the items before
+  it are done, the items after it did not run, and in the failed item, the `do`
+  steps before the failing one are done.
 
 ## Added text and cancel
 
@@ -106,7 +106,7 @@ and runs nothing after it.
 - Cancel: the client reports the plan with the failure code `cancelled` at the
   step or item where it stopped, and the request ends. The server answers with a
   stop without asking the planner. When the client was waiting for the server's
-  response, it reports nothing more.
+  response, or a question was open, it reports nothing more.
 
 Nothing that was done is undone. The report tells exactly what was done, so a
 later request can fix it.
@@ -156,7 +156,7 @@ The server answers a round it cannot take with an HTTP error and a JSON body
 
 - `400`: the body is not valid.
 - `401`: the token is missing, not valid or expired. The client gets a new token
-  and sends the round again.
+  and sends the round again, once; a second `401` ends the request.
 - `413`: the body is larger than 1 MB.
 - `500`: an unexpected server error.
 
