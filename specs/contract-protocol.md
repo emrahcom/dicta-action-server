@@ -39,7 +39,8 @@ a new one.
   gave in its first answer.
 - `text`: the user's request, the same in every round.
 - `state`: what the page shows now, as a JSON object. Sent new in every round.
-  Kept small.
+  Kept small. The client does not choose it: it comes from the site's own state
+  function, which the site context describes.
 - `exchange`: what happened so far, oldest first. Empty in the first round. Each
   item is one of:
   - a plan the server sent, with the client's `report` on it;
@@ -81,8 +82,25 @@ logs. The server creates it in the first round and repeats it in every answer.
 
 - `plan`: run `plan` (`contract-plan.md`) and report back.
 - `question`: show `text` to the user and send their answer in the next round.
-- `done`: the request is finished. `text` is a short summary for the user.
+  `options`, when present, is a list of short answers the user can pick with
+  one tap; the user can also answer in their own words.
+- `done`: the request is finished. `text`, when present, is a short summary for
+  the user; without it, the client only shows that it is done.
 - `stop`: the request ends without finishing. `text` says why, for the user.
+
+The user wants the task done fast, not to read. Every `text` is one short
+sentence, and each option a few words.
+
+```json
+{
+  "requestId": "...",
+  "answer": {
+    "type": "question",
+    "text": "Which Friday?",
+    "options": ["This week", "Next week"]
+  }
+}
+```
 
 Clients ignore fields and answer types they do not know.
 
