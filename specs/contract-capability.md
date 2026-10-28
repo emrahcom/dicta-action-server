@@ -24,6 +24,7 @@ export default {
     "tasks.create": {
       level: "write",
       description: "Creates a task in the open project.",
+      confirm: "Create tasks",
       args: {
         type: "object",
         properties: {
@@ -63,8 +64,15 @@ developers can change it. Without it, it is 10.
   `required`, `items`, `enum` and `description` are used.
 - `run`: an async function. It takes the arguments, already checked against
   `args`, and returns a JSON value: small, a summary rather than whole data.
+- `confirm`: for `write`, `destructive` and `external` capabilities, a few words
+  naming the action for the user, for example "Delete tasks". The client shows
+  it when it asks the user, with the number of calls (`contract-plan.md`,
+  Confirmation). The wording of a confirmation comes only from here, never from
+  a plan, so a plan cannot make a risky step look harmless.
 - `navigates`: `true` when the capability loads another page. It is always the
-  last step of a plan, and it never opens a new tab or window.
+  last step of a plan, and it never opens a new tab or window. Its result is
+  `null`: the client sends the report from the new page, once it has loaded,
+  with that page's `state`.
 
 ## Errors
 

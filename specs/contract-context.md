@@ -42,8 +42,8 @@ What the planner knows about one site. It is one JSON file, made with
 - `state`: the `description` of the site's state function
   (`contract-capability.md`, State).
 - `capabilities`: one entry for each capability of the module, with its `name`,
-  `level`, `description`, `args` and, when set, `navigates`; everything but
-  `run`. The harness takes them from the module, so they always match it.
+  `level`, `description`, `args` and, when set, `navigates`. The harness takes
+  them from the module, so they always match it.
 - `notes`: what the planner needs to know beyond the capabilities: entities,
   screens, rules, glossary, common workflows. Each note has a `title` and a
   plain `text`. Short and to the point: the planner reads all of it on every
