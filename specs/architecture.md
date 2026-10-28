@@ -89,4 +89,5 @@ Environment variables:
   only. Default `false`. The server logs a warning at startup when it is on.
 - `CONTEXT_FILE`: the path of the site context file. Required.
 - `PLANNER`: the planner. Required. Values: `stub`.
-- `MAX_ROUNDS`: the most rounds per user request (Requests). Default `10`.
+- `MAX_ROUNDS`: the most rounds per user request (Requests), a whole number from
+  `1` to `100`. Default `10`.
