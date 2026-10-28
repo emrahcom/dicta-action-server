@@ -80,10 +80,14 @@ and runs nothing after it.
 
 - Added text: the client reports the plan with the failure code `interrupted` at
   the step or item where it stopped, followed by an `added` item with the text,
-  and the planner decides what comes next. When the text comes while the client
-  waits for an answer, and the answer is a plan, the plan is reported as
-  `interrupted` before its first step, with no `step`. When a question is open,
-  the text is its answer instead.
+  and the planner decides what comes next. Each text is its own `added` item, in
+  the order the user gave them; several texts before the client stops follow the
+  one report.
+- Text while the client waits for an answer is held until the answer comes. A
+  plan is then not run: it is reported as `interrupted` before its first step,
+  with no `step`, followed by the `added` items. A question gets the held text
+  as its answer. After done or a stop, the held text starts a new request.
+- When a question is open, the text is its answer.
 - Cancel: the client reports the plan with the failure code `cancelled` at the
   step or item where it stopped, and the request ends. The server answers with a
   stop without asking the planner. When the client was waiting for an answer, it
