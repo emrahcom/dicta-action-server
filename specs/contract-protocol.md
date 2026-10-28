@@ -21,6 +21,7 @@ a new one.
 {
   "requestId": "...",
   "text": "move the selected tasks to Friday",
+  "time": "2026-10-28T15:20:00+01:00",
   "state": { "page": "tasks", "selected": ["t1", "t2"] },
   "exchange": [
     {
@@ -39,6 +40,8 @@ a new one.
 - `requestId`: left out in the first round. In later rounds, the id the server
   gave in its first answer.
 - `text`: the user's request, the same in every round.
+- `time`: the user's current time, sent new in every round, so the planner can
+  read words like "today" or "tomorrow".
 - `state`: what the page shows now, as a JSON object. Sent new in every round.
   Kept small. The client does not choose it: it comes from the site's own state
   function, which the site context describes.
@@ -48,6 +51,9 @@ a new one.
   - a plan the server sent, with the client's `report` on it;
   - a question the server asked, with the user's `answer`;
   - `added`: text the user gave while the request was running (Added text).
+
+Every time in the contracts is the user's local time with its offset, in ISO
+8601, for example `2026-10-28T15:20:00+01:00`.
 
 ## Report
 

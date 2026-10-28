@@ -90,8 +90,9 @@ the module or the context file; the server adds them to every site context.
   history is sent unless the planner calls it. It takes one of:
   - `list: true`: every finished request of the tab, short: an array of
     `{ "requestId", "time", "text", "end" }`, newest first. `time` is when the
-    request ended (ISO 8601); `end` is the type of the server's last answer and
-    its text, if any, or `cancelled` when the user cancelled the request.
+    request ended (`contract-protocol.md`, Request body); `end` is the type of
+    the server's last answer and its text, if any, or `cancelled` when the user
+    cancelled the request.
   - `requestId`: one request in full: its `text`, its `time`, its `exchange`
     (`contract-protocol.md`) and its `end`, as in `list`. An id that is not kept
     fails with the code `not_found`.
