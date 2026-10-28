@@ -95,14 +95,16 @@ capabilities. Before a step that calls a destructive or external capability, the
 client asks the user with the text that the capability's `confirm` returns for
 the step's arguments, after their references are filled in.
 
-In a `forEach`, it asks once for all items, before the first item runs. It fills
-in the arguments of every item first; a call in `do` refers only to earlier
-steps and to the item, so all of them are known. It shows the number of items
-and the texts of the first three; it calls `confirm` only for these three.
+A `forEach` asks when `do` holds a destructive or external call, or a `write`
+call and more items than the module's `confirmOver` (`contract-capability.md`).
+The calls that ask are then the destructive and external ones, plus the `write`
+ones when the items are over `confirmOver`.
 
-A `forEach` that calls a `write` capability for more items than the module's
-`confirmOver` (`contract-capability.md`) asks the user too, in the same way. One
-`forEach` never asks twice.
+It asks once for all items, before the first item runs. It fills in the
+arguments of every item first; a call in `do` refers only to earlier steps and
+to the item, so all of them are known. It shows the number of items and the
+first three items, each with the texts of all its calls that ask; it calls
+`confirm` only for these. One `forEach` never asks twice.
 
 The client shows a confirmation as plain text and hides the plan's label while
 it is open, so the user sees only the module's words.
