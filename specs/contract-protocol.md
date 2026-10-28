@@ -72,16 +72,16 @@ Every time in the contracts is the user's local time with its offset, in ISO
 - `failure`: only when a step failed: the number of the top-level step, from 1
   as in references (left out for `invalid`), a `code` and a `message`. Codes:
   `capability` (the capability threw), `reference` (a reference had no value),
-  `declined` (the user said no), `limit` (a limit of `contract-plan.md` or the
-  round size was reached), `invalid` (the plan failed the client's check before
-  any step ran), `cancelled` (the user cancelled the request), `interrupted`
-  (the user added text; Added text). For `capability`, the capability's own
-  error code and message are used when it gives them. When the failed step is a
-  `forEach`, `item` is the number of the failed item and `do` the number of the
-  failed call in its `do`, both from 0. The items before it are done, and in the
-  failed item, the calls before the failed one; nothing after it ran. `results`
-  then holds every item that ran, in the form of a `forEach` result; the last
-  entry holds only the calls of the failed item that are done.
+  `limit` (a limit of `contract-plan.md` or the round size was reached),
+  `invalid` (the plan failed the client's check before any step ran),
+  `cancelled` (the user cancelled the request), `interrupted` (the user added
+  text; Added text). For `capability`, the capability's own error code and
+  message are used when it gives them. When the failed step is a `forEach`,
+  `item` is the number of the failed item and `do` the number of the failed call
+  in its `do`, both from 0. The items before it are done, and in the failed
+  item, the calls before the failed one; nothing after it ran. `results` then
+  holds every item that ran, in the form of a `forEach` result; the last entry
+  holds only the calls of the failed item that are done.
 
 ## Added text and cancel
 

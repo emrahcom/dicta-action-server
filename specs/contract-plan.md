@@ -78,9 +78,9 @@ it before it sends it:
 - a capability that `navigates` is called only in the last step, never inside a
   `forEach`.
 
-A step fails when its capability throws, when a reference has no value, when the
-user declines a confirmation or when a limit is reached. The client stops at the
-first failed step and reports the results so far and the failure.
+A step fails when its capability throws, when a reference has no value or when a
+limit is reached. The client stops at the first failed step and reports the
+results so far and the failure.
 
 ## Limits
 
@@ -107,4 +107,6 @@ first three items, each with the texts of all its calls that ask; it calls
 `confirm` only for these. One `forEach` never asks twice.
 
 The client shows a confirmation as plain text and hides the plan's label while
-it is open, so the user sees only the module's words.
+it is open, so the user sees only the module's words. The user answers with
+Continue, which runs the step, or Cancel, which cancels the request
+(`contract-protocol.md`, Added text and cancel).
