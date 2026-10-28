@@ -65,8 +65,14 @@ As in dicta-server:
 ## Planner
 
 - Turns a round into an answer: a plan, a question, done or a stop.
-- Chosen per server. The first one is `stub`: no LLM and no key, it returns
-  fixed answers for tests. LLM planners come later.
+- Chosen per server. The first one is `stub`: no LLM and no key, for tests. LLM
+  planners come later.
+- `stub` takes its answers from the request text: a JSON array of answers
+  (`contract-protocol.md`, Response body), for example
+  `[{"type": "plan", "plan": {...}}, {"type": "done"}]`. In each round it gives
+  the answer whose index is the number of items in the exchange, so the first
+  round gets the first one. When the text is not such an array, or the array has
+  no answer for the round, it answers with a stop.
 - A report on a plan marked final whose steps all succeeded gets done from the
   server, without the planner (`contract-plan.md`, Reporting).
 - The server checks every plan before it leaves: each step calls a capability of
