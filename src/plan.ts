@@ -151,7 +151,10 @@ export function checkPlan(plan: unknown, context: SiteContext) {
   if (!isObject(plan)) {
     throw new BadPlan("the plan must be an object");
   }
-  onlyKeys(plan, ["steps", "final"], "plan");
+  onlyKeys(plan, ["steps", "text", "final"], "plan");
+  if (plan.text !== undefined && typeof plan.text !== "string") {
+    throw new BadPlan("text must be a string");
+  }
   if (plan.final !== undefined && typeof plan.final !== "boolean") {
     throw new BadPlan("final must be true or false");
   }

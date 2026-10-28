@@ -6,7 +6,7 @@ import { SignJWT } from "jose";
 import { readFileSync } from "node:fs";
 import { checkContext } from "../src/context.ts";
 import { stubPlanner } from "../src/planners/stub.ts";
-import type { Planner } from "../src/round.ts";
+import type { Answer, Planner } from "../src/round.ts";
 import { type AuthOptions, createServer } from "../src/server.ts";
 
 const SECRET = "s".repeat(32);
@@ -16,6 +16,7 @@ const CONTEXT = checkContext(
   ),
 );
 const PATH = "/dicta-action/v1/round";
+const TIME = "2026-10-28T15:20:00+01:00";
 
 const PLAN = {
   type: "plan",
@@ -54,6 +55,7 @@ function body(
   return {
     ...(requestId ? { requestId } : {}),
     text: JSON.stringify(answers),
+    time: TIME,
     state: { page: "tasks" },
     exchange,
   };
@@ -131,6 +133,7 @@ test("stub: a stop when the text is not a list of answers", async (t) => {
 
   const { body: answer } = await post(base, {
     text: "add a task",
+    time: TIME,
     state: {},
     exchange: [],
   });
@@ -223,6 +226,80 @@ test("a plan that fails the check gets a stop", async (t) => {
   assert.match(String(warn.mock.calls[0]?.arguments[0]), /tasks\.fly/);
 });
 
+test("takes added text in the exchange", async (t) => {
+  const base = await start(t);
+  const exchange = [
+    {
+      plan: PLAN.plan,
+      report: {
+        results: [],
+        failure: { step: 1, code: "interrupted", message: "added text" },
+      },
+    },
+    { added: "no, Friday" },
+    { added: "and the closed ones" },
+  ];
+
+  const { status, body: answer } = await post(
+    base,
+    body([PLAN, PLAN, PLAN, PLAN], exchange),
+  );
+
+  assert.equal(status, 200);
+  assert.deepEqual(answer.answer, PLAN);
+});
+
+test("answers a cancelled plan with a stop, without the planner", async (t) => {
+  let calls = 0;
+  const base = await start(t, {
+    planner: async () => {
+      calls++;
+      return PLAN as Answer;
+    },
+  });
+  const cancelled = {
+    plan: { steps: [], final: true },
+    report: {
+      results: [],
+      failure: { step: 1, code: "cancelled", message: "cancelled" },
+    },
+  };
+
+  const { body: answer } = await post(base, body([], [cancelled]));
+
+  assert.equal(answer.answer.type, "stop");
+  assert.equal(calls, 0);
+});
+
+test("sends a plan with a label", async (t) => {
+  const base = await start(t);
+  const labelled = {
+    type: "plan",
+    plan: { ...PLAN.plan, text: "Listing the tasks" },
+  };
+
+  const { body: answer } = await post(base, body([labelled]));
+
+  assert.deepEqual(answer.answer, labelled);
+});
+
+test("sends a plan that calls dicta.history", async (t) => {
+  const base = await start(t);
+  const history = {
+    type: "plan",
+    plan: {
+      steps: [
+        { call: "dicta.history", args: { list: true } },
+        { call: "dicta.history", args: { requestId: "$1.0.requestId" } },
+      ],
+    },
+  };
+
+  const { body: answer } = await post(base, body([history]));
+
+  assert.deepEqual(answer.answer, history);
+});
+
 test("a planner error gives a stop", async (t) => {
   const base = await start(t, {
     planner: async () => {
@@ -294,31 +371,48 @@ test("takes rounds without a token when unauthenticated is allowed", async (t) =
 });
 
 const BAD_BODIES: [string, unknown][] = [
+  ["no time", { text: "a", state: {}, exchange: [] }],
+  [
+    "a time without an offset",
+    { text: "a", time: "2026-10-28T15:20:00", state: {}, exchange: [] },
+  ],
+  [
+    "a time that is not a date",
+    { text: "a", time: "2026-13-45T99:00:00+01:00", state: {}, exchange: [] },
+  ],
+  [
+    "added text that is not a string",
+    { text: "a", time: TIME, state: {}, exchange: [{ added: 5 }] },
+  ],
   ["a body that is not JSON", "{"],
   ["a body that is not an object", "[]"],
-  ["no text", { state: {}, exchange: [] }],
-  ["a state that is not an object", { text: "a", state: [], exchange: [] }],
-  ["no exchange", { text: "a", state: {} }],
+  ["no text", { time: TIME, state: {}, exchange: [] }],
+  [
+    "a state that is not an object",
+    { text: "a", time: TIME, state: [], exchange: [] },
+  ],
+  ["no exchange", { text: "a", time: TIME, state: {} }],
   [
     "a requestId that is not text",
-    { requestId: 1, text: "a", state: {}, exchange: [] },
+    { requestId: 1, text: "a", time: TIME, state: {}, exchange: [] },
   ],
   [
     "an exchange item of another kind",
-    { text: "a", state: {}, exchange: [{}] },
+    { text: "a", time: TIME, state: {}, exchange: [{}] },
   ],
   [
     "a plan without a report",
-    { text: "a", state: {}, exchange: [{ plan: {} }] },
+    { text: "a", time: TIME, state: {}, exchange: [{ plan: {} }] },
   ],
   [
     "a report without results",
-    { text: "a", state: {}, exchange: [{ plan: {}, report: {} }] },
+    { text: "a", time: TIME, state: {}, exchange: [{ plan: {}, report: {} }] },
   ],
   [
     "a failure without a code",
     {
       text: "a",
+      time: TIME,
       state: {},
       exchange: [
         { plan: {}, report: { results: [], failure: { message: "x" } } },
@@ -327,7 +421,7 @@ const BAD_BODIES: [string, unknown][] = [
   ],
   [
     "a question without an answer",
-    { text: "a", state: {}, exchange: [{ question: "Which?" }] },
+    { text: "a", time: TIME, state: {}, exchange: [{ question: "Which?" }] },
   ],
 ];
 
@@ -344,7 +438,12 @@ for (const [name, payload] of BAD_BODIES) {
 
 test("413 for a body over 1 MB", async (t) => {
   const base = await start(t);
-  const big = { text: "x".repeat(1024 * 1024), state: {}, exchange: [] };
+  const big = {
+    text: "x".repeat(1024 * 1024),
+    time: TIME,
+    state: {},
+    exchange: [],
+  };
 
   const { status } = await post(base, big);
 

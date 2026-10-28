@@ -19,8 +19,11 @@ test("accepts a valid context", () => {
   const c = checkContext(context());
 
   assert.equal(c.site.name, "Teamboard");
-  assert.equal(c.capabilities.length, 3);
   assert.equal(c.capabilities[2]?.navigates, true);
+  assert.deepEqual(
+    c.capabilities.map((capability) => capability.name),
+    ["tasks.list", "tasks.create", "tasks.open", "dicta.history"],
+  );
 });
 
 const INVALID: [string, (c: any) => void, RegExp][] = [
@@ -72,6 +75,11 @@ const INVALID: [string, (c: any) => void, RegExp][] = [
     "two capabilities with one name",
     (c) => (c.capabilities[1].name = "tasks.list"),
     /^capability tasks\.list is listed twice$/,
+  ],
+  [
+    "a capability in the dicta group",
+    (c) => (c.capabilities[0].name = "dicta.undo"),
+    /^capability dicta\.undo uses the dicta group$/,
   ],
   ["no notes", (c) => delete c.notes, /^notes must be an array$/],
   [

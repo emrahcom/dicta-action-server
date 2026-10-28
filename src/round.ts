@@ -11,11 +11,13 @@ export type Report = {
 
 export type ExchangeItem =
   | { plan: Record<string, unknown>; report: Report }
-  | { question: string; answer: string };
+  | { question: string; answer: string }
+  | { added: string };
 
 export type Round = {
   requestId?: string;
   text: string;
+  time: string;
   state: Record<string, unknown>;
   exchange: ExchangeItem[];
 };
@@ -70,7 +72,25 @@ function checkItem(value: unknown, path: string): ExchangeItem {
     }
     return { question: value.question, answer: value.answer };
   }
-  throw new BadRound(`${path} must be a plan with its report or a question`);
+  if (isObject(value) && "added" in value) {
+    if (typeof value.added !== "string") {
+      throw new BadRound(`${path}.added must be a string`);
+    }
+    return { added: value.added };
+  }
+  throw new BadRound(
+    `${path} must be a plan with its report, a question or added text`,
+  );
+}
+
+// A time like 2026-10-28T15:20:00+01:00: ISO 8601 with an offset
+// (contract-protocol.md, Request body).
+function isLocalTime(value: string) {
+  return (
+    /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2}(\.\d+)?)?(Z|[+-]\d{2}:\d{2})$/.test(
+      value,
+    ) && !Number.isNaN(Date.parse(value))
+  );
 }
 
 // Checks a request body. Throws BadRound when it does not fit.
@@ -84,6 +104,9 @@ export function checkRound(body: unknown): Round {
   if (typeof body.text !== "string") {
     throw new BadRound("text must be a string");
   }
+  if (typeof body.time !== "string" || !isLocalTime(body.time)) {
+    throw new BadRound("time must be a local time with its offset");
+  }
   if (!isObject(body.state)) {
     throw new BadRound("state must be an object");
   }
@@ -93,6 +116,7 @@ export function checkRound(body: unknown): Round {
   return {
     ...(body.requestId === undefined ? {} : { requestId: body.requestId }),
     text: body.text,
+    time: body.time,
     state: body.state,
     exchange: body.exchange.map((item, i) => checkItem(item, `exchange[${i}]`)),
   };
@@ -110,6 +134,9 @@ export async function answerRound(
     return { type: "stop", text: "This took too many steps." };
   }
   const last = round.exchange.at(-1);
+  if (last && "plan" in last && last.report.failure?.code === "cancelled") {
+    return { type: "stop", text: "Cancelled." };
+  }
   if (
     last &&
     "plan" in last &&

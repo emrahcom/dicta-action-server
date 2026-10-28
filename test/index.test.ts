@@ -85,7 +85,12 @@ test("starts, logs one line and answers rounds", async (t) => {
     `http://localhost:${server.port}/dicta-action/v1/round`,
     {
       method: "POST",
-      body: JSON.stringify({ text: "[]", state: {}, exchange: [] }),
+      body: JSON.stringify({
+        text: "[]",
+        time: "2026-10-28T15:20:00+01:00",
+        state: {},
+        exchange: [],
+      }),
     },
   );
   assert.equal(response.status, 200);

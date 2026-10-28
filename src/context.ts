@@ -42,6 +42,23 @@ export type SiteContext = {
   notes: { title: string; text: string }[];
 };
 
+// The capabilities dicta-action-js brings to every site
+// (contract-capability.md, Built-in capabilities).
+const BUILT_IN: Capability[] = [
+  {
+    name: "dicta.history",
+    level: "read",
+    description:
+      "Earlier requests of this browser tab, for requests that refer to the " +
+      "past. list: true gives all of them, short and newest first; " +
+      "requestId gives one in full.",
+    args: {
+      type: "object",
+      properties: { list: { type: "boolean" }, requestId: { type: "string" } },
+    },
+  },
+];
+
 class ContextError extends Error {}
 
 function isObject(value: unknown): value is Record<string, unknown> {
@@ -121,7 +138,8 @@ function capability(value: unknown, path: string): Capability {
   };
 }
 
-// Checks a parsed context file. Throws an error that names the wrong field.
+// Checks a parsed context file and adds the built-in capabilities. Throws an
+// error that names the wrong field.
 export function checkContext(value: unknown): SiteContext {
   const c = object(value, "context");
   if (c.version !== 1) {
@@ -134,6 +152,9 @@ export function checkContext(value: unknown): SiteContext {
   );
   const names = new Set<string>();
   for (const { name } of capabilities) {
+    if (name.startsWith("dicta.")) {
+      throw new ContextError(`capability ${name} uses the dicta group`);
+    }
     if (names.has(name)) {
       throw new ContextError(`capability ${name} is listed twice`);
     }
@@ -153,7 +174,7 @@ export function checkContext(value: unknown): SiteContext {
       description: string(site.description, "site.description"),
     },
     state: { description: string(state.description, "state.description") },
-    capabilities,
+    capabilities: [...capabilities, ...BUILT_IN],
     notes,
   };
 }

@@ -51,6 +51,7 @@ const open = { call: "tasks.open", args: { id: "t1" } };
 const VALID: [string, unknown][] = [
   ["an empty plan", { steps: [] }],
   ["a final plan", { steps: [list], final: true }],
+  ["a plan with a label", { steps: [list], text: "Listing the tasks" }],
   [
     "a call with all argument types",
     {
@@ -104,6 +105,7 @@ const INVALID: [string, unknown, RegExp][] = [
   ["a plan without steps", {}, /steps must be an array/],
   ["an unknown plan field", { steps: [], next: "go" }, /plan has next/],
   ["final that is not a boolean", { steps: [], final: "yes" }, /final must be/],
+  ["a label that is not text", { steps: [], text: 5 }, /text must be a string/],
   ["51 steps", { steps: Array(51).fill(list) }, /at most 50 steps/],
   ["a step that is neither", { steps: [{ wait: 1 }] }, /a call or a forEach/],
   [
