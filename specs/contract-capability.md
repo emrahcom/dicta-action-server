@@ -72,6 +72,24 @@ contain no secrets.
 calls it before every round and sends the result as `state`. Its `description`
 tells the planner what the fields mean.
 
+## Built-in capabilities
+
+`dicta-action-js` brings some capabilities of its own, the same on every site.
+Their names are in the `dicta` group, which sites cannot use. They are not in
+the module or the context file; the server adds them to every site context.
+
+- `dicta.history` (`read`): earlier requests of this browser tab, for requests
+  that refer to the past, such as "undo that" or "the same for Friday". No
+  history is sent unless the planner calls it. It takes one of:
+  - `list: true`: every finished request of the tab, short: an array of
+    `{ "index", "text", "end" }`, newest first, where `end` is the type of the
+    server's last answer and its text, if any. Index 0 is the latest.
+  - `index`: one request in full: its `text`, its `exchange`
+    (`contract-protocol.md`) and the server's last answer as `end`.
+
+  The client keeps the finished requests of the tab, including cancelled ones,
+  and drops the oldest when the browser's storage is full.
+
 ## Rights
 
 A capability runs with the user's own rights, through the site's own code. It

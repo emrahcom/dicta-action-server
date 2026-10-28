@@ -52,6 +52,6 @@ What the planner knows about one site. It is one JSON file, made with
 ## Checks
 
 The server does not start when the file is missing or not valid: a field is
-missing or has the wrong type, two capabilities share a name, a level is not one
-of the four, or `args` uses more than the JSON Schema keywords the capability
-contract allows.
+missing or has the wrong type, two capabilities share a name, a capability uses
+the `dicta` group, a level is not one of the four, or `args` uses more than the
+JSON Schema keywords the capability contract allows.

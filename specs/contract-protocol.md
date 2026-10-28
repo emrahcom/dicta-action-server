@@ -59,19 +59,22 @@ a new one.
 ```
 
 - `results`: one entry for each top-level step that succeeded, in order; the
-  failed step is only in `failure`. The result of a `forEach` step is an array
-  with one entry for each item: the array of the results of its `do` steps.
-  Results are kept small: summaries, not whole data sets.
+  failed step is only in `failure`. The whole round must stay under 1 MB: when a
+  step's result would push it over, that step fails with the code `limit`. The
+  result of a `forEach` step is an array with one entry for each item: the array
+  of the results of its `do` steps. Results are kept small: summaries, not whole
+  data sets.
 - `failure`: only when a step failed: the number of the top-level step (left out
   for `invalid`), a `code` and a `message`. Codes: `capability` (the capability
   threw), `reference` (a reference had no value), `declined` (the user said no),
-  `limit` (a limit of `contract-plan.md` was reached), `invalid` (the plan
-  failed the client's check before any step ran), `cancelled` (the user
-  cancelled the request), `interrupted` (the user added text; Added text). For
-  `capability`, the capability's own error code and message are used when it
-  gives them. When the failed step is a `forEach`, `item` is the number of the
-  failed item, from 0: the items before it are done, the items after it did not
-  run, and in the failed item, the `do` steps before the failing one are done.
+  `limit` (a limit of `contract-plan.md` or the round size was reached),
+  `invalid` (the plan failed the client's check before any step ran),
+  `cancelled` (the user cancelled the request), `interrupted` (the user added
+  text; Added text). For `capability`, the capability's own error code and
+  message are used when it gives them. When the failed step is a `forEach`,
+  `item` is the number of the failed item, from 0: the items before it are done,
+  the items after it did not run, and in the failed item, the `do` steps before
+  the failing one are done.
 
 ## Added text and cancel
 

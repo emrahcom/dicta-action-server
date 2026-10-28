@@ -61,6 +61,9 @@ As in dicta-server:
   server does not start without a valid one.
 - It lists the site's capabilities with their arguments and levels, and what the
   planner needs to know about the site. Its format is in `contract-context.md`.
+- The server adds the built-in capabilities of `dicta-action-js` to it
+  (`contract-capability.md`, Built-in capabilities), so plans can call them like
+  any other capability.
 
 ## Planner
 
