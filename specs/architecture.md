@@ -33,11 +33,12 @@ Message formats are in `contract-protocol.md`.
   on the next page; a request ends when the user opens or reloads the page. When
   a request ends, the client keeps it as history for `dicta.history`
   (`contract-capability.md`, Built-in capabilities).
-- A limit on rounds per user request (`MAX_ROUNDS`) stops runaway loops and
-  their cost. It is not a target: one plan can hold many steps, and a request
-  that its first plan finishes takes two rounds, the plan and its report. The
-  server counts the earlier plans in the round and answers with a stop after the
-  limit.
+- A limit on plans per user request (`MAX_PLANS`) stops runaway loops and their
+  cost. It is not a target: one plan can hold many steps. The server counts the
+  earlier plans in the exchange. When the planner answers with a new plan and
+  the limit is already reached, the round gets a stop instead; every other
+  answer goes through, so a request that has finished its job is never stopped
+  by the limit.
 - All paths start with `/dicta-action/`, so the server can share a domain with
   the application behind a proxy.
 - CORS allows any origin. The token is sent in the `Authorization` header, not
@@ -101,5 +102,5 @@ Environment variables:
   only. Default `false`. The server logs a warning at startup when it is on.
 - `CONTEXT_FILE`: the path of the site context file. Required.
 - `PLANNER`: the planner. Required. Values: `stub`.
-- `MAX_ROUNDS`: the most rounds per user request (Requests), a whole number from
+- `MAX_PLANS`: the most plans per user request (Requests), a whole number from
   `1` to `100`. Default `10`.
