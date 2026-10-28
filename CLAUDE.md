@@ -13,8 +13,8 @@ runs the plan.
   only what the next task needs and update them whenever needed.
 - The action contracts are in `specs/` here: the protocol with
   `dicta-action-js`, the plan format, the context format and the capability
-  format. They are the source of truth for `dicta-action-js`,
-  `dicta-action-kit` and this repo.
+  format. They are the source of truth for all action repos. The harness
+  (`dicta-action-harness`) gets a copy of them.
 - Tasks are files in `tasks/open/` and `tasks/done/`, named
   `YYYY-MM-DD-HHMMSS-slug.md` (UTC). The folder is the status. `specs/tasks.md`
   defines the format, including how findings are handled.
