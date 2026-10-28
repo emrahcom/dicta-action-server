@@ -72,7 +72,7 @@ Every time in the contracts is the user's local time with its offset, in ISO
 - `failure`: only when a step failed: the number of the top-level step, from 1
   as in references (left out for `invalid`), a `code` and a `message`. Codes:
   `capability` (the capability threw), `reference` (a reference had no value),
-  `limit` (a limit of `contract-plan.md` or the round size was reached),
+  `limit` (a `forEach` over more than 100 items, or the round size was reached),
   `invalid` (the plan failed the client's check before any step ran),
   `cancelled` (the user cancelled the request), `interrupted` (the user added
   text; Added text). For `capability`, the capability's own error code and
