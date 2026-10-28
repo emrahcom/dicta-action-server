@@ -72,14 +72,17 @@ it before it sends it:
 
 - it has at most 50 top-level steps (Limits);
 - every `call` names a capability;
-- every `args` matches that capability's schema;
+- every `args` matches that capability's schema, with no properties the schema
+  does not name;
 - every reference points to an earlier step or to a `forEach` item;
 - a capability that `navigates` is called only in the last step, never inside a
   `forEach`.
 
-A step fails when its capability throws, when a reference has no value or when a
-limit is reached. The client stops at the first failed step and reports the
-results so far and the failure.
+A step fails when its capability throws, when a reference has no value or a
+value that does not fit where it is used, or when a limit is reached. The client
+checks each call's arguments against the schema again once their references are
+filled in, and a `forEach` needs an array. The client stops at the first failed
+step and reports the results so far and the failure.
 
 ## Limits
 
