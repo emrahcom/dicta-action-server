@@ -64,15 +64,15 @@ As in dicta-server:
 
 ## Planner
 
-- Turns a round into an answer: a plan, a question or a stop.
+- Turns a round into an answer: a plan, a question, done or a stop.
 - Chosen per server. The first one is `stub`: no LLM and no key, it returns
   fixed answers for tests. LLM planners come later.
 - A report on a plan marked final whose steps all succeeded gets done from the
   server, without the planner (`contract-plan.md`, Reporting).
 - The server checks every plan before it leaves: each step calls a capability of
   the site context, with arguments that match its schema, and each reference
-  points to an earlier step. A plan that fails the check is never sent; the
-  round gets a stop instead.
+  points to an earlier step; the full list is in `contract-plan.md` (Failures).
+  A plan that fails the check is never sent; the round gets a stop instead.
 
 ## State
 

@@ -62,9 +62,14 @@ start with `$` itself is written with `$$`.
 
 ## Failures
 
-The client checks the whole plan before it runs any step: every `call` names a
-capability, every `args` matches that capability's schema, and every reference
-points to an earlier step or to a `forEach` item.
+The client checks the whole plan before it runs any step, and the server checks
+it before it sends it:
+
+- every `call` names a capability;
+- every `args` matches that capability's schema;
+- every reference points to an earlier step or to a `forEach` item;
+- a capability that `navigates` is called only in the last step, never inside a
+  `forEach`.
 
 A step fails when its capability throws, when a reference has no value, when the
 user declines a confirmation or when a limit is reached. The client stops at the

@@ -50,15 +50,15 @@ a new one.
 
 ```json
 {
-  "results": [{ "id": "t1" }, null],
+  "results": [{ "id": "t1" }],
   "failure": { "step": 2, "code": "not_found", "message": "No such task" }
 }
 ```
 
-- `results`: one entry for each top-level step that ran, in order. The result of
-  a `forEach` step is an array with one entry for each item: the array of the
-  results of its `do` steps. Results are kept small: summaries, not whole data
-  sets.
+- `results`: one entry for each top-level step that succeeded, in order; the
+  failed step is only in `failure`. The result of a `forEach` step is an array
+  with one entry for each item: the array of the results of its `do` steps.
+  Results are kept small: summaries, not whole data sets.
 - `failure`: only when a step failed: the number of the top-level step (left out
   for `invalid`), a `code` and a `message`. Codes: `capability` (the capability
   threw), `reference` (a reference had no value), `declined` (the user said no),
