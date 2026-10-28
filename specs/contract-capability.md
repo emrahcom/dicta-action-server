@@ -50,8 +50,9 @@ developers can change it. Without it, it is 10.
 
 ## Capabilities
 
-- Name: lowercase words, a group and an action joined by a dot, for example
-  `tasks.create`.
+- Name: unique in the module. By convention lowercase words, a group and an
+  action joined by a dot, for example `tasks.create`; the `dicta` group is
+  reserved (Built-in capabilities).
 - `level`: `read`, `write`, `destructive` or `external`.
   - `read` changes nothing.
   - `write` changes the user's data or the page.

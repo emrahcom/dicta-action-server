@@ -8,14 +8,15 @@ dicta-action-js (browser) --HTTP--> dicta-action-server --> LLM
 ```
 
 1. The application's own backend signs a JWT for its user.
-2. `dicta-action-js` sends the request text, the page state and the token to
-   dicta-action-server.
+2. `dicta-action-js` sends the request text, the user's time, the page state and
+   the token to dicta-action-server.
 3. The server verifies the token, asks the planner for a plan, checks the plan
    against the site's capabilities and returns it.
 4. The browser runs the plan and always reports back in a new round of the same
    user request: the original text, the plans so far with their results, and the
    user's answer if there was a question. The server decides the next answer: a
-   new plan, a question to the user or done. So the server sees every outcome.
+   new plan, a question to the user, done or a stop. So the server sees every
+   outcome.
 
 Message formats are in `contract-protocol.md`.
 
@@ -27,11 +28,11 @@ Message formats are in `contract-protocol.md`.
 - Stateless. Each round carries the whole exchange of the user's request: the
   text, the page state, and every earlier plan with its results. The server
   keeps nothing between rounds, so any instance can serve any round.
-- `dicta-action-js` keeps the exchange only while the user's request runs. It
+- `dicta-action-js` keeps the exchange while the user's request runs. It
   survives only a page load that the plan itself causes, so a request can go on
-  on the next page; it is dropped when the request ends or when the user opens
-  or reloads the page.
-- Results in the exchange are kept small: summaries, not whole data sets.
+  on the next page; a request ends when the user opens or reloads the page. When
+  a request ends, the client keeps it as history for `dicta.history`
+  (`contract-capability.md`, Built-in capabilities).
 - A limit on rounds per user request (`MAX_ROUNDS`) stops runaway loops and
   their cost. It is not a target: one plan can hold many steps, and a request
   that its first plan finishes takes two rounds, the plan and its report. The

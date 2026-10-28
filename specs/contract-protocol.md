@@ -68,8 +68,7 @@ Every time in the contracts is the user's local time with its offset, in ISO
   failed step is only in `failure`. The whole round must stay under 1 MB: when a
   step's result would push it over, that step fails with the code `limit`. The
   result of a `forEach` step is an array with one entry for each item: the array
-  of the results of its `do` steps. Results are kept small: summaries, not whole
-  data sets.
+  of the results of its `do` steps.
 - `failure`: only when a step failed: the number of the top-level step, from 1
   as in references (left out for `invalid`), a `code` and a `message`. Codes:
   `capability` (the capability threw), `reference` (a reference had no value),
