@@ -1,6 +1,9 @@
 // A round of a user request: the request body, the answer and the rules that
 // pick the answer (contract-protocol.md, architecture.md).
 
+import type { SiteContext } from "./context.ts";
+import { BadPlan, checkPlan } from "./plan.ts";
+
 export type Report = {
   results: unknown[];
   failure?: { step?: number; item?: number; code: string; message: string };
@@ -99,6 +102,7 @@ export function checkRound(body: unknown): Round {
 export async function answerRound(
   round: Round,
   planner: Planner,
+  context: SiteContext,
   maxRounds: number,
 ): Promise<Answer> {
   const plans = round.exchange.filter((item) => "plan" in item);
@@ -114,9 +118,22 @@ export async function answerRound(
   ) {
     return { type: "done" };
   }
+  let answer: Answer;
   try {
-    return await planner(round);
+    answer = await planner(round);
   } catch {
     return { type: "stop", text: "Something went wrong." };
   }
+  if (answer.type === "plan") {
+    try {
+      checkPlan(answer.plan, context);
+    } catch (err) {
+      if (!(err instanceof BadPlan)) {
+        throw err;
+      }
+      console.warn(`plan not sent: ${err.message}`);
+      return { type: "stop", text: "Something went wrong." };
+    }
+  }
+  return answer;
 }

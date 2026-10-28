@@ -3,11 +3,18 @@ import { once } from "node:events";
 import type { AddressInfo } from "node:net";
 import { test, type TestContext } from "node:test";
 import { SignJWT } from "jose";
+import { readFileSync } from "node:fs";
+import { checkContext } from "../src/context.ts";
 import { stubPlanner } from "../src/planners/stub.ts";
 import type { Planner } from "../src/round.ts";
 import { type AuthOptions, createServer } from "../src/server.ts";
 
 const SECRET = "s".repeat(32);
+const CONTEXT = checkContext(
+  JSON.parse(
+    readFileSync(new URL("fixtures/context.json", import.meta.url), "utf8"),
+  ),
+);
 const PATH = "/dicta-action/v1/round";
 
 const PLAN = {
@@ -22,6 +29,7 @@ async function start(
   const server = createServer({
     auth: options.auth ?? { jwtSecret: SECRET },
     planner: options.planner ?? stubPlanner,
+    context: CONTEXT,
     maxRounds: options.maxRounds ?? 10,
   });
   server.listen(0);
@@ -199,6 +207,20 @@ test("questions do not count as rounds for the limit", async (t) => {
   const { body: answer } = await post(base, body([PLAN, PLAN], exchange));
 
   assert.equal(answer.answer.type, "plan");
+});
+
+test("a plan that fails the check gets a stop", async (t) => {
+  const base = await start(t);
+  const warn = t.mock.method(console, "warn", () => {});
+  const bad = {
+    type: "plan",
+    plan: { steps: [{ call: "tasks.fly", args: {} }] },
+  };
+
+  const { body: answer } = await post(base, body([bad]));
+
+  assert.equal(answer.answer.type, "stop");
+  assert.match(String(warn.mock.calls[0]?.arguments[0]), /tasks\.fly/);
 });
 
 test("a planner error gives a stop", async (t) => {

@@ -8,6 +8,7 @@ import {
   type ServerResponse,
 } from "node:http";
 import { jwtVerify } from "jose";
+import type { SiteContext } from "./context.ts";
 import { answerRound, BadRound, checkRound, type Planner } from "./round.ts";
 
 const ROUND_PATH = "/dicta-action/v1/round";
@@ -19,6 +20,7 @@ export type AuthOptions =
 export type ServerOptions = {
   auth: AuthOptions;
   planner: Planner;
+  context: SiteContext;
   maxRounds: number;
 };
 
@@ -90,7 +92,12 @@ async function handleRound(
     }
     throw err;
   }
-  const answer = await answerRound(round, options.planner, options.maxRounds);
+  const answer = await answerRound(
+    round,
+    options.planner,
+    options.context,
+    options.maxRounds,
+  );
   send(response, 200, { requestId: round.requestId ?? randomUUID(), answer });
 }
 
