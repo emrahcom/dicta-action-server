@@ -77,9 +77,11 @@ Every time in the contracts is the user's local time with its offset, in ISO
   any step ran), `cancelled` (the user cancelled the request), `interrupted`
   (the user added text; Added text). For `capability`, the capability's own
   error code and message are used when it gives them. When the failed step is a
-  `forEach`, `item` is the number of the failed item, from 0: the items before
-  it are done, the items after it did not run, and in the failed item, the `do`
-  steps before the failing one are done.
+  `forEach`, `item` is the number of the failed item and `do` the number of the
+  failed call in its `do`, both from 0. The items before it are done, and in the
+  failed item, the calls before the failed one; nothing after it ran. `results`
+  then holds every item that ran, in the form of a `forEach` result; the last
+  entry holds only the calls of the failed item that are done.
 
 ## Added text and cancel
 
