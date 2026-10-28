@@ -24,7 +24,7 @@ export default {
     "tasks.create": {
       level: "write",
       description: "Creates a task in the open project.",
-      confirm: "Create tasks",
+      confirm: async ({ title }) => `Create task "${title}"`,
       args: {
         type: "object",
         properties: {
@@ -65,11 +65,16 @@ developers can change it. Without it, it is 10.
   `required`, `items`, `enum` and `description` are used.
 - `run`: an async function. It takes the arguments, already checked against
   `args`, and returns a JSON value: small, a summary rather than whole data.
-- `confirm`: for `write`, `destructive` and `external` capabilities, a few words
-  naming the action for the user, for example "Delete tasks". The client shows
-  it when it asks the user, with the number of calls (`contract-plan.md`,
-  Confirmation). The wording of a confirmation comes only from here, never from
-  a plan, so a plan cannot make a risky step look harmless.
+- `confirm`: for `write`, `destructive` and `external` capabilities, an async
+  function that takes the arguments and returns a short text naming the action
+  and what it acts on, for example
+  `Share "Budget review" with chen@example.com`. It may read data through the
+  site's own code, to turn ids into names the user knows, but it never changes
+  anything. When it throws, the step fails as if `run` had thrown (Errors), and
+  nothing runs. The client shows the text when it asks the user
+  (`contract-plan.md`, Confirmation). The wording of a confirmation comes only
+  from here, never from a plan, so a plan cannot make a risky step look
+  harmless, and the user sees exactly what will happen.
 - `navigates`: `true` when the capability loads another page. It is always the
   last step of a plan, and it never opens a new tab or window. Its result is
   `null`: the client sends the report from the new page, once it has loaded,

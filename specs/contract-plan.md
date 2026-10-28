@@ -92,9 +92,17 @@ first failed step and reports the results so far and the failure.
 
 The plan carries no levels and no confirmation text; both come from the
 capabilities. Before a step that calls a destructive or external capability, the
-client asks the user, with the capability's `confirm` text. In a `forEach`, it
-asks once for all items, with their number, for example "Delete tasks: 12".
+client asks the user with the text that the capability's `confirm` returns for
+the step's arguments, after their references are filled in.
+
+In a `forEach`, it asks once for all items, before the first item runs. It fills
+in the arguments of every item first; a call in `do` refers only to earlier
+steps and to the item, so all of them are known. It shows the number of items
+and the texts of the first three; it calls `confirm` only for these three.
 
 A `forEach` that calls a `write` capability for more items than the module's
-`confirmOver` (`contract-capability.md`) asks the user too, once for all items,
-for example "Update tasks: 40". One `forEach` never asks twice.
+`confirmOver` (`contract-capability.md`) asks the user too, in the same way. One
+`forEach` never asks twice.
+
+The client shows a confirmation as plain text and hides the plan's label while
+it is open, so the user sees only the module's words.
