@@ -15,6 +15,7 @@ The module's default export is an object:
 
 ```js
 export default {
+  confirmOver: 10,
   state: {
     description: "The open page and the selected tasks.",
     run: async () => ({ page: "tasks", selected: ["t1", "t2"] }),
@@ -39,6 +40,12 @@ export default {
   },
 };
 ```
+
+## Confirm over
+
+`confirmOver` is the most items a `forEach` may change without asking the user
+first (`contract-plan.md`, Confirmation). The harness sets it; the site's
+developers can change it. Without it, it is 10.
 
 ## Capabilities
 
