@@ -73,13 +73,22 @@ function contextFile(content: string) {
   return file;
 }
 
-test("starts, logs one line and answers 404", async (t) => {
-  const server = await startListening(VALID_ENV);
+test("starts, logs one line and answers rounds", async (t) => {
+  const server = await startListening({
+    ...VALID_ENV,
+    ALLOW_UNAUTHENTICATED: "true",
+  });
   t.after(server.stop);
 
   assert.match(server.line, /^dicta-action-server listening on port \d+\n$/);
-  const response = await fetch(`http://localhost:${server.port}/`);
-  assert.equal(response.status, 404);
+  const response = await fetch(
+    `http://localhost:${server.port}/dicta-action/v1/round`,
+    {
+      method: "POST",
+      body: JSON.stringify({ text: "[]", state: {}, exchange: [] }),
+    },
+  );
+  assert.equal(response.status, 200);
 });
 
 test("warns when unauthenticated is allowed", async (t) => {

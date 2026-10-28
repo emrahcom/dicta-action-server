@@ -21,5 +21,8 @@
     "oxlint-tsgolint": "^7.0.2005",
     "prettier": "^3.9.10",
     "typescript": "^7.0.2"
+  },
+  "dependencies": {
+    "jose": "^6.2.13"
   }
 }

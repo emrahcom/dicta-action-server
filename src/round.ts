@@ -1,0 +1,122 @@
+// A round of a user request: the request body, the answer and the rules that
+// pick the answer (contract-protocol.md, architecture.md).
+
+export type Report = {
+  results: unknown[];
+  failure?: { step?: number; item?: number; code: string; message: string };
+};
+
+export type ExchangeItem =
+  | { plan: Record<string, unknown>; report: Report }
+  | { question: string; answer: string };
+
+export type Round = {
+  requestId?: string;
+  text: string;
+  state: Record<string, unknown>;
+  exchange: ExchangeItem[];
+};
+
+export type Answer =
+  | { type: "plan"; plan: Record<string, unknown> }
+  | { type: "question"; text: string; options?: string[] }
+  | { type: "done"; text?: string }
+  | { type: "stop"; text: string };
+
+export type Planner = (round: Round) => Promise<Answer>;
+
+export class BadRound extends Error {}
+
+function isObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function checkReport(value: unknown, path: string): Report {
+  if (!isObject(value) || !Array.isArray(value.results)) {
+    throw new BadRound(`${path} must be an object with results`);
+  }
+  if (value.failure !== undefined) {
+    const f = value.failure;
+    if (
+      !isObject(f) ||
+      typeof f.code !== "string" ||
+      typeof f.message !== "string"
+    ) {
+      throw new BadRound(`${path}.failure must have a code and a message`);
+    }
+  }
+  return value as Report;
+}
+
+function checkItem(value: unknown, path: string): ExchangeItem {
+  if (isObject(value) && "plan" in value) {
+    if (!isObject(value.plan)) {
+      throw new BadRound(`${path}.plan must be an object`);
+    }
+    return {
+      plan: value.plan,
+      report: checkReport(value.report, `${path}.report`),
+    };
+  }
+  if (isObject(value) && "question" in value) {
+    if (
+      typeof value.question !== "string" ||
+      typeof value.answer !== "string"
+    ) {
+      throw new BadRound(`${path} must have a question and an answer`);
+    }
+    return { question: value.question, answer: value.answer };
+  }
+  throw new BadRound(`${path} must be a plan with its report or a question`);
+}
+
+// Checks a request body. Throws BadRound when it does not fit.
+export function checkRound(body: unknown): Round {
+  if (!isObject(body)) {
+    throw new BadRound("the body must be an object");
+  }
+  if (body.requestId !== undefined && typeof body.requestId !== "string") {
+    throw new BadRound("requestId must be a string");
+  }
+  if (typeof body.text !== "string") {
+    throw new BadRound("text must be a string");
+  }
+  if (!isObject(body.state)) {
+    throw new BadRound("state must be an object");
+  }
+  if (!Array.isArray(body.exchange)) {
+    throw new BadRound("exchange must be an array");
+  }
+  return {
+    ...(body.requestId === undefined ? {} : { requestId: body.requestId }),
+    text: body.text,
+    state: body.state,
+    exchange: body.exchange.map((item, i) => checkItem(item, `exchange[${i}]`)),
+  };
+}
+
+// The rules before the planner, then the planner (architecture.md, Planner).
+export async function answerRound(
+  round: Round,
+  planner: Planner,
+  maxRounds: number,
+): Promise<Answer> {
+  const plans = round.exchange.filter((item) => "plan" in item);
+  if (plans.length >= maxRounds) {
+    return { type: "stop", text: "This took too many steps." };
+  }
+  const last = round.exchange.at(-1);
+  if (
+    last &&
+    "plan" in last &&
+    last.plan.final === true &&
+    last.report.failure === undefined
+  ) {
+    return { type: "done" };
+  }
+  try {
+    return await planner(round);
+  } catch {
+    return { type: "stop", text: "Something went wrong." };
+  }
+}
