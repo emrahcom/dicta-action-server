@@ -21,16 +21,16 @@ Message formats are in `contract-protocol.md`.
 
 ## Requests
 
-- Plain HTTP: one `POST` per round, JSON in and out. A round needs no streaming,
-  so no WebSocket.
+- Plain HTTP: one `POST` per round, JSON in and out. A round needs no
+  streaming. A WebSocket would also close at each page load, and keeping the
+  exchange on the server would need sticky load balancing.
 - Stateless. Each round carries the whole exchange of the user's request: the
   text, the page state, and every earlier plan with its results. The server
   keeps nothing between rounds, so any instance can serve any round.
 - `dicta-action-js` keeps the exchange only while the user's request runs. It
   survives only a page load that the plan itself causes, so a request can go on
   on the next page; it is dropped when the request ends or when the user opens
-  or reloads the page. A WebSocket would lose it at each page load, and
-  server-side session state would need sticky load balancing.
+  or reloads the page.
 - Results in the exchange are kept small: summaries, not whole data sets.
 - A limit on rounds per user request (`MAX_ROUNDS`) stops runaway loops and
   their cost. It is not a target: one plan can hold many steps, and rounds are
