@@ -89,13 +89,20 @@ the module or the context file; the server adds them to every site context.
   that refer to the past, such as "undo that" or "the same for Friday". No
   history is sent unless the planner calls it. It takes one of:
   - `list: true`: every finished request of the tab, short: an array of
-    `{ "index", "text", "end" }`, newest first, where `end` is the type of the
-    server's last answer and its text, if any. Index 0 is the latest.
-  - `index`: one request in full: its `text`, its `exchange`
-    (`contract-protocol.md`) and the server's last answer as `end`.
+    `{ "requestId", "time", "text", "end" }`, newest first. `time` is when the
+    request ended (ISO 8601); `end` is the type of the server's last answer and
+    its text, if any, or `cancelled` when the user cancelled the request.
+  - `requestId`: one request in full: its `text`, its `time`, its `exchange`
+    (`contract-protocol.md`) and its `end`, as in `list`. An id that is not kept
+    fails with the code `not_found`.
 
-  The client keeps the finished requests of the tab, including cancelled ones,
-  and drops the oldest when the browser's storage is full.
+  Both can be in one plan: `list`, then `requestId` with the reference
+  `$1.0.requestId` for the latest request.
+
+  The client stores each request once, when it ends: on done, a stop or cancel.
+  A request that ended before it got a `requestId` ran nothing and is not
+  stored. When the browser's storage is full, the client drops the oldest
+  requests.
 
 ## Rights
 
