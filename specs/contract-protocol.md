@@ -55,10 +55,10 @@ a new one.
 }
 ```
 
-- `results`: one entry for each top-level step that ran, in order. The result
-  of a `forEach` step is an array with one entry for each item: the array of
-  the results of its `do` steps. Results are kept small: summaries, not whole
-  data sets.
+- `results`: one entry for each top-level step that ran, in order. The result of
+  a `forEach` step is an array with one entry for each item: the array of the
+  results of its `do` steps. Results are kept small: summaries, not whole data
+  sets.
 - `failure`: only when a step failed: the number of the top-level step (left out
   for `invalid`), a `code` and a `message`. Codes: `capability` (the capability
   threw), `reference` (a reference had no value), `declined` (the user said no),
@@ -82,8 +82,8 @@ logs. The server creates it in the first round and repeats it in every answer.
 
 - `plan`: run `plan` (`contract-plan.md`) and report back.
 - `question`: show `text` to the user and send their answer in the next round.
-  `options`, when present, is a list of short answers the user can pick with
-  one tap; the user can also answer in their own words.
+  `options`, when present, is a list of short answers the user can pick with one
+  tap; the user can also answer in their own words.
 - `done`: the request is finished. `text`, when present, is a short summary for
   the user; without it, the client only shows that it is done.
 - `stop`: the request ends without finishing. `text` says why, for the user.

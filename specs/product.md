@@ -4,8 +4,8 @@ dicta actions let users tell a web application what they want, in their own
 words, and the application does it. The request is plain text; where it comes
 from (typing, `dicta-js` or anything else) does not matter.
 
-dicta-action-server is the server side. It takes a request and the current
-state of the page, and returns a plan: steps that call the site's capability
+dicta-action-server is the server side. It takes a request and the current state
+of the page, and returns a plan: steps that call the site's capability
 functions. The browser runs the plan with `dicta-action-js`.
 
 ## The parts
@@ -42,7 +42,7 @@ functions. The browser runs the plan with `dicta-action-js`.
 - A request and the page state in, a plan out.
 - Plans with steps that call capabilities, use the results of earlier steps and
   repeat steps for each item of a result.
-- After each plan the results come back, and the server answers with a new
-  plan, a question to the user or done.
+- After each plan the results come back, and the server answers with a new plan,
+  a question to the user or done.
 - Capability levels: read, write, destructive and external. Destructive and
   external steps wait for the user to confirm.

@@ -12,19 +12,18 @@ dicta-action-js (browser) --HTTP--> dicta-action-server --> LLM
    dicta-action-server.
 3. The server verifies the token, asks the planner for a plan, checks the plan
    against the site's capabilities and returns it.
-4. The browser runs the plan and always reports back in a new round of the
-   same user request: the original text, the plans so far with their results,
-   and the user's answer if there was a question. The server decides the next
-   answer: a new plan, a question to the user or done. So the server sees every
-   outcome.
+4. The browser runs the plan and always reports back in a new round of the same
+   user request: the original text, the plans so far with their results, and the
+   user's answer if there was a question. The server decides the next answer: a
+   new plan, a question to the user or done. So the server sees every outcome.
 
 Message formats are in `contract-protocol.md`.
 
 ## Requests
 
-- Plain HTTP: one `POST` per round, JSON in and out. A round needs no
-  streaming. A WebSocket would also close at each page load, and keeping the
-  exchange on the server would need sticky load balancing.
+- Plain HTTP: one `POST` per round, JSON in and out. A round needs no streaming.
+  A WebSocket would also close at each page load, and keeping the exchange on
+  the server would need sticky load balancing.
 - Stateless. Each round carries the whole exchange of the user's request: the
   text, the page state, and every earlier plan with its results. The server
   keeps nothing between rounds, so any instance can serve any round.
@@ -58,11 +57,10 @@ As in dicta-server:
 
 ## Site context
 
-- One site per server instance. The site context is a file, read at startup;
-  the server does not start without a valid one.
-- It lists the site's capabilities with their arguments and levels, and what
-  the planner needs to know about the site. Its format is in
-  `contract-context.md`.
+- One site per server instance. The site context is a file, read at startup; the
+  server does not start without a valid one.
+- It lists the site's capabilities with their arguments and levels, and what the
+  planner needs to know about the site. Its format is in `contract-context.md`.
 
 ## Planner
 
@@ -71,8 +69,8 @@ As in dicta-server:
   fixed answers for tests. LLM planners come later.
 - A report on a plan marked final whose steps all succeeded gets done from the
   server, without the planner (`contract-plan.md`, Reporting).
-- The server checks every plan before it leaves: each step calls a capability
-  of the site context, with arguments that match its schema, and each reference
+- The server checks every plan before it leaves: each step calls a capability of
+  the site context, with arguments that match its schema, and each reference
   points to an earlier step. A plan that fails the check is never sent; the
   round gets a stop instead.
 

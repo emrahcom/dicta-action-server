@@ -25,15 +25,14 @@ calling one of the site's capabilities. It is JSON data, never code.
 ## Reporting
 
 After a plan, the client always sends a new round with the results, whether the
-plan succeeded or failed. The server always decides what comes next: a new
-plan, a question to the user or done. The client never decides to go on or to
-stop.
+plan succeeded or failed. The server always decides what comes next: a new plan,
+a question to the user or done. The client never decides to go on or to stop.
 
 `final` is for the server only. The planner sets it to `true` when the plan is
 the whole job. When a plan with `final: true` reports that all its steps
 succeeded, the server answers done without asking the planner again. Without
-`final`, or after a failure, the planner decides. The client ignores `final`
-and sends the plan back unchanged in the exchange.
+`final`, or after a failure, the planner decides. The client ignores `final` and
+sends the plan back unchanged in the exchange.
 
 ## Steps
 
@@ -68,8 +67,8 @@ capability, every `args` matches that capability's schema, and every reference
 points to an earlier step or to a `forEach` item.
 
 A step fails when its capability throws, when a reference has no value, when the
-user declines a confirmation or when a limit is reached. The client stops at
-the first failed step and reports the results so far and the failure.
+user declines a confirmation or when a limit is reached. The client stops at the
+first failed step and reports the results so far and the failure.
 
 ## Limits
 

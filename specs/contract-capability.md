@@ -6,8 +6,8 @@ bundled into the site. It wraps what the site's own buttons already call.
 
 The module is the single source for each capability: its name, level,
 description, arguments and function sit together. The harness takes the site
-context's capability list (`contract-context.md`) from it, so the client and
-the server never disagree about a capability.
+context's capability list (`contract-context.md`) from it, so the client and the
+server never disagree about a capability.
 
 ## Module
 
