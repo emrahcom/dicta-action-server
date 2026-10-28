@@ -30,7 +30,8 @@ a new one.
     {
       "question": "Which Friday, this week or next week?",
       "answer": "next week"
-    }
+    },
+    { "added": "and the closed ones too" }
   ]
 }
 ```
@@ -44,7 +45,8 @@ a new one.
 - `exchange`: what happened so far, oldest first. Empty in the first round. Each
   item is one of:
   - a plan the server sent, with the client's `report` on it;
-  - a question the server asked, with the user's `answer`.
+  - a question the server asked, with the user's `answer`;
+  - `added`: text the user gave while the request was running (Added text).
 
 ## Report
 
@@ -63,11 +65,32 @@ a new one.
   for `invalid`), a `code` and a `message`. Codes: `capability` (the capability
   threw), `reference` (a reference had no value), `declined` (the user said no),
   `limit` (a limit of `contract-plan.md` was reached), `invalid` (the plan
-  failed the client's check before any step ran). For `capability`, the
-  capability's own error code and message are used when it gives them. When the
-  failed step is a `forEach`, `item` is the number of the failed item, from 0:
-  the items before it are done, the items after it did not run, and in the
-  failed item, the `do` steps before the failing one are done.
+  failed the client's check before any step ran), `cancelled` (the user
+  cancelled the request), `interrupted` (the user added text; Added text). For
+  `capability`, the capability's own error code and message are used when it
+  gives them. When the failed step is a `forEach`, `item` is the number of the
+  failed item, from 0: the items before it are done, the items after it did not
+  run, and in the failed item, the `do` steps before the failing one are done.
+
+## Added text and cancel
+
+The user can add text or cancel while a request runs. The client never stops in
+the middle of a step: it finishes the step it is in, or the item of a `forEach`,
+and runs nothing after it.
+
+- Added text: the client reports the plan with the failure code `interrupted` at
+  the step or item where it stopped, followed by an `added` item with the text,
+  and the planner decides what comes next. When the text comes while the client
+  waits for an answer, and the answer is a plan, the plan is reported as
+  `interrupted` before its first step, with no `step`. When a question is open,
+  the text is its answer instead.
+- Cancel: the client reports the plan with the failure code `cancelled` at the
+  step or item where it stopped, and the request ends. The server answers with a
+  stop without asking the planner. When the client was waiting for an answer, it
+  reports nothing more.
+
+Nothing that was done is undone. The report tells exactly what was done, so a
+later request can fix it.
 
 ## Response body
 

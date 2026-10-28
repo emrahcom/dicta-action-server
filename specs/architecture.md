@@ -75,6 +75,8 @@ As in dicta-server:
   no answer for the round, it answers with a stop.
 - A report on a plan marked final whose steps all succeeded gets done from the
   server, without the planner (`contract-plan.md`, Reporting).
+- A report with the failure code `cancelled` gets a stop from the server,
+  without the planner (`contract-protocol.md`, Added text and cancel).
 - The server checks every plan before it leaves: each step calls a capability of
   the site context, with arguments that match its schema, and each reference
   points to an earlier step; the full list is in `contract-plan.md` (Failures).

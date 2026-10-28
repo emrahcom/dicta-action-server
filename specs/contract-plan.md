@@ -18,9 +18,16 @@ calling one of the site's capabilities. It is JSON data, never code.
       ]
     }
   ],
+  "text": "Moving the selected tasks to Friday",
   "final": true
 }
 ```
+
+## Label
+
+`text`, when present, is one short sentence the client shows while the plan
+runs, so the user sees what is happening. Without it, the client shows only the
+progress.
 
 ## Reporting
 
