@@ -86,14 +86,18 @@ Every time in the contracts is the user's local time with its offset, in ISO
 ## Added text and cancel
 
 The user can add text or cancel while a request runs. The client never stops in
-the middle of a step: it finishes the step it is in, or the item of a `forEach`,
-and runs nothing after it.
+the middle of a step: it finishes the step it is in, or in a `forEach` all calls
+of the current item, and runs nothing after it. The failure's `step` and, in a
+`forEach`, `item` name the first one that did not run; `do` is not set, and
+`failure.results` holds the items that ran, all complete.
 
 - Added text: the client reports the plan with the failure code `interrupted` at
   the step or item where it stopped, followed by an `added` item with the text,
   and the planner decides what comes next. Each text is its own `added` item, in
   the order the user gave them; several texts before the client stops follow the
-  one report.
+  one report. Text that comes after the last step, before the report is sent,
+  leaves the plan done: the report has no failure, and the `added` items follow
+  it.
 - Text that comes while the client waits for the server's response is added text
   too, since no question is open yet. The client holds it until the response
   arrives:
@@ -104,10 +108,13 @@ and runs nothing after it.
   - after done or a stop, the request is over, and the held text starts a new
     request, with a new `requestId` from the server.
 - When a question is open, the text is its answer.
+- While a confirmation is open, text is ignored: only a click on its buttons
+  answers it.
 - Cancel: the client reports the plan with the failure code `cancelled` at the
   step or item where it stopped, and the request ends. The server answers with a
-  stop without asking the planner. When the client was waiting for the server's
-  response, or a question was open, it reports nothing more.
+  stop without asking the planner. Cancel while a confirmation is open reports
+  `cancelled` at that step, which does not run. When the client was waiting for
+  the server's response, or a question was open, it reports nothing more.
 
 Nothing that was done is undone. The report tells exactly what was done, so a
 later request can fix it.
