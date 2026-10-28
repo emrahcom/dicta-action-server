@@ -42,8 +42,9 @@ a new one.
 - `state`: what the page shows now, as a JSON object. Sent new in every round.
   Kept small. The client does not choose it: it comes from the site's own state
   function, which the site context describes.
-- `exchange`: what happened so far, oldest first. Empty in the first round. Each
-  item is one of:
+- `exchange`: what happened so far, oldest first. Empty in the first round. The
+  client only adds to it, and sends all of it in every round. Each item is one
+  of:
   - a plan the server sent, with the client's `report` on it;
   - a question the server asked, with the user's `answer`;
   - `added`: text the user gave while the request was running (Added text).
@@ -85,10 +86,13 @@ and runs nothing after it.
   one report.
 - Text that comes while the client waits for the server's response is added text
   too, since no question is open yet. The client holds it until the response
-  arrives. A plan is then not run: it is reported as `interrupted` before its
-  first step, with no `step`, followed by the `added` items. A question is not
-  shown: the held text becomes its answer, because the user has already said
-  more. After done or a stop, the held text starts a new request.
+  arrives:
+  - a plan or a question is dropped: the plan is not run and the question is not
+    shown. The client keeps the response's `requestId` and sends a new round of
+    the same request with the `added` items, and nothing about the dropped
+    response;
+  - after done or a stop, the request is over, and the held text starts a new
+    request, with a new `requestId` from the server.
 - When a question is open, the text is its answer.
 - Cancel: the client reports the plan with the failure code `cancelled` at the
   step or item where it stopped, and the request ends. The server answers with a
