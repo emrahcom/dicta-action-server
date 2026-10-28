@@ -12,10 +12,11 @@ dicta-action-js (browser) --HTTP--> dicta-action-server --> LLM
    dicta-action-server.
 3. The server verifies the token, asks the planner for a plan, checks the plan
    against the site's capabilities and returns it.
-4. The browser runs the plan. When it fails or needs a decision, the browser
-   sends a new round of the same user request: the original text, the plans so
-   far with their results, and the user's answer if there was a question. It
-   gets the next answer: a new plan, a question to the user or a stop.
+4. The browser runs the plan and always reports back in a new round of the
+   same user request: the original text, the plans so far with their results,
+   and the user's answer if there was a question. The server decides the next
+   answer: a new plan, a question to the user or done. So the server sees every
+   outcome.
 
 Message formats are in `contract-protocol.md`.
 
@@ -33,9 +34,10 @@ Message formats are in `contract-protocol.md`.
   or reloads the page.
 - Results in the exchange are kept small: summaries, not whole data sets.
 - A limit on rounds per user request (`MAX_ROUNDS`) stops runaway loops and
-  their cost. It is not a target: one plan can hold many steps, and rounds are
-  only for failures, decisions and answers to questions. The server counts the
-  earlier plans in the round and answers with a stop after the limit.
+  their cost. It is not a target: one plan can hold many steps, and a request
+  that its first plan finishes takes two rounds, the plan and its report. The
+  server counts the earlier plans in the round and answers with a stop after the
+  limit.
 - All paths start with `/dicta-action/`, so the server can share a domain with
   the application behind a proxy.
 - CORS allows any origin. The token is sent in the `Authorization` header, not
@@ -67,6 +69,8 @@ As in dicta-server:
 - Turns a round into an answer: a plan, a question or a stop.
 - Chosen per server. The first one is `stub`: no LLM and no key, it returns
   fixed answers for tests. LLM planners come later.
+- A report on a plan marked final whose steps all succeeded gets done from the
+  server, without the planner (`contract-plan.md`, Reporting).
 - The server checks every plan before it leaves: each step calls a capability
   of the site context, with arguments that match its schema, and each reference
   points to an earlier step. A plan that fails the check is never sent; the

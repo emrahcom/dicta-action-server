@@ -42,7 +42,7 @@ functions. The browser runs the plan with `dicta-action-js`.
 - A request and the page state in, a plan out.
 - Plans with steps that call capabilities, use the results of earlier steps and
   repeat steps for each item of a result.
-- When a plan fails or needs a decision, the results come back and the server
-  continues with a new plan, a question to the user or a stop.
+- After each plan the results come back, and the server answers with a new
+  plan, a question to the user or done.
 - Capability levels: read, write, destructive and external. Destructive and
   external steps wait for the user to confirm.
