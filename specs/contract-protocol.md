@@ -64,7 +64,10 @@ a new one.
   threw), `reference` (a reference had no value), `declined` (the user said no),
   `limit` (a limit of `contract-plan.md` was reached), `invalid` (the plan
   failed the client's check before any step ran). For `capability`, the
-  capability's own error code and message are used when it gives them.
+  capability's own error code and message are used when it gives them. When the
+  failed step is a `forEach`, `item` is the number of the failed item, from 0:
+  the items before it are done, the items after it did not run, and in the
+  failed item, the `do` steps before the failing one are done.
 
 ## Response body
 
