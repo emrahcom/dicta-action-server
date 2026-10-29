@@ -196,7 +196,7 @@ logs. The server creates it in the first round and repeats it in every answer.
 - `stop`: the request ends without finishing. `text` says why, for the user.
 
 The user wants the task done fast, not to read. Every `text` is one short
-sentence, and each option a few words.
+sentence, and each option a few words (Limits).
 
 ```json
 {
@@ -208,6 +208,11 @@ sentence, and each option a few words.
   }
 }
 ```
+
+The server checks every answer before it sends it: `type` is one of the four, a
+question and a stop have a `text`, `options` is a list of strings, and the
+limits hold. An answer that fails the check is never sent; the round gets a stop
+instead. A plan is checked as well (`contract-plan.md`, Failures).
 
 Clients ignore fields they do not know. An answer type they do not know ends the
 request as an error, as an HTTP error does (Errors), so a newer server never
@@ -243,5 +248,7 @@ only guards against a client that breaks them.
 - A plan: at most 16 KB and 50 top-level steps (`contract-plan.md`, Limits).
 - The included outputs of a report: at most 16 KB together (Report).
 - Plans in a request: at most `MAX_PLANS`, which is at most 20.
+- The `text` of an answer: at most 200 characters. A question's `options`: at
+  most 5, each at most 50 characters.
 
 Questions and added texts have no count limit: a person writes each of them.
