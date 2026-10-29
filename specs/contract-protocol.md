@@ -23,6 +23,7 @@ a new one.
   "text": "move the selected tasks to Friday",
   "time": "2026-10-28T15:20:00+01:00",
   "state": { "page": "tasks", "selected": ["t1", "t2"] },
+  "context": { "site": { "name": "Teamboard" }, "capabilities": ["..."] },
   "exchange": [
     {
       "plan": { "steps": ["..."] },
@@ -45,6 +46,8 @@ a new one.
 - `state`: what the page shows now, as a JSON object. Sent new in every round.
   At most 16 KB (Limits). The client does not choose it: it comes from the
   site's own state function, which the site context describes.
+- `context`: the site context (`contract-context.md`), built from the capability
+  module. Sent in every round.
 - `exchange`: what happened so far, oldest first. Empty in the first round. The
   client only adds to it, and sends all of it in every round. Each item is one
   of:

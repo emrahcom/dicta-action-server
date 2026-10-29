@@ -1,12 +1,11 @@
 # Contract: site context
 
-What the planner knows about one site. It is one JSON file, made with
-`dicta-action-harness` and read by dicta-action-server at startup
-(`CONTEXT_FILE`).
+What the planner knows about one site. The client builds it from the capability
+module (`contract-capability.md`) and sends it as `context` in every round
+(`contract-protocol.md`, Request body).
 
 ```json
 {
-  "version": 1,
   "site": {
     "name": "Teamboard",
     "description": "A task list for small teams."
@@ -37,21 +36,21 @@ What the planner knows about one site. It is one JSON file, made with
 
 ## Fields
 
-- `version`: the format version, `1`. The server does not start with another.
-- `site`: the site's name and a short description.
+- `site`: the site's name and a short description, the module's `site`.
 - `state`: the `description` of the site's state function
   (`contract-capability.md`, State).
 - `capabilities`: one entry for each capability of the module, with its `name`,
-  `level`, `description`, `args` and, when set, `navigates`. The harness takes
+  `level`, `description`, `args` and, when set, `navigates`. The client takes
   them from the module, so they always match it.
-- `notes`: what the planner needs to know beyond the capabilities: entities,
-  screens, rules, glossary, common workflows. Each note has a `title` and a
-  plain `text`. Short and to the point: the planner reads all of it on every
-  round.
+- `notes`: the module's `notes`: what the planner needs to know beyond the
+  capabilities: entities, screens, rules, glossary, common workflows. Each note
+  has a `title` and a plain `text`. Short and to the point: the planner reads
+  all of it on every round.
 
 ## Checks
 
-The server does not start when the file is missing or not valid: a field is
-missing or has the wrong type, two capabilities share a name, a capability uses
-the `dicta` group, a level is not one of the four, or `args` uses more than the
-JSON Schema keywords the capability contract allows.
+A round whose context is not valid gets a `400` (`contract-protocol.md`,
+Errors), with an `error` that names the problem: a field is missing or has the
+wrong type, two capabilities share a name, a capability uses the `dicta` group,
+a level is not one of the four, or `args` uses more than the JSON Schema
+keywords the capability contract allows.

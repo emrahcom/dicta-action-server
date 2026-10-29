@@ -4,10 +4,10 @@ Capabilities are the functions a plan can call. A site has one capability
 module, made with `dicta-action-harness`, reviewed by the site's developers and
 bundled into the site. It wraps what the site's own buttons already call.
 
-The module is the single source for each capability: its name, level,
-description, arguments and function sit together. The harness takes the site
-context's capability list (`contract-context.md`) from it, so the client and the
-server never disagree about a capability.
+The module is the single source for each capability and for the rest of the site
+context: a capability's name, level, description, arguments and function sit
+together. The client builds the site context (`contract-context.md`) from it, so
+the client and the server never disagree about a capability.
 
 ## Module
 
@@ -15,6 +15,13 @@ The module's default export is an object:
 
 ```js
 export default {
+  site: { name: "Teamboard", description: "A task list for small teams." },
+  notes: [
+    {
+      title: "Glossary",
+      text: 'Users say "board" for a project and "card" for a task.',
+    },
+  ],
   confirmOver: 10,
   state: {
     description: "The open page and the selected tasks.",
@@ -41,6 +48,11 @@ export default {
   },
 };
 ```
+
+## Site and notes
+
+`site` and `notes` go into the site context as they are (`contract-context.md`,
+Fields).
 
 ## Confirm over
 
@@ -98,7 +110,8 @@ fields mean.
 
 `dicta-action-js` brings some capabilities of its own, the same on every site.
 Their names are in the `dicta` group, which sites cannot use. They are not in
-the module or the context file; the server adds them to every site context.
+the module or in the context the client sends; the server adds them to the
+context in every round.
 
 - `dicta.listHistory` (`read`): earlier requests of this browser tab, newest
   first, for requests that refer to the past, such as "undo that" or "the same

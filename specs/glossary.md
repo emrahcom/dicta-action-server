@@ -13,8 +13,8 @@ detail.
 - Planner: the LLM behind the server that writes plans and questions.
 - Capability: a function of the site that a plan can call, with a name, a level,
   a description and an argument schema (`contract-capability.md`).
-- Capability module: the site's one module that holds all its capabilities and
-  its state function, bundled into the site.
+- Capability module: the site's one module that holds all its capabilities, its
+  state function and the rest of the site context, bundled into the site.
 - Built-in capability: a capability the client brings itself, in the `dicta`
   group, for example `dicta.listHistory`.
 - Level: how risky a capability is: `read`, `write`, `destructive` or
