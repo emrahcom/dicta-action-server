@@ -1,7 +1,7 @@
 // A round of a user request: the request body, the answer and the rules that
 // pick the answer (contract-protocol.md, architecture.md).
 
-import type { SiteContext } from "./context.ts";
+import { checkContext, ContextError, type SiteContext } from "./context.ts";
 import { BadPlan, checkPlan } from "./plan.ts";
 
 export type Report = {
@@ -19,6 +19,7 @@ export type Round = {
   text: string;
   time: string;
   state: Record<string, unknown>;
+  context: SiteContext;
   exchange: ExchangeItem[];
 };
 
@@ -83,6 +84,8 @@ function checkItem(value: unknown, path: string): ExchangeItem {
   );
 }
 
+const MAX_CONTEXT_BYTES = 64 * 1024;
+
 // A time like 2026-10-28T15:20:00+01:00: ISO 8601 with an offset
 // (contract-protocol.md, Request body).
 function isLocalTime(value: string) {
@@ -110,6 +113,20 @@ export function checkRound(body: unknown): Round {
   if (!isObject(body.state)) {
     throw new BadRound("state must be an object");
   }
+  if (
+    Buffer.byteLength(JSON.stringify(body.context ?? null)) > MAX_CONTEXT_BYTES
+  ) {
+    throw new BadRound("context is larger than 64 KB");
+  }
+  let context: SiteContext;
+  try {
+    context = checkContext(body.context);
+  } catch (err) {
+    if (err instanceof ContextError) {
+      throw new BadRound(err.message);
+    }
+    throw err;
+  }
   if (!Array.isArray(body.exchange)) {
     throw new BadRound("exchange must be an array");
   }
@@ -118,6 +135,7 @@ export function checkRound(body: unknown): Round {
     text: body.text,
     time: body.time,
     state: body.state,
+    context,
     exchange: body.exchange.map((item, i) => checkItem(item, `exchange[${i}]`)),
   };
 }
@@ -126,7 +144,6 @@ export function checkRound(body: unknown): Round {
 export async function answerRound(
   round: Round,
   planner: Planner,
-  context: SiteContext,
   maxRounds: number,
 ): Promise<Answer> {
   const plans = round.exchange.filter((item) => "plan" in item);
@@ -153,7 +170,7 @@ export async function answerRound(
   }
   if (answer.type === "plan") {
     try {
-      checkPlan(answer.plan, context);
+      checkPlan(answer.plan, round.context);
     } catch (err) {
       if (!(err instanceof BadPlan)) {
         throw err;

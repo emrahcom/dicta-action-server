@@ -4,16 +4,13 @@ import type { AddressInfo } from "node:net";
 import { test, type TestContext } from "node:test";
 import { SignJWT } from "jose";
 import { readFileSync } from "node:fs";
-import { checkContext } from "../src/context.ts";
 import { stubPlanner } from "../src/planners/stub.ts";
 import type { Answer, Planner } from "../src/round.ts";
 import { type AuthOptions, createServer } from "../src/server.ts";
 
 const SECRET = "s".repeat(32);
-const CONTEXT = checkContext(
-  JSON.parse(
-    readFileSync(new URL("fixtures/context.json", import.meta.url), "utf8"),
-  ),
+const CONTEXT = JSON.parse(
+  readFileSync(new URL("fixtures/context.json", import.meta.url), "utf8"),
 );
 const PATH = "/dicta-action/v1/round";
 const TIME = "2026-10-28T15:20:00+01:00";
@@ -30,7 +27,6 @@ async function start(
   const server = createServer({
     auth: options.auth ?? { jwtSecret: SECRET },
     planner: options.planner ?? stubPlanner,
-    context: CONTEXT,
     maxRounds: options.maxRounds ?? 10,
   });
   server.listen(0);
@@ -57,6 +53,7 @@ function body(
     text: JSON.stringify(answers),
     time: TIME,
     state: { page: "tasks" },
+    context: CONTEXT,
     exchange,
   };
 }
@@ -135,6 +132,7 @@ test("stub: a stop when the text is not a list of answers", async (t) => {
     text: "add a task",
     time: TIME,
     state: {},
+    context: CONTEXT,
     exchange: [],
   });
 
@@ -283,19 +281,44 @@ test("sends a plan with a label", async (t) => {
   assert.deepEqual(answer.answer, labelled);
 });
 
-test("sends a plan that calls dicta.history", async (t) => {
+test("sends a plan that calls built-in capabilities from the context", async (t) => {
   const base = await start(t);
+  const context = {
+    ...CONTEXT,
+    capabilities: [
+      ...CONTEXT.capabilities,
+      {
+        name: "dicta.listHistory",
+        level: "read",
+        desc: "Earlier requests of this tab, newest first.",
+        args: { type: "object", properties: { limit: { type: "integer" } } },
+      },
+      {
+        name: "dicta.getHistory",
+        level: "read",
+        desc: "One earlier request in full.",
+        args: {
+          type: "object",
+          properties: { requestId: { type: "string" } },
+          required: ["requestId"],
+        },
+      },
+    ],
+  };
   const history = {
     type: "plan",
     plan: {
       steps: [
-        { call: "dicta.history", args: { list: true } },
-        { call: "dicta.history", args: { requestId: "$1.0.requestId" } },
+        { call: "dicta.listHistory", args: { limit: 1 } },
+        { call: "dicta.getHistory", args: { requestId: "$1.0.requestId" } },
       ],
     },
   };
 
-  const { body: answer } = await post(base, body([history]));
+  const { body: answer } = await post(base, {
+    ...body([history]),
+    context,
+  });
 
   assert.deepEqual(answer.answer, history);
 });
@@ -429,12 +452,67 @@ for (const [name, payload] of BAD_BODIES) {
   test(`400 for ${name}`, async (t) => {
     const base = await start(t);
 
-    const { status, body: error } = await post(base, payload);
+    const { status, body: error } = await post(
+      base,
+      typeof payload === "string" || Array.isArray(payload)
+        ? payload
+        : { context: CONTEXT, ...(payload as object) },
+    );
 
     assert.equal(status, 400);
     assert.equal(typeof error.error, "string");
   });
 }
+
+const BAD_CONTEXTS: [string, unknown, RegExp][] = [
+  ["no context", undefined, /^context must be an object$/],
+  [
+    "a context without a site desc",
+    { ...CONTEXT, site: { name: "Teamboard" } },
+    /^context\.site\.desc must be a string$/,
+  ],
+  [
+    "a capability without desc",
+    {
+      ...CONTEXT,
+      capabilities: [{ name: "a.b", level: "read", args: { type: "object" } }],
+    },
+    /^context\.capabilities\[0\]\.desc must be a string$/,
+  ],
+  [
+    "a context over 64 KB",
+    { ...CONTEXT, site: { name: "T", desc: "x".repeat(64 * 1024) } },
+    /^context is larger than 64 KB$/,
+  ],
+];
+
+for (const [name, context, message] of BAD_CONTEXTS) {
+  test(`400 for ${name}, naming the problem`, async (t) => {
+    const base = await start(t);
+
+    const { status, body: error } = await post(base, {
+      ...body([PLAN]),
+      context,
+    });
+
+    assert.equal(status, 400);
+    assert.match(error.error, message);
+  });
+}
+
+test("checks a plan against the context of the round", async (t) => {
+  const base = await start(t);
+  const context = {
+    ...CONTEXT,
+    capabilities: CONTEXT.capabilities.filter(
+      (c: { name: string }) => c.name !== "tasks.list",
+    ),
+  };
+
+  const { body: answer } = await post(base, { ...body([PLAN]), context });
+
+  assert.equal(answer.answer.type, "stop");
+});
 
 test("413 for a body over 1 MB", async (t) => {
   const base = await start(t);

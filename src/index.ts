@@ -1,5 +1,4 @@
 import type { AddressInfo } from "node:net";
-import { loadContext, type SiteContext } from "./context.ts";
 import { stubPlanner } from "./planners/stub.ts";
 import { type AuthOptions, createServer } from "./server.ts";
 
@@ -36,20 +35,9 @@ if (!Number.isInteger(maxRounds) || maxRounds < 1 || maxRounds > MAX_ROUNDS) {
   fail(`MAX_ROUNDS must be a whole number from 1 to ${MAX_ROUNDS}`);
 }
 
-if (!process.env.CONTEXT_FILE) {
-  fail("CONTEXT_FILE is required");
-}
-let context: SiteContext;
-try {
-  context = loadContext(process.env.CONTEXT_FILE);
-} catch (err) {
-  fail(err instanceof Error ? err.message : String(err));
-}
-
 const server = createServer({
   auth,
   planner: stubPlanner,
-  context,
   maxRounds,
 });
 

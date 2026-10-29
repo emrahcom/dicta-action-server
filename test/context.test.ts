@@ -19,43 +19,89 @@ test("accepts a valid context", () => {
   const c = checkContext(context());
 
   assert.equal(c.site.name, "Teamboard");
-  assert.equal(c.capabilities[2]?.navigates, true);
+  assert.match(c.site.desc, /## Words/);
+  assert.equal(c.state.desc, "The open page and the tasks it shows.");
   assert.deepEqual(
     c.capabilities.map((capability) => capability.name),
-    ["tasks.list", "tasks.create", "tasks.open", "dicta.history"],
+    ["tasks.list", "tasks.create", "tasks.open"],
   );
 });
 
+test("accepts the built-in capabilities like any other", () => {
+  const c = checkContext(
+    context((c) =>
+      c.capabilities.push({
+        name: "dicta.listHistory",
+        level: "read",
+        desc: "Earlier requests of this tab.",
+        args: { type: "object", properties: { limit: { type: "integer" } } },
+      }),
+    ),
+  );
+
+  assert.equal(c.capabilities[3]?.name, "dicta.listHistory");
+});
+
+test("keeps only the fields it knows", () => {
+  const c = checkContext(
+    context((c) => {
+      c.version = 1;
+      c.notes = [];
+      c.capabilities[0].navigates = true;
+    }),
+  );
+
+  assert.equal("version" in c, false);
+  assert.equal("notes" in c, false);
+  assert.equal("navigates" in (c.capabilities[0] ?? {}), false);
+});
+
 const INVALID: [string, (c: any) => void, RegExp][] = [
-  ["another version", (c) => (c.version = 2), /^version must be 1$/],
-  ["no site", (c) => delete c.site, /^site must be an object$/],
-  ["a site name that is not text", (c) => (c.site.name = 1), /^site.name /],
-  ["no state description", (c) => delete c.state.description, /^state.descr/],
-  ["capabilities that are not a list", (c) => (c.capabilities = {}), /^capab/],
+  ["no site", (c) => delete c.site, /^context\.site must be an object$/],
+  [
+    "a site name that is not text",
+    (c) => (c.site.name = 1),
+    /^context\.site\.name must be a string$/,
+  ],
+  [
+    "no site desc",
+    (c) => delete c.site.desc,
+    /^context\.site\.desc must be a string$/,
+  ],
+  [
+    "no state desc",
+    (c) => delete c.state.desc,
+    /^context\.state\.desc must be a string$/,
+  ],
+  [
+    "capabilities that are not a list",
+    (c) => (c.capabilities = {}),
+    /^context\.capabilities must be an array$/,
+  ],
   [
     "a capability without a name",
     (c) => delete c.capabilities[1].name,
-    /^capabilities\[1\]\.name must be a string$/,
+    /^context\.capabilities\[1\]\.name must be a string$/,
   ],
   [
     "an unknown level",
     (c) => (c.capabilities[0].level = "admin"),
-    /^capabilities\[0\]\.level must be one of read, write, destructive, external$/,
+    /^context\.capabilities\[0\]\.level must be one of read, write, destructive, external$/,
   ],
   [
-    "navigates that is not a boolean",
-    (c) => (c.capabilities[2].navigates = "yes"),
-    /^capabilities\[2\]\.navigates must be true or false$/,
+    "a capability without desc",
+    (c) => delete c.capabilities[0].desc,
+    /^context\.capabilities\[0\]\.desc must be a string$/,
   ],
   [
     "a capability without args",
     (c) => delete c.capabilities[0].args,
-    /^capabilities\[0\]\.args must be an object$/,
+    /^context\.capabilities\[0\]\.args must be an object$/,
   ],
   [
     "a schema keyword that is not allowed",
     (c) => (c.capabilities[1].args.properties.title.minLength = 1),
-    /^capabilities\[1\]\.args\.properties\.title uses minLength, which is not allowed$/,
+    /^context\.capabilities\[1\]\.args\.properties\.title uses minLength, which is not allowed$/,
   ],
   [
     "a keyword not allowed inside items",
@@ -75,17 +121,6 @@ const INVALID: [string, (c: any) => void, RegExp][] = [
     "two capabilities with one name",
     (c) => (c.capabilities[1].name = "tasks.list"),
     /^capability tasks\.list is listed twice$/,
-  ],
-  [
-    "a capability in the dicta group",
-    (c) => (c.capabilities[0].name = "dicta.undo"),
-    /^capability dicta\.undo uses the dicta group$/,
-  ],
-  ["no notes", (c) => delete c.notes, /^notes must be an array$/],
-  [
-    "a note without text",
-    (c) => delete c.notes[0].text,
-    /^notes\[0\]\.text must be a string$/,
   ],
 ];
 

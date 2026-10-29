@@ -1,23 +1,22 @@
 {
-  "version": 1,
   "site": {
     "name": "Teamboard",
-    "description": "A task list for a small team."
+    "desc": "A task list for a small team.\n\n## Words\n\nUsers say \"card\" for a task."
   },
   "state": {
-    "description": "The open page and the tasks it shows."
+    "desc": "The open page and the tasks it shows."
   },
   "capabilities": [
     {
       "name": "tasks.list",
       "level": "read",
-      "description": "Lists the tasks.",
+      "desc": "Lists the tasks.",
       "args": { "type": "object", "properties": {} }
     },
     {
       "name": "tasks.create",
       "level": "write",
-      "description": "Adds a task.",
+      "desc": "Adds a task.",
       "args": {
         "type": "object",
         "properties": {
@@ -30,19 +29,12 @@
     {
       "name": "tasks.open",
       "level": "read",
-      "description": "Loads the page of a task.",
+      "desc": "Loads the page of a task.",
       "args": {
         "type": "object",
         "properties": { "id": { "type": "string" } },
         "required": ["id"]
-      },
-      "navigates": true
-    }
-  ],
-  "notes": [
-    {
-      "title": "Glossary",
-      "text": "Users say \"card\" for a task."
+      }
     }
   ]
 }

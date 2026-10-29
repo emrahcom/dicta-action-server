@@ -1,7 +1,5 @@
-// The site context: read from CONTEXT_FILE and checked at startup
+// The site context: it comes with every round and is checked there
 // (contract-context.md).
-
-import { readFileSync } from "node:fs";
 
 export const LEVELS = ["read", "write", "destructive", "external"] as const;
 export type Level = (typeof LEVELS)[number];
@@ -29,37 +27,17 @@ export type Schema = {
 export type Capability = {
   name: string;
   level: Level;
-  description: string;
+  desc: string;
   args: Schema;
-  navigates?: boolean;
 };
 
 export type SiteContext = {
-  version: 1;
-  site: { name: string; description: string };
-  state: { description: string };
+  site: { name: string; desc: string };
+  state: { desc: string };
   capabilities: Capability[];
-  notes: { title: string; text: string }[];
 };
 
-// The capabilities dicta-action-js brings to every site
-// (contract-capability.md, Built-in capabilities).
-const BUILT_IN: Capability[] = [
-  {
-    name: "dicta.history",
-    level: "read",
-    description:
-      "Earlier requests of this browser tab, for requests that refer to the " +
-      "past. list: true gives all of them, short and newest first; " +
-      "requestId gives one in full.",
-    args: {
-      type: "object",
-      properties: { list: { type: "boolean" }, requestId: { type: "string" } },
-    },
-  },
-];
-
-class ContextError extends Error {}
+export class ContextError extends Error {}
 
 function isObject(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -126,77 +104,36 @@ function capability(value: unknown, path: string): Capability {
   if (!(LEVELS as readonly string[]).includes(level)) {
     throw new ContextError(`${path}.level must be one of ${LEVELS.join(", ")}`);
   }
-  if (c.navigates !== undefined && typeof c.navigates !== "boolean") {
-    throw new ContextError(`${path}.navigates must be true or false`);
-  }
   return {
     name: string(c.name, `${path}.name`),
     level: level as Level,
-    description: string(c.description, `${path}.description`),
+    desc: string(c.desc, `${path}.desc`),
     args: schema(c.args, `${path}.args`),
-    ...(c.navigates === undefined ? {} : { navigates: c.navigates }),
   };
 }
 
-// Checks a parsed context file and adds the built-in capabilities. Throws an
-// error that names the wrong field.
+// Checks the context of a round. Throws a ContextError that names the wrong
+// field.
 export function checkContext(value: unknown): SiteContext {
   const c = object(value, "context");
-  if (c.version !== 1) {
-    throw new ContextError("version must be 1");
-  }
-  const site = object(c.site, "site");
-  const state = object(c.state, "state");
-  const capabilities = array(c.capabilities, "capabilities").map((item, i) =>
-    capability(item, `capabilities[${i}]`),
+  const site = object(c.site, "context.site");
+  const state = object(c.state, "context.state");
+  const capabilities = array(c.capabilities, "context.capabilities").map(
+    (item, i) => capability(item, `context.capabilities[${i}]`),
   );
   const names = new Set<string>();
   for (const { name } of capabilities) {
-    if (name.startsWith("dicta.")) {
-      throw new ContextError(`capability ${name} uses the dicta group`);
-    }
     if (names.has(name)) {
       throw new ContextError(`capability ${name} is listed twice`);
     }
     names.add(name);
   }
-  const notes = array(c.notes, "notes").map((item, i) => {
-    const note = object(item, `notes[${i}]`);
-    return {
-      title: string(note.title, `notes[${i}].title`),
-      text: string(note.text, `notes[${i}].text`),
-    };
-  });
   return {
-    version: 1,
     site: {
-      name: string(site.name, "site.name"),
-      description: string(site.description, "site.description"),
+      name: string(site.name, "context.site.name"),
+      desc: string(site.desc, "context.site.desc"),
     },
-    state: { description: string(state.description, "state.description") },
-    capabilities: [...capabilities, ...BUILT_IN],
-    notes,
+    state: { desc: string(state.desc, "context.state.desc") },
+    capabilities,
   };
-}
-
-export function loadContext(file: string): SiteContext {
-  let text: string;
-  try {
-    text = readFileSync(file, "utf8");
-  } catch {
-    throw new ContextError(`CONTEXT_FILE ${file} cannot be read`);
-  }
-  let value: unknown;
-  try {
-    value = JSON.parse(text);
-  } catch {
-    throw new ContextError(`CONTEXT_FILE ${file} is not JSON`);
-  }
-  try {
-    return checkContext(value);
-  } catch (err) {
-    throw new ContextError(
-      `CONTEXT_FILE ${file}: ${err instanceof Error ? err.message : String(err)}`,
-    );
-  }
 }

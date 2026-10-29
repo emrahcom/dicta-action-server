@@ -12,13 +12,13 @@ const CONTEXT = checkContext({
     {
       name: "tasks.list",
       level: "read",
-      description: "Lists the tasks.",
+      desc: "Lists the tasks.",
       args: { type: "object", properties: { q: { type: "string" } } },
     },
     {
       name: "tasks.create",
       level: "write",
-      description: "Adds a task.",
+      desc: "Adds a task.",
       args: {
         type: "object",
         properties: {
@@ -33,7 +33,7 @@ const CONTEXT = checkContext({
     {
       name: "tasks.move",
       level: "write",
-      description: "Moves a task.",
+      desc: "Moves a task.",
       args: {
         type: "object",
         properties: {

@@ -1,19 +1,15 @@
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
-import { mkdtempSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { readFileSync } from "node:fs";
 import { test } from "node:test";
-import { fileURLToPath } from "node:url";
 
 const SECRET = "s".repeat(32);
-const CONTEXT = fileURLToPath(
-  new URL("fixtures/context.json", import.meta.url),
+const CONTEXT = JSON.parse(
+  readFileSync(new URL("fixtures/context.json", import.meta.url), "utf8"),
 );
 const VALID_ENV = {
   JWT_SECRET: SECRET,
   PLANNER: "stub",
-  CONTEXT_FILE: CONTEXT,
 };
 
 function startIndex(env: Record<string, string>) {
@@ -22,7 +18,6 @@ function startIndex(env: Record<string, string>) {
     JWT_SECRET,
     ALLOW_UNAUTHENTICATED,
     PLANNER,
-    CONTEXT_FILE,
     MAX_ROUNDS,
     ...rest
   } = process.env;
@@ -66,13 +61,6 @@ async function startListening(env: Record<string, string>) {
   return { line, port, stderr: () => stderr, stop: () => child.kill() };
 }
 
-function contextFile(content: string) {
-  const dir = mkdtempSync(join(tmpdir(), "dicta-action-test-"));
-  const file = join(dir, "context.json");
-  writeFileSync(file, content);
-  return file;
-}
-
 test("starts, logs one line and answers rounds", async (t) => {
   const server = await startListening({
     ...VALID_ENV,
@@ -89,6 +77,7 @@ test("starts, logs one line and answers rounds", async (t) => {
         text: "[]",
         time: "2026-10-28T15:20:00+01:00",
         state: {},
+        context: CONTEXT,
         exchange: [],
       }),
     },
@@ -125,22 +114,6 @@ const REFUSED: [string, Record<string, string | undefined>, RegExp][] = [
   ["with MAX_ROUNDS=101", { MAX_ROUNDS: "101" }, /MAX_ROUNDS must be a whole/],
   ["with MAX_ROUNDS=2.5", { MAX_ROUNDS: "2.5" }, /MAX_ROUNDS must be a whole/],
   ["with MAX_ROUNDS=abc", { MAX_ROUNDS: "abc" }, /MAX_ROUNDS must be a whole/],
-  ["without CONTEXT_FILE", { CONTEXT_FILE: undefined }, /CONTEXT_FILE is req/],
-  [
-    "with a CONTEXT_FILE that does not exist",
-    { CONTEXT_FILE: "/nonexistent/context.json" },
-    /CONTEXT_FILE \/nonexistent\/context\.json cannot be read/,
-  ],
-  [
-    "with a CONTEXT_FILE that is not JSON",
-    { CONTEXT_FILE: contextFile("{") },
-    /CONTEXT_FILE .* is not JSON/,
-  ],
-  [
-    "with an invalid CONTEXT_FILE, naming the field",
-    { CONTEXT_FILE: contextFile('{"version": 2}') },
-    /CONTEXT_FILE .*: version must be 1/,
-  ],
 ];
 
 for (const [name, changes, message] of REFUSED) {
