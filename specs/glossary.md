@@ -30,7 +30,8 @@ detail.
 
 - User request: one thing the user asks for, in plain text (`text`), for example
   "move the selected tasks to Friday". It can take several rounds.
-- `requestId`: the server's id for one user request, the same in all its rounds.
+- Request id: the server's id for one user request, the same in all its rounds
+  (`requestId`).
 - Round: one HTTP request from the client to the server and its response. A user
   request takes one or more rounds (`contract-protocol.md`).
 - Exchange: everything that happened so far in a user request (`exchange`),
@@ -53,7 +54,7 @@ detail.
   Page changes).
 - History: finished user requests of the browser tab, kept by the client and
   read with `dicta.listHistory` and `dicta.getHistory`.
-- `MAX_PLANS`: the most plans one user request may have.
+- Plan limit: the most plans one user request may have (`MAX_PLANS`).
 
 ## A plan
 
