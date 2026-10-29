@@ -170,8 +170,9 @@ after a page load in the same tab only when a step was running:
   the plan, which was written for the old page; the planner decides what comes
   next. An older saved request is dropped.
 - A page load at any other time ends the request: while the client waits for the
-  server's response, or a question or a confirmation is open. It is not kept in
-  history.
+  server's response, or a question or a confirmation is open. On `pagehide`, the
+  client adds it to history as cancelled, with everything done so far, also a
+  report it had not sent yet (`contract-capability.md`, Built-in capabilities).
 
 ## Response body
 
