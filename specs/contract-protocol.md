@@ -55,7 +55,9 @@ a new one.
   An answer and an added text have the same limit as `text` (Limits).
 
 Every time in the contracts is the user's local time with its offset, in ISO
-8601, for example `2026-10-28T15:20:00+01:00`.
+8601, for example `2026-10-28T15:20:00+01:00`. The offset is always written as
+numbers, `+00:00` too, never `Z`: `Z` hides the user's own offset, and the
+planner could take the wrong day for "today".
 
 ## Report
 
