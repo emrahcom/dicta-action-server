@@ -45,8 +45,10 @@ functions. The browser runs the plan with `dicta-action-js`.
 - The browser sends the user's request, the page state and the site context. The
   server replies with a plan.
 - A plan is a list of steps that call the capabilities of the site.
-- A step can use what an earlier step of the same plan returned.
-- A step can repeat calls for each item of a list that an earlier step returned.
+- A step can use what an earlier step of the same plan returned, for example the
+  id of a task that the step before it created.
+- A step can run the same calls once for each item of a list that an earlier
+  step returned, for example update each task that a search found.
 - After each plan, the browser reports back. The server then replies with a new
   plan, a question to the user, done, a stop or an info.
 - Each capability has a level: read, write, destructive or external. Before a
