@@ -57,7 +57,7 @@ detail.
 - `forEach`: a step that runs the calls in its `do` once for each item of an
   array.
 - Item: one element of the array a `forEach` runs over, `$item` in its `do`.
-- Reference: a string starting with `$` that stands for an earlier result, for
+- Reference: a string starting with `$` that stands for an earlier output, for
   example `$1.id` or `$item.id`.
 - Label: the plan's `text`, shown while the plan runs.
 - Final: a plan the planner marks as the whole job. When it succeeds, the server
@@ -68,13 +68,13 @@ detail.
 
 ## After a plan
 
-- Result: the JSON value a step returns. For a `forEach`, an array with one
+- Output: the JSON value a step returns. For a `forEach`, an array with one
   entry for each item.
-- `reportResult`: a mark on a top-level step that puts its result in the report.
-  Results that are not reported stay in the browser.
-- Report: what the client sends back about a plan: the reported results, the
-  reported results that were too large and the failure, if any.
+- `includeOutput`: a mark on a top-level step that puts its output in the
+  report. Outputs that are not included stay in the browser.
+- Report: what the client sends back about a plan: the included outputs, the
+  included outputs that were too large and the failure, if any.
 - Failure: the step that failed, with a code and a message, for example
   `capability`, `reference`, `limit`, `invalid`, `cancelled` or `interrupted`.
   When it is a `forEach`, the failure also names the failed item and call, and
-  holds the reported results of the items that ran (`failure.results`).
+  holds the included outputs of the items that ran (`failure.outputs`).

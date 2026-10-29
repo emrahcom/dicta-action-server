@@ -40,9 +40,9 @@ functions. The browser runs the plan with `dicta-action-js`.
 ## First version
 
 - A request and the page state in, a plan out.
-- Plans with steps that call capabilities, use the results of earlier steps and
-  repeat steps for each item of a result.
-- After each plan the report comes back, with the results the plan asked for,
+- Plans with steps that call capabilities, use the outputs of earlier steps and
+  repeat steps for each item of an output.
+- After each plan the report comes back, with the outputs the plan asked for,
   and the server answers with a new plan, a question to the user, done or a
   stop.
 - Capability levels: read, write, destructive and external. Destructive and

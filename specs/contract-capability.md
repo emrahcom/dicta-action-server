@@ -76,7 +76,7 @@ developers can change it. Without it, it is 10.
   from here, never from a plan, so a plan cannot make a risky step look
   harmless, and the user sees exactly what will happen.
 - `navigates`: `true` when the capability loads another page. It is always the
-  last step of a plan, and it never opens a new tab or window. Its result is
+  last step of a plan, and it never opens a new tab or window. Its output is
   `null`: the client sends the report from the new page, once it has loaded,
   with that page's `state`.
 
@@ -90,8 +90,8 @@ contain no secrets.
 ## State
 
 `state.run` returns what the page shows now, as a small JSON object. The client
-calls it before every round and sends the result as `state`. Its `description`
-tells the planner what the fields mean.
+calls it before every round and sends what it returns as `state`. Its
+`description` tells the planner what the fields mean.
 
 ## Built-in capabilities
 

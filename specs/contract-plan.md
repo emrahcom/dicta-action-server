@@ -43,42 +43,42 @@ sends the plan back unchanged in the exchange.
 ## Steps
 
 - `call`: runs one capability, by its name in the site context, with `args`, a
-  JSON object. Its result is any JSON value.
+  JSON object. Its output is any JSON value.
 - `forEach`: runs the `call` steps in `do` once for each item of an array. `do`
   holds only `call` steps; a `forEach` cannot hold another `forEach`.
 
-A top-level step can also have `reportResult` (Report result).
+A top-level step can also have `includeOutput` (Include output).
 
 Steps run one after the other, in order. Nothing else exists: no conditions, no
 expressions and no arithmetic. Decisions are made by the server in the next
 round, and values are computed when the plan is written.
 
-## Report result
+## Include output
 
-`reportResult` is a boolean on a top-level step, `false` when left out. With
-`true`, the step's result goes into the report, so the planner can read it in
+`includeOutput` is a boolean on a top-level step, `false` when left out. With
+`true`, the step's output goes into the report, so the planner can read it in
 the next round (`contract-protocol.md`, Report). With `false`, the planner
-learns only that the step succeeded. References in the plan use every result,
-reported or not.
+learns only that the step succeeded. References in the plan use every output,
+included or not.
 
-The planner asks for a result only when it has to read it to decide what comes
-next, for example a list the user asks about. A result that only feeds later
-steps of the same plan is not reported. A `forEach` with `reportResult` reports
-its whole result; steps in a `do` have no `reportResult`.
+The planner asks for an output only when it has to read it to decide what comes
+next, for example a list the user asks about. An output that only feeds later
+steps of the same plan is not included. A `forEach` with `includeOutput`
+includes its whole output; steps in a `do` have no `includeOutput`.
 
 ```json
 {
   "steps": [
-    { "call": "tasks.list", "args": { "due": "today" }, "reportResult": true }
+    { "call": "tasks.list", "args": { "due": "today" }, "includeOutput": true }
   ]
 }
 ```
 
 ## References
 
-A string in `args` or in `forEach` that starts with `$` refers to a result:
+A string in `args` or in `forEach` that starts with `$` refers to an output:
 
-- `$1` is the result of the first step of the plan, `$2` of the second, and so
+- `$1` is the output of the first step of the plan, `$2` of the second, and so
   on. Only top-level steps are numbered; a step can refer only to earlier ones.
 - `$item` is the current item inside the `do` of a `forEach`.
 - A path follows with dots: `$1.id`, `$item.owner.name`, `$1.items.0.id` (array
@@ -98,7 +98,7 @@ it before it sends it:
 - every `args` matches that capability's schema, with no properties the schema
   does not name;
 - every reference points to an earlier step or to a `forEach` item;
-- `reportResult` is a boolean, and only on top-level steps;
+- `includeOutput` is a boolean, and only on top-level steps;
 - a capability that `navigates` is called only in the last step, never inside a
   `forEach`.
 
@@ -106,7 +106,7 @@ A step fails when its capability throws, when a reference has no value or a
 value that does not fit where it is used, or when a limit is reached. The client
 checks each call's arguments against the schema again once their references are
 filled in, and a `forEach` needs an array. The client stops at the first failed
-step and reports the results asked for so far and the failure.
+step and reports the outputs asked for so far and the failure.
 
 ## Limits
 

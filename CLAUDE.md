@@ -2,7 +2,7 @@
 
 The action server of dicta. It takes a user's request as text, with the current
 state of the page, and turns it into a plan: steps that call the site's
-capability functions. When a plan fails or needs a decision, it gets the results
+capability functions. When a plan fails or needs a decision, it gets the outputs
 back and continues with a new plan, a question to the user or a stop. It holds
 the LLM keys and the site context. It never acts on the site itself; the browser
 runs the plan.
