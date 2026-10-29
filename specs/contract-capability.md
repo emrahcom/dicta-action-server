@@ -14,6 +14,8 @@ the client and the server never disagree about a capability.
 The module's default export is an object:
 
 ```js
+import { dictaCapabilities } from "dicta-action-js";
+
 export default {
   site: { name: "Teamboard", description: "A task list for small teams." },
   notes: [
@@ -28,6 +30,7 @@ export default {
     run: async () => ({ page: "tasks", selected: ["t1", "t2"] }),
   },
   capabilities: {
+    ...dictaCapabilities,
     "tasks.create": {
       level: "write",
       description: "Creates a task in the open project.",
@@ -108,10 +111,11 @@ fields mean.
 
 ## Built-in capabilities
 
-`dicta-action-js` brings some capabilities of its own, the same on every site.
-Their names are in the `dicta` group, which sites cannot use. They are not in
-the module or in the context the client sends; the server adds them to the
-context in every round.
+`dicta-action-js` brings some capabilities of its own, the same on every site,
+and exports them as `dictaCapabilities`. The module adds them to its
+`capabilities` like any other (Module); the harness's template does it, so they
+go into the site context like any other capability. Their names are in the
+`dicta` group, which only they use.
 
 - `dicta.listHistory` (`read`): earlier requests of this browser tab, newest
   first, for requests that refer to the past, such as "undo that" or "the same

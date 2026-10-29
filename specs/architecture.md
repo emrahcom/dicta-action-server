@@ -73,9 +73,8 @@ As in dicta-server:
 - It comes from the browser, so the server does not trust it. It only shapes
   plans: every step runs in the browser with the user's own rights, and
   confirmations come from the module.
-- The server adds the built-in capabilities of `dicta-action-js` to it
-  (`contract-capability.md`, Built-in capabilities), so plans can call them like
-  any other capability.
+- The built-in capabilities of `dicta-action-js` are in it like any other
+  capability (`contract-capability.md`, Built-in capabilities).
 
 ## Planner
 

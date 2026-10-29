@@ -15,8 +15,8 @@ detail.
   a description and an argument schema (`contract-capability.md`).
 - Capability module: the site's one module that holds all its capabilities, its
   state function and the rest of the site context, bundled into the site.
-- Built-in capability: a capability the client brings itself, in the `dicta`
-  group, for example `dicta.listHistory`.
+- Built-in capability: a capability `dicta-action-js` brings, in the `dicta`
+  group, for example `dicta.listHistory`. The module adds it like any other.
 - Level: how risky a capability is: `read`, `write`, `destructive` or
   `external`.
 - Site context: what the planner knows about the site: its capabilities and

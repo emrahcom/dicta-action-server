@@ -44,13 +44,12 @@ module (`contract-capability.md`) and sends it as `context` in every round
   them from the module, so they always match it.
 - `notes`: the module's `notes`: what the planner needs to know beyond the
   capabilities: entities, screens, rules, glossary, common workflows. Each note
-  has a `title` and a plain `text`. Short and to the point: the planner reads
-  all of it on every round.
+  has a `title` and a `text` in Markdown. Short and to the point: the planner
+  reads all of it on every round.
 
 ## Checks
 
 A round whose context is not valid gets a `400` (`contract-protocol.md`,
 Errors), with an `error` that names the problem: a field is missing or has the
-wrong type, two capabilities share a name, a capability uses the `dicta` group,
-a level is not one of the four, or `args` uses more than the JSON Schema
-keywords the capability contract allows.
+wrong type, two capabilities share a name, a level is not one of the four, or
+`args` uses more than the JSON Schema keywords the capability contract allows.
