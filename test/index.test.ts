@@ -61,7 +61,7 @@ async function startListening(env: Record<string, string>) {
   return { line, port, stderr: () => stderr, stop: () => child.kill() };
 }
 
-test("starts, logs one line and answers rounds", async (t) => {
+test("starts, logs one line and replies to rounds", async (t) => {
   const server = await startListening({
     ...VALID_ENV,
     ALLOW_UNAUTHENTICATED: "true",

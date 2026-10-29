@@ -1,5 +1,5 @@
-// A round of a user request: the request body, the answer and the rules that
-// pick the answer (contract-protocol.md, architecture.md).
+// A round of a user request: the request body, the reply and the rules that
+// pick the reply (contract-protocol.md, architecture.md).
 
 import { checkContext, ContextError, type SiteContext } from "./context.ts";
 import { BadPlan, checkPlan } from "./plan.ts";
@@ -31,13 +31,13 @@ export type Round = {
   exchange: ExchangeItem[];
 };
 
-export type Answer =
+export type Reply =
   | { type: "plan"; plan: Record<string, unknown> }
   | { type: "question"; text: string; options?: string[] }
   | { type: "done"; text?: string }
   | { type: "stop"; text: string };
 
-export type Planner = (round: Round) => Promise<Answer>;
+export type Planner = (round: Round) => Promise<Reply>;
 
 export class BadRound extends Error {}
 
@@ -51,6 +51,9 @@ const MAX_STATE_BYTES = 16 * 1024;
 const MAX_CONTEXT_BYTES = 64 * 1024;
 const MAX_MESSAGE_CHARS = 200;
 const MAX_OUTPUTS_BYTES = 16 * 1024;
+const MAX_REPLY_CHARS = 200;
+const MAX_OPTIONS = 5;
+const MAX_OPTION_CHARS = 50;
 
 // Characters are Unicode code points; bytes are the UTF-8 bytes of the JSON.
 function chars(value: string) {
@@ -201,13 +204,69 @@ export function checkRound(body: unknown): Round {
   };
 }
 
-// The rules before the planner, then the planner, then the plan limit
-// (architecture.md, Requests, Planner).
-export async function answerRound(
+class BadReply extends Error {}
+
+function checkReplyText(value: unknown, required: boolean) {
+  if (value === undefined && !required) {
+    return;
+  }
+  if (typeof value !== "string") {
+    throw new BadReply("text must be a string");
+  }
+  if (chars(value) > MAX_REPLY_CHARS) {
+    throw new BadReply(`text is longer than ${MAX_REPLY_CHARS} characters`);
+  }
+}
+
+// Checks a reply of the planner before it is sent (contract-protocol.md,
+// Response body, Limits). Throws BadReply or BadPlan with the reason.
+function checkReply(reply: unknown, context: SiteContext): Reply {
+  if (!isObject(reply)) {
+    throw new BadReply("the reply must be an object");
+  }
+  switch (reply.type) {
+    case "plan":
+      checkPlan(reply.plan, context);
+      break;
+    case "question":
+      checkReplyText(reply.text, true);
+      if (reply.options !== undefined) {
+        const options = reply.options;
+        if (
+          !Array.isArray(options) ||
+          !options.every((option) => typeof option === "string")
+        ) {
+          throw new BadReply("options must be a list of strings");
+        }
+        if (options.length > MAX_OPTIONS) {
+          throw new BadReply(`a question has at most ${MAX_OPTIONS} options`);
+        }
+        if (options.some((option) => chars(option) > MAX_OPTION_CHARS)) {
+          throw new BadReply(
+            `an option is longer than ${MAX_OPTION_CHARS} characters`,
+          );
+        }
+      }
+      break;
+    case "done":
+      checkReplyText(reply.text, false);
+      break;
+    case "stop":
+      checkReplyText(reply.text, true);
+      break;
+    default:
+      throw new BadReply("type must be plan, question, done or stop");
+  }
+  return reply as Reply;
+}
+
+// The rules before the planner, then the planner, its reply check and the plan
+// limit (architecture.md, Requests, Planner).
+export async function pickReply(
   round: Round,
   planner: Planner,
   maxPlans: number,
-): Promise<Answer> {
+): Promise<Reply> {
   const last = round.exchange.at(-1);
   if (last && "plan" in last && last.report.failure?.code === "cancelled") {
     return { type: "stop", text: "Cancelled." };
@@ -220,26 +279,26 @@ export async function answerRound(
   ) {
     return { type: "done" };
   }
-  let answer: Answer;
+  let reply: Reply;
   try {
-    answer = await planner(round);
+    reply = await planner(round);
   } catch {
     return { type: "stop", text: "Something went wrong." };
   }
-  if (answer.type === "plan") {
+  try {
+    reply = checkReply(reply, round.context);
+  } catch (err) {
+    if (!(err instanceof BadReply || err instanceof BadPlan)) {
+      throw err;
+    }
+    console.warn(`reply not sent: ${err.message}`);
+    return { type: "stop", text: "Something went wrong." };
+  }
+  if (reply.type === "plan") {
     const plans = round.exchange.filter((item) => "plan" in item);
     if (plans.length >= maxPlans) {
       return { type: "stop", text: "This took too many steps." };
     }
-    try {
-      checkPlan(answer.plan, round.context);
-    } catch (err) {
-      if (!(err instanceof BadPlan)) {
-        throw err;
-      }
-      console.warn(`plan not sent: ${err.message}`);
-      return { type: "stop", text: "Something went wrong." };
-    }
   }
-  return answer;
+  return reply;
 }

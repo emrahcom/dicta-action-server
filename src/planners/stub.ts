@@ -1,30 +1,21 @@
-// The stub planner, for tests: the request text is a JSON array of answers,
-// one for each round (architecture.md, Planner).
+// The stub planner, for tests: the request text is a JSON array of replies,
+// one for each round (architecture.md, Planner). The server checks them like
+// any planner's reply.
 
-import type { Answer, Planner } from "../round.ts";
-
-const TYPES = ["plan", "question", "done", "stop"];
-
-function isAnswer(value: unknown): value is Answer {
-  return (
-    typeof value === "object" &&
-    value !== null &&
-    TYPES.includes((value as { type?: unknown }).type as string)
-  );
-}
+import type { Planner, Reply } from "../round.ts";
 
 export const stubPlanner: Planner = async (round) => {
-  let answers: unknown;
+  let replies: unknown;
   try {
-    answers = JSON.parse(round.text);
+    replies = JSON.parse(round.text);
   } catch {
-    answers = undefined;
+    replies = undefined;
   }
-  const answer = Array.isArray(answers)
-    ? (answers as unknown[])[round.exchange.length]
+  const reply = Array.isArray(replies)
+    ? (replies as unknown[])[round.exchange.length]
     : undefined;
-  if (!isAnswer(answer)) {
-    return { type: "stop", text: "The stub has no answer for this round." };
+  if (reply === undefined) {
+    return { type: "stop", text: "The stub has no reply for this round." };
   }
-  return answer;
+  return reply as Reply;
 };

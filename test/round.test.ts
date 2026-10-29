@@ -5,7 +5,7 @@ import { test, type TestContext } from "node:test";
 import { SignJWT } from "jose";
 import { readFileSync } from "node:fs";
 import { stubPlanner } from "../src/planners/stub.ts";
-import type { Answer, Planner } from "../src/round.ts";
+import type { Planner, Reply } from "../src/round.ts";
 import { type AuthOptions, createServer } from "../src/server.ts";
 
 const SECRET = "s".repeat(32);
@@ -42,15 +42,15 @@ function token(expires: string | number = "5m", secret = SECRET) {
     .sign(new TextEncoder().encode(secret));
 }
 
-// A round body: the stub's answers as the text, and the exchange so far.
+// A round body: the stub's replies as the text, and the exchange so far.
 function body(
-  answers: unknown[],
+  replies: unknown[],
   exchange: unknown[] = [],
   requestId?: string,
 ) {
   return {
     ...(requestId ? { requestId } : {}),
-    text: JSON.stringify(answers),
+    text: JSON.stringify(replies),
     time: TIME,
     state: { page: "tasks" },
     context: CONTEXT,
@@ -85,14 +85,14 @@ const DONE_PLAN = {
   report: {},
 };
 
-test("answers the first round with the planner's answer and a new id", async (t) => {
+test("replies to the first round with the planner's reply and a new id", async (t) => {
   const base = await start(t);
 
-  const { status, body: answer, headers } = await post(base, body([PLAN]));
+  const { status, body: response, headers } = await post(base, body([PLAN]));
 
   assert.equal(status, 200);
-  assert.deepEqual(answer.answer, PLAN);
-  assert.match(answer.requestId, /^[0-9a-f-]{36}$/);
+  assert.deepEqual(response.reply, PLAN);
+  assert.match(response.requestId, /^[0-9a-f-]{36}$/);
   assert.equal(headers.get("access-control-allow-origin"), "*");
 });
 
@@ -100,16 +100,16 @@ test("repeats the request id in later rounds", async (t) => {
   const base = await start(t);
   const exchange = [{ plan: PLAN.plan, report: { outputs: { "1": [] } } }];
 
-  const { body: answer } = await post(
+  const { body: response } = await post(
     base,
     body([PLAN, { type: "done", text: "Listed." }], exchange, "req-1"),
   );
 
-  assert.equal(answer.requestId, "req-1");
-  assert.deepEqual(answer.answer, { type: "done", text: "Listed." });
+  assert.equal(response.requestId, "req-1");
+  assert.deepEqual(response.reply, { type: "done", text: "Listed." });
 });
 
-test("gives the stub's answer for the round", async (t) => {
+test("gives the stub's reply for the round", async (t) => {
   const base = await start(t);
   const question = { type: "question", text: "Which?", options: ["A", "B"] };
   const exchange = [
@@ -117,18 +117,18 @@ test("gives the stub's answer for the round", async (t) => {
     { question: "Sure?", answer: "yes" },
   ];
 
-  const { body: answer } = await post(
+  const { body: response } = await post(
     base,
     body([PLAN, PLAN, question], exchange),
   );
 
-  assert.deepEqual(answer.answer, question);
+  assert.deepEqual(response.reply, question);
 });
 
-test("stub: a stop when the text is not a list of answers", async (t) => {
+test("stub: a stop when the text is not a list of replies", async (t) => {
   const base = await start(t);
 
-  const { body: answer } = await post(base, {
+  const { body: response } = await post(base, {
     text: "add a task",
     time: TIME,
     state: {},
@@ -136,19 +136,19 @@ test("stub: a stop when the text is not a list of answers", async (t) => {
     exchange: [],
   });
 
-  assert.equal(answer.answer.type, "stop");
+  assert.equal(response.reply.type, "stop");
 });
 
-test("stub: a stop when there is no answer for the round", async (t) => {
+test("stub: a stop when there is no reply for the round", async (t) => {
   const base = await start(t);
   const exchange = [{ plan: PLAN.plan, report: {} }];
 
-  const { body: answer } = await post(base, body([PLAN], exchange));
+  const { body: response } = await post(base, body([PLAN], exchange));
 
-  assert.equal(answer.answer.type, "stop");
+  assert.equal(response.reply.type, "stop");
 });
 
-test("answers done without the planner after a final plan that succeeded", async (t) => {
+test("replies with done without the planner after a final plan that succeeded", async (t) => {
   let calls = 0;
   const base = await start(t, {
     planner: async () => {
@@ -157,9 +157,9 @@ test("answers done without the planner after a final plan that succeeded", async
     },
   });
 
-  const { body: answer } = await post(base, body([], [DONE_PLAN]));
+  const { body: response } = await post(base, body([], [DONE_PLAN]));
 
-  assert.deepEqual(answer.answer, { type: "done" });
+  assert.deepEqual(response.reply, { type: "done" });
   assert.equal(calls, 0);
 });
 
@@ -172,21 +172,21 @@ test("asks the planner after a final plan that failed", async (t) => {
     },
   };
 
-  const { body: answer } = await post(
+  const { body: response } = await post(
     base,
     body([PLAN, { type: "stop", text: "Not found." }], [failed]),
   );
 
-  assert.deepEqual(answer.answer, { type: "stop", text: "Not found." });
+  assert.deepEqual(response.reply, { type: "stop", text: "Not found." });
 });
 
 test("asks the planner after a plan that is not final", async (t) => {
   const base = await start(t);
   const exchange = [{ plan: PLAN.plan, report: {} }];
 
-  const { body: answer } = await post(base, body([PLAN, PLAN], exchange));
+  const { body: response } = await post(base, body([PLAN, PLAN], exchange));
 
-  assert.deepEqual(answer.answer, PLAN);
+  assert.deepEqual(response.reply, PLAN);
 });
 
 test("stops a new plan when the exchange holds MAX_PLANS plans", async (t) => {
@@ -196,35 +196,35 @@ test("stops a new plan when the exchange holds MAX_PLANS plans", async (t) => {
   const below = await post(base, body([PLAN, PLAN, PLAN], [item]));
   const at = await post(base, body([PLAN, PLAN, PLAN], [item, item]));
 
-  assert.equal(below.body.answer.type, "plan");
-  assert.equal(at.body.answer.type, "stop");
+  assert.equal(below.body.reply.type, "plan");
+  assert.equal(at.body.reply.type, "stop");
 });
 
-test("lets other answers through when MAX_PLANS is reached", async (t) => {
+test("lets other replies through when MAX_PLANS is reached", async (t) => {
   const base = await start(t, { maxPlans: 1 });
   const item = { plan: PLAN.plan, report: {} };
   const question = { type: "question", text: "Which?" };
 
-  const { body: answer } = await post(base, body([PLAN, question], [item]));
+  const { body: response } = await post(base, body([PLAN, question], [item]));
 
-  assert.deepEqual(answer.answer, question);
+  assert.deepEqual(response.reply, question);
 });
 
-test("answers done for a final plan when MAX_PLANS is reached", async (t) => {
+test("replies with done for a final plan when MAX_PLANS is reached", async (t) => {
   const base = await start(t, { maxPlans: 1 });
 
-  const { body: answer } = await post(base, body([], [DONE_PLAN]));
+  const { body: response } = await post(base, body([], [DONE_PLAN]));
 
-  assert.deepEqual(answer.answer, { type: "done" });
+  assert.deepEqual(response.reply, { type: "done" });
 });
 
 test("questions do not count as plans for the limit", async (t) => {
   const base = await start(t, { maxPlans: 1 });
   const exchange = [{ question: "Which?", answer: "A" }];
 
-  const { body: answer } = await post(base, body([PLAN, PLAN], exchange));
+  const { body: response } = await post(base, body([PLAN, PLAN], exchange));
 
-  assert.equal(answer.answer.type, "plan");
+  assert.equal(response.reply.type, "plan");
 });
 
 test("a plan that fails the check gets a stop", async (t) => {
@@ -235,10 +235,70 @@ test("a plan that fails the check gets a stop", async (t) => {
     plan: { steps: [{ call: "tasks.fly", args: {} }] },
   };
 
-  const { body: answer } = await post(base, body([bad]));
+  const { body: response } = await post(base, body([bad]));
 
-  assert.equal(answer.answer.type, "stop");
+  assert.equal(response.reply.type, "stop");
   assert.match(String(warn.mock.calls[0]?.arguments[0]), /tasks\.fly/);
+});
+
+const BAD_REPLIES: [string, unknown, RegExp][] = [
+  ["a reply that is not an object", "hello", /must be an object/],
+  ["an unknown type", { type: "info", text: "Hi." }, /type must be/],
+  ["a question without text", { type: "question" }, /text must be a string/],
+  ["a stop without text", { type: "stop" }, /text must be a string/],
+  ["a done text that is not text", { type: "done", text: 5 }, /text must be/],
+  [
+    "a text over 200 characters",
+    { type: "done", text: "x".repeat(201) },
+    /text is longer than 200 characters/,
+  ],
+  [
+    "options that are not strings",
+    { type: "question", text: "Which?", options: [1, 2] },
+    /options must be a list of strings/,
+  ],
+  [
+    "more than 5 options",
+    {
+      type: "question",
+      text: "Which?",
+      options: ["a", "b", "c", "d", "e", "f"],
+    },
+    /at most 5 options/,
+  ],
+  [
+    "an option over 50 characters",
+    { type: "question", text: "Which?", options: ["x".repeat(51)] },
+    /an option is longer than 50 characters/,
+  ],
+];
+
+for (const [name, reply, reason] of BAD_REPLIES) {
+  test(`a stop instead of ${name}`, async (t) => {
+    const base = await start(t);
+    const warn = t.mock.method(console, "warn", () => {});
+
+    const { body: response } = await post(base, body([reply]));
+
+    assert.deepEqual(response.reply, {
+      type: "stop",
+      text: "Something went wrong.",
+    });
+    assert.match(String(warn.mock.calls[0]?.arguments[0]), reason);
+  });
+}
+
+test("sends replies at their limits", async (t) => {
+  const base = await start(t);
+  const question = {
+    type: "question",
+    text: "\u{1F600}".repeat(200),
+    options: Array(5).fill("x".repeat(50)),
+  };
+
+  const { body: response } = await post(base, body([question]));
+
+  assert.deepEqual(response.reply, question);
 });
 
 test("takes added text in the exchange", async (t) => {
@@ -254,21 +314,21 @@ test("takes added text in the exchange", async (t) => {
     { added: "and the closed ones" },
   ];
 
-  const { status, body: answer } = await post(
+  const { status, body: response } = await post(
     base,
     body([PLAN, PLAN, PLAN, PLAN], exchange),
   );
 
   assert.equal(status, 200);
-  assert.deepEqual(answer.answer, PLAN);
+  assert.deepEqual(response.reply, PLAN);
 });
 
-test("answers a cancelled plan with a stop, without the planner", async (t) => {
+test("replies to a cancelled plan with a stop, without the planner", async (t) => {
   let calls = 0;
   const base = await start(t, {
     planner: async () => {
       calls++;
-      return PLAN as Answer;
+      return PLAN as Reply;
     },
   });
   const cancelled = {
@@ -278,9 +338,9 @@ test("answers a cancelled plan with a stop, without the planner", async (t) => {
     },
   };
 
-  const { body: answer } = await post(base, body([], [cancelled]));
+  const { body: response } = await post(base, body([], [cancelled]));
 
-  assert.equal(answer.answer.type, "stop");
+  assert.equal(response.reply.type, "stop");
   assert.equal(calls, 0);
 });
 
@@ -291,9 +351,9 @@ test("sends a plan with a label", async (t) => {
     plan: { ...PLAN.plan, text: "Listing the tasks" },
   };
 
-  const { body: answer } = await post(base, body([labelled]));
+  const { body: response } = await post(base, body([labelled]));
 
-  assert.deepEqual(answer.answer, labelled);
+  assert.deepEqual(response.reply, labelled);
 });
 
 test("sends a plan that calls built-in capabilities from the context", async (t) => {
@@ -330,12 +390,12 @@ test("sends a plan that calls built-in capabilities from the context", async (t)
     },
   };
 
-  const { body: answer } = await post(base, {
+  const { body: response } = await post(base, {
     ...body([history]),
     context,
   });
 
-  assert.deepEqual(answer.answer, history);
+  assert.deepEqual(response.reply, history);
 });
 
 test("a planner error gives a stop", async (t) => {
@@ -345,10 +405,10 @@ test("a planner error gives a stop", async (t) => {
     },
   });
 
-  const { status, body: answer } = await post(base, body([]));
+  const { status, body: response } = await post(base, body([]));
 
   assert.equal(status, 200);
-  assert.equal(answer.answer.type, "stop");
+  assert.equal(response.reply.type, "stop");
 });
 
 for (const [name, headers] of [
@@ -558,9 +618,9 @@ test("checks a plan against the context of the round", async (t) => {
     ),
   };
 
-  const { body: answer } = await post(base, { ...body([PLAN]), context });
+  const { body: response } = await post(base, { ...body([PLAN]), context });
 
-  assert.equal(answer.answer.type, "stop");
+  assert.equal(response.reply.type, "stop");
 });
 
 const failed = (failure: object, outputs?: object) => ({
