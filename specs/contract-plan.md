@@ -31,14 +31,14 @@ progress.
 ## Reporting
 
 After a plan, the client always sends a new round with its report, whether the
-plan succeeded or failed. The server always decides what comes next: a new plan,
+plan finished or halted. The server always decides what comes next: a new plan,
 a question to the user, done or a stop. The client never decides to go on or to
 stop.
 
 `final` is for the server only. The planner sets it to `true` when the plan is
 the whole job. When a plan with `final: true` reports that all its steps
 succeeded, the server replies with done without asking the planner again.
-Without `final`, or after a failure, the planner decides. The client ignores
+Without `final`, or after a halt, the planner decides. The client ignores
 `final` and sends the plan back unchanged in the exchange.
 
 ## Steps
@@ -105,7 +105,7 @@ A step fails when its capability throws, when a reference has no value or a
 value that does not fit where it is used, or when a limit is reached. The client
 checks each call's arguments against the schema again once their references are
 filled in, and a `forEach` needs an array. The client stops at the first failed
-step and reports the outputs asked for so far and the failure.
+step and reports the outputs asked for so far and the halt.
 
 ## Limits
 

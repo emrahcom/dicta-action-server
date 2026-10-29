@@ -68,13 +68,13 @@ planner could take the wrong day for "today".
 {
   "outputs": { "1": [{ "id": "t1", "title": "Budget review" }] },
   "tooLarge": { "3": 48210 },
-  "failure": { "step": 4, "code": "not_found", "message": "No such task" }
+  "halt": { "step": 4, "code": "not_found", "message": "No such task" }
 }
 ```
 
 The report holds only the outputs the plan asks for (`contract-plan.md`, Include
-output). Which steps succeeded follows from `failure`: every step before the
-failed one, or every step when there is no failure.
+output). Which steps succeeded follows from `halt`: every step before the one
+where the plan halted, or every step when there is no halt.
 
 - `outputs`: the output of each top-level step with `includeOutput` that
   succeeded, by its number, from 1 as in references. Other steps have no entry.
@@ -82,31 +82,31 @@ failed one, or every step when there is no failure.
   array of the outputs of its `do` steps. Left out when there is no entry.
 - `tooLarge`: included outputs that did not fit, by step number, each with its
   size in bytes. The included outputs of one report, in `outputs` and
-  `failure.outputs`, are at most 16 KB together, counted as the UTF-8 bytes of
+  `halt.outputs`, are at most 16 KB together, counted as the UTF-8 bytes of
   their JSON. The client adds them in step order and leaves out each one that
   would go over. This does not make the step fail; the planner can ask again for
   less, with a narrower call. Left out when there is no entry.
-- `failure`: only when the plan did not finish: the number of the top-level
-  step, from 1 as in references (left out for `invalid`), a `code` and a
-  `message`. Codes: `capability` (the capability threw), `reference` (a
-  reference had no value, or a value that does not fit where it is used),
-  `limit` (a `forEach` over more than 100 items), `invalid` (the plan failed the
-  client's check before any step ran), `cancelled` (the user cancelled the
-  request), `interrupted` (the user added text; Added text), `navigated` (the
-  page changed during the step; Page changes). For `capability`, the
-  capability's own error code and message are used when it gives them; the
-  client cuts a message to 200 characters. When the failed step is a `forEach`,
-  `item` is the number of the failed item and `do` the number of the failed call
-  in its `do`, both from 0. The items before it are done, and in the failed
-  item, the calls before the failed one; nothing after it ran. When the step has
-  `includeOutput`, `failure.outputs` holds every item that ran, in the form of a
-  `forEach` output; the last entry holds only the calls of the failed item that
-  are done. In this example items 0 to 2 are done and item 3 failed at its first
-  call:
+- `halt`: only when the plan halted before its end: the number of the top-level
+  step where it halted, from 1 as in references (left out for `invalid`), a
+  `code` and a `message`. Codes: `capability` (the capability threw),
+  `reference` (a reference had no value, or a value that does not fit where it
+  is used), `limit` (a `forEach` over more than 100 items), `invalid` (the plan
+  failed the client's check before any step ran), `cancelled` (the user
+  cancelled the request), `interrupted` (the user added text; Added text),
+  `navigated` (the page changed during the step; Page changes). For
+  `capability`, the capability's own error code and message are used when it
+  gives them; the client cuts a message to 200 characters. When the plan halted
+  in a `forEach`, `item` is the number of the item and `do` the number of the
+  call in its `do` where it halted, both from 0. The items before it are done,
+  and in that item, the calls before that call; nothing after it ran. When the
+  step has `includeOutput`, `halt.outputs` holds every item that ran, in the
+  form of a `forEach` output; the last entry holds only the calls of that item
+  that are done. In this example items 0 to 2 are done and item 3 failed at its
+  first call:
 
 ```json
 {
-  "failure": {
+  "halt": {
     "step": 2,
     "code": "not_found",
     "message": "No such task",
@@ -121,18 +121,17 @@ failed one, or every step when there is no failure.
 
 The user can add text or cancel while a request runs. The client never stops in
 the middle of a step: it finishes the step it is in, or in a `forEach` all calls
-of the current item, and runs nothing after it. The failure's `step` and, in a
+of the current item, and runs nothing after it. The halt's `step` and, in a
 `forEach`, `item` name the first one that did not run; `do` is not set, and
-`failure.outputs`, when the step has `includeOutput`, holds the items that ran,
-all complete.
+`halt.outputs`, when the step has `includeOutput`, holds the items that ran, all
+complete.
 
-- Added text: the client reports the plan with the failure code `interrupted` at
+- Added text: the client reports the plan with the halt code `interrupted` at
   the step or item where it stopped, followed by an `added` item with the text,
   and the planner decides what comes next. Each text is its own `added` item, in
   the order the user gave them; several texts before the client stops follow the
   one report. Text that comes after the last step, before the report is sent,
-  leaves the plan done: the report has no failure, and the `added` items follow
-  it.
+  leaves the plan done: the report has no halt, and the `added` items follow it.
 - Text that comes while the client waits for the server's response is added text
   too, since no question is open yet. The client holds it until the response
   arrives:
@@ -145,9 +144,9 @@ all complete.
 - When a question is open, the text is its answer.
 - While a confirmation is open, text is ignored: only a click on its buttons
   answers it.
-- Cancel: the client reports the plan with the failure code `cancelled` at the
-  step or item where it stopped, and the request ends. The server replies with a
-  stop without asking the planner. Cancel while a confirmation is open reports
+- Cancel: the client reports the plan with the halt code `cancelled` at the step
+  or item where it stopped, and the request ends. The server replies with a stop
+  without asking the planner. Cancel while a confirmation is open reports
   `cancelled` at that step, which does not run. When the client was waiting for
   the server's response, or a question was open, it reports nothing more.
 
@@ -165,7 +164,7 @@ after a page load in the same tab only when a step was running:
   call.
 - When `dicta-action-js` starts on a page, it looks for a saved request and
   takes it out. One saved at most 60 seconds ago goes on: the client reports the
-  plan with the failure code `navigated` at the step that was running, with the
+  plan with the halt code `navigated` at the step that was running, with the
   outputs so far, and sends the new page's `state`. The running step may or may
   not have finished; nothing after it ran. The client does not run the rest of
   the plan, which was written for the old page; the planner decides what comes
@@ -244,7 +243,7 @@ only guards against a client that breaks them.
   small is the site's job (`contract-capability.md`, State).
 - `context`: at most 64 KB, counted as the UTF-8 bytes of its JSON. Keeping it
   small is the site's job (`contract-context.md`).
-- A failure `message`: at most 200 characters. The client cuts longer ones.
+- A halt `message`: at most 200 characters. The client cuts longer ones.
 - A plan: at most 16 KB and 50 top-level steps (`contract-plan.md`, Limits).
 - The included outputs of a report: at most 16 KB together (Report).
 - Plans in a request: at most `MAX_PLANS`, which is at most 20.
