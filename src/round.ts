@@ -35,7 +35,8 @@ export type Reply =
   | { type: "plan"; plan: Record<string, unknown> }
   | { type: "question"; text: string; options?: string[] }
   | { type: "done"; text?: string }
-  | { type: "stop"; text: string };
+  | { type: "stop"; text: string }
+  | { type: "info"; text: string };
 
 export type Planner = (round: Round) => Promise<Reply>;
 
@@ -52,6 +53,7 @@ const MAX_CONTEXT_BYTES = 64 * 1024;
 const MAX_MESSAGE_CHARS = 200;
 const MAX_OUTPUTS_BYTES = 16 * 1024;
 const MAX_REPLY_CHARS = 200;
+const MAX_INFO_CHARS = 2000;
 const MAX_OPTIONS = 5;
 const MAX_OPTION_CHARS = 50;
 
@@ -206,15 +208,19 @@ export function checkRound(body: unknown): Round {
 
 class BadReply extends Error {}
 
-function checkReplyText(value: unknown, required: boolean) {
+function checkReplyText(
+  value: unknown,
+  required: boolean,
+  max = MAX_REPLY_CHARS,
+) {
   if (value === undefined && !required) {
     return;
   }
   if (typeof value !== "string") {
     throw new BadReply("text must be a string");
   }
-  if (chars(value) > MAX_REPLY_CHARS) {
-    throw new BadReply(`text is longer than ${MAX_REPLY_CHARS} characters`);
+  if (chars(value) > max) {
+    throw new BadReply(`text is longer than ${max} characters`);
   }
 }
 
@@ -254,8 +260,11 @@ function checkReply(reply: unknown, context: SiteContext): Reply {
     case "stop":
       checkReplyText(reply.text, true);
       break;
+    case "info":
+      checkReplyText(reply.text, true, MAX_INFO_CHARS);
+      break;
     default:
-      throw new BadReply("type must be plan, question, done or stop");
+      throw new BadReply("type must be plan, question, done, stop or info");
   }
   return reply as Reply;
 }

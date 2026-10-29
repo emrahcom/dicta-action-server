@@ -243,7 +243,13 @@ test("a plan that fails the check gets a stop", async (t) => {
 
 const BAD_REPLIES: [string, unknown, RegExp][] = [
   ["a reply that is not an object", "hello", /must be an object/],
-  ["an unknown type", { type: "info", text: "Hi." }, /type must be/],
+  ["an unknown type", { type: "chat", text: "Hi." }, /type must be/],
+  ["an info without text", { type: "info" }, /text must be a string/],
+  [
+    "an info over 2000 characters",
+    { type: "info", text: "x".repeat(2001) },
+    /text is longer than 2000 characters/,
+  ],
   ["a question without text", { type: "question" }, /text must be a string/],
   ["a stop without text", { type: "stop" }, /text must be a string/],
   ["a done text that is not text", { type: "done", text: 5 }, /text must be/],
@@ -287,6 +293,28 @@ for (const [name, reply, reason] of BAD_REPLIES) {
     assert.match(String(warn.mock.calls[0]?.arguments[0]), reason);
   });
 }
+
+test("sends an info at its limit", async (t) => {
+  const base = await start(t);
+  const info = {
+    type: "info",
+    text: "To share a board, open it and click Share.\n\n" + "x".repeat(1956),
+  };
+
+  const { body: response } = await post(base, body([info]));
+
+  assert.deepEqual(response.reply, info);
+});
+
+test("lets an info through when MAX_PLANS is reached", async (t) => {
+  const base = await start(t, { maxPlans: 1 });
+  const item = { plan: PLAN.plan, report: {} };
+  const info = { type: "info", text: "Click Share." };
+
+  const { body: response } = await post(base, body([PLAN, info], [item]));
+
+  assert.deepEqual(response.reply, info);
+});
 
 test("sends replies at their limits", async (t) => {
   const base = await start(t);
