@@ -32,8 +32,9 @@ Message formats are in `contract-protocol.md`.
   keeps nothing between rounds, so any instance can serve any round.
 - `dicta-action-js` keeps the running request in the page's memory. If the page
   changes during a step, the client saves the request in the tab's session
-  storage, and the new page continues it. A page change at any other time ends
-  the request (`contract-protocol.md`, Page changes).
+  storage, and the new page continues it. A page change at any other time, for
+  example while a question or a confirmation is open, ends the request
+  (`contract-protocol.md`, Page changes).
 - When a request ends, the client adds it to the tab's history, also in session
   storage. The planner reads it with `dicta.listHistory` and `dicta.getHistory`
   (`contract-capability.md`, Built-in capabilities).

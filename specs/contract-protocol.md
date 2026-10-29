@@ -169,8 +169,9 @@ after a page load in the same tab only when a step was running:
   not have finished; nothing after it ran. The client does not run the rest of
   the plan, which was written for the old page; the planner decides what comes
   next. An older saved request is dropped.
-- A page load at any other time, while the client waits for the server's
-  response or a question is open, ends the request. It is not kept in history.
+- A page load at any other time ends the request: while the client waits for the
+  server's response, or a question or a confirmation is open. It is not kept in
+  history.
 
 ## Response body
 
