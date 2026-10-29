@@ -209,7 +209,9 @@ sentence, and each option a few words.
 }
 ```
 
-Clients ignore fields and answer types they do not know.
+Clients ignore fields they do not know. An answer type they do not know ends the
+request as an error, as an HTTP error does (Errors), so a newer server never
+leaves an older client waiting.
 
 ## Errors
 
