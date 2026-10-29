@@ -3,8 +3,8 @@
 ## Flow
 
 ```
-dicta-action-js (browser) --HTTP--> dicta-action-server --> LLM
-(site context)            <-plan---                     <--
+dicta-action-js (browser) --request, context--> dicta-action-server --> LLM
+                          <-------reply---------                      <--
 ```
 
 1. The application's own backend signs a JWT for its user.
