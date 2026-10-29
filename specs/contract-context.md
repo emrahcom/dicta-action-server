@@ -8,27 +8,21 @@ module (`contract-capability.md`) and sends it as `context` in every round
 {
   "site": {
     "name": "Teamboard",
-    "description": "A task list for small teams."
+    "desc": "A task list.\n\n## Words\n\nA card is a task."
   },
   "state": {
-    "description": "The open page and the selected tasks."
+    "desc": "The open page and the selected tasks."
   },
   "capabilities": [
     {
       "name": "tasks.create",
       "level": "write",
-      "description": "Creates a task in the open project.",
+      "desc": "Creates a task in the open project.",
       "args": {
         "type": "object",
         "properties": { "title": { "type": "string" } },
         "required": ["title"]
       }
-    }
-  ],
-  "notes": [
-    {
-      "title": "Glossary",
-      "text": "Users say \"board\" for a project and \"card\" for a task."
     }
   ]
 }
@@ -36,16 +30,15 @@ module (`contract-capability.md`) and sends it as `context` in every round
 
 ## Fields
 
-- `site`: the site's name and a short description, the module's `site`.
-- `state`: the `description` of the site's state function
-  (`contract-capability.md`, State).
+- `site`: the module's `site`: the site's `name` and its `desc`, one Markdown
+  text with what the planner needs to know beyond the capabilities: what the
+  site is for, its entities, screens, words, rules and common workflows. Short
+  and to the point: the planner reads all of it on every round.
+- `state`: the `desc` of the site's state function (`contract-capability.md`,
+  State).
 - `capabilities`: one entry for each capability of the module, with its `name`,
-  `level`, `description`, `args` and, when set, `navigates`. The client takes
-  them from the module, so they always match it.
-- `notes`: the module's `notes`: what the planner needs to know beyond the
-  capabilities: entities, screens, rules, glossary, common workflows. Each note
-  has a `title` and a `text` in Markdown. Short and to the point: the planner
-  reads all of it on every round.
+  `level`, `desc`, `args` and, when set, `navigates`. The client takes them from
+  the module, so they always match it.
 
 ## Checks
 

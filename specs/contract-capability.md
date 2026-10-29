@@ -17,23 +17,24 @@ The module's default export is an object:
 import { dictaCapabilities } from "dicta-action-js";
 
 export default {
-  site: { name: "Teamboard", description: "A task list for small teams." },
-  notes: [
-    {
-      title: "Glossary",
-      text: 'Users say "board" for a project and "card" for a task.',
-    },
-  ],
+  site: {
+    name: "Teamboard",
+    desc: `A task list for small teams.
+
+## Words
+
+Users say "board" for a project and "card" for a task.`,
+  },
   confirmOver: 10,
   state: {
-    description: "The open page and the selected tasks.",
+    desc: "The open page and the selected tasks.",
     run: async () => ({ page: "tasks", selected: ["t1", "t2"] }),
   },
   capabilities: {
     ...dictaCapabilities,
     "tasks.create": {
       level: "write",
-      description: "Creates a task in the open project.",
+      desc: "Creates a task in the open project.",
       confirm: async ({ title }) => `Create task "${title}"`,
       args: {
         type: "object",
@@ -52,10 +53,9 @@ export default {
 };
 ```
 
-## Site and notes
+## Site
 
-`site` and `notes` go into the site context as they are (`contract-context.md`,
-Fields).
+`site` goes into the site context as it is (`contract-context.md`, Fields).
 
 ## Confirm over
 
@@ -74,8 +74,7 @@ developers can change it. Without it, it is 10.
   - `destructive` deletes or overwrites what cannot easily be restored.
   - `external` sends data out of the site or reaches other people: sharing,
     inviting, sending messages, publishing, paying.
-- `description`: one or two sentences for the planner: what it does and when to
-  use it.
+- `desc`: one or two sentences for the planner: what it does and when to use it.
 - `args`: a JSON Schema for the argument object. Only `type`, `properties`,
   `required`, `items`, `enum` and `description` are used.
 - `run`: an async function. It takes the arguments, already checked against
@@ -106,8 +105,8 @@ most 200 characters, and contain no secrets; the client cuts longer ones.
 
 `state.run` returns what the page shows now, as a small JSON object, at most 16
 KB (`contract-protocol.md`, Limits). The client calls it before every round and
-sends what it returns as `state`. Its `description` tells the planner what the
-fields mean.
+sends what it returns as `state`. Its `desc` tells the planner what the fields
+mean.
 
 ## Built-in capabilities
 

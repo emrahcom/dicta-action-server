@@ -19,9 +19,9 @@ detail.
   group, for example `dicta.listHistory`. The module adds it like any other.
 - Level: how risky a capability is: `read`, `write`, `destructive` or
   `external`.
-- Site context: what the planner knows about the site: its capabilities and
-  notes. It ships with the capability module, and the client sends it in every
-  round (`contract-context.md`).
+- Site context: what the planner knows about the site: its description, its
+  state description and its capabilities. It ships with the capability module,
+  and the client sends it in every round (`contract-context.md`).
 - State: a small JSON object that says what the page shows now. The site's state
   function makes it, and the client sends it in every round.
 
