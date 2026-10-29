@@ -10,7 +10,7 @@ detail.
   confirmations and talks to the server.
 - Server: dicta-action-server. It turns a request into replies; it never acts on
   the site.
-- Planner: the LLM behind the server that writes plans and questions.
+- Planner: the LLM behind the server that writes the replies.
 - Capability: a function of the site that a plan can call, with a name, a level,
   a description and an argument schema (`contract-capability.md`).
 - Capability module: the site's one module that holds all its capabilities, its
@@ -28,7 +28,8 @@ detail.
 ## A request
 
 - User request: one thing the user asks for, in plain text, for example "move
-  the selected tasks to Friday". It lasts until done, a stop, an info or cancel.
+  the selected tasks to Friday". It lasts until done, a stop, an info, cancel,
+  an error or a page change outside a step.
 - `requestId`: the server's id for one user request, the same in all its rounds.
 - Round: one HTTP request from the client to the server and its response. A user
   request takes one or more rounds (`contract-protocol.md`).
@@ -48,6 +49,9 @@ detail.
 - Added text: text the user gives while a request runs. It interrupts the plan
   and goes to the planner.
 - Cancel: the user ends the request. Nothing after the current step runs.
+- Page change: a page load in the middle of a request. During a step, the
+  request goes on on the new page, and the plan halts there with `navigated`; at
+  any other time, the request ends (`contract-protocol.md`, Page changes).
 - History: finished user requests of the browser tab, kept by the client and
   read with `dicta.listHistory` and `dicta.getHistory`.
 - `MAX_PLANS`: the most plans one user request may have.
@@ -81,6 +85,7 @@ detail.
   included outputs that were too large and the halt, if any.
 - Halt: where and why a plan stopped before its end: the step, a code and a
   message. The cause can be an error (`capability`, `reference`, `limit`,
-  `invalid`) or not (`cancelled`, `interrupted`, `navigated`). When it is in a
-  `forEach`, the halt also names the item and call, and holds the included
-  outputs of the items that ran (`halt.outputs`).
+  `invalid`, or a capability's own error code such as `not_found`) or not
+  (`cancelled`, `interrupted`, `navigated`). When it is in a `forEach`, the halt
+  also names the item and call, and holds the included outputs of the items that
+  ran (`halt.outputs`).
