@@ -22,12 +22,12 @@ const PLAN = {
 
 async function start(
   t: TestContext,
-  options: { auth?: AuthOptions; planner?: Planner; maxRounds?: number } = {},
+  options: { auth?: AuthOptions; planner?: Planner; maxPlans?: number } = {},
 ) {
   const server = createServer({
     auth: options.auth ?? { jwtSecret: SECRET },
     planner: options.planner ?? stubPlanner,
-    maxRounds: options.maxRounds ?? 10,
+    maxPlans: options.maxPlans ?? 10,
   });
   server.listen(0);
   t.after(() => server.close());
@@ -82,7 +82,7 @@ async function post(
 
 const DONE_PLAN = {
   plan: { steps: [], final: true },
-  report: { results: [] },
+  report: {},
 };
 
 test("answers the first round with the planner's answer and a new id", async (t) => {
@@ -98,7 +98,7 @@ test("answers the first round with the planner's answer and a new id", async (t)
 
 test("repeats the request id in later rounds", async (t) => {
   const base = await start(t);
-  const exchange = [{ plan: PLAN.plan, report: { results: [[]] } }];
+  const exchange = [{ plan: PLAN.plan, report: { outputs: { "1": [] } } }];
 
   const { body: answer } = await post(
     base,
@@ -113,7 +113,7 @@ test("gives the stub's answer for the round", async (t) => {
   const base = await start(t);
   const question = { type: "question", text: "Which?", options: ["A", "B"] };
   const exchange = [
-    { plan: PLAN.plan, report: { results: [] } },
+    { plan: PLAN.plan, report: {} },
     { question: "Sure?", answer: "yes" },
   ];
 
@@ -141,7 +141,7 @@ test("stub: a stop when the text is not a list of answers", async (t) => {
 
 test("stub: a stop when there is no answer for the round", async (t) => {
   const base = await start(t);
-  const exchange = [{ plan: PLAN.plan, report: { results: [] } }];
+  const exchange = [{ plan: PLAN.plan, report: {} }];
 
   const { body: answer } = await post(base, body([PLAN], exchange));
 
@@ -168,7 +168,6 @@ test("asks the planner after a final plan that failed", async (t) => {
   const failed = {
     plan: { steps: [], final: true },
     report: {
-      results: [],
       failure: { step: 1, code: "not_found", message: "No such task" },
     },
   };
@@ -183,16 +182,16 @@ test("asks the planner after a final plan that failed", async (t) => {
 
 test("asks the planner after a plan that is not final", async (t) => {
   const base = await start(t);
-  const exchange = [{ plan: PLAN.plan, report: { results: [] } }];
+  const exchange = [{ plan: PLAN.plan, report: {} }];
 
   const { body: answer } = await post(base, body([PLAN, PLAN], exchange));
 
   assert.deepEqual(answer.answer, PLAN);
 });
 
-test("stops when the exchange holds MAX_ROUNDS plans", async (t) => {
-  const base = await start(t, { maxRounds: 2 });
-  const item = { plan: PLAN.plan, report: { results: [] } };
+test("stops a new plan when the exchange holds MAX_PLANS plans", async (t) => {
+  const base = await start(t, { maxPlans: 2 });
+  const item = { plan: PLAN.plan, report: {} };
 
   const below = await post(base, body([PLAN, PLAN, PLAN], [item]));
   const at = await post(base, body([PLAN, PLAN, PLAN], [item, item]));
@@ -201,8 +200,26 @@ test("stops when the exchange holds MAX_ROUNDS plans", async (t) => {
   assert.equal(at.body.answer.type, "stop");
 });
 
-test("questions do not count as rounds for the limit", async (t) => {
-  const base = await start(t, { maxRounds: 1 });
+test("lets other answers through when MAX_PLANS is reached", async (t) => {
+  const base = await start(t, { maxPlans: 1 });
+  const item = { plan: PLAN.plan, report: {} };
+  const question = { type: "question", text: "Which?" };
+
+  const { body: answer } = await post(base, body([PLAN, question], [item]));
+
+  assert.deepEqual(answer.answer, question);
+});
+
+test("answers done for a final plan when MAX_PLANS is reached", async (t) => {
+  const base = await start(t, { maxPlans: 1 });
+
+  const { body: answer } = await post(base, body([], [DONE_PLAN]));
+
+  assert.deepEqual(answer.answer, { type: "done" });
+});
+
+test("questions do not count as plans for the limit", async (t) => {
+  const base = await start(t, { maxPlans: 1 });
   const exchange = [{ question: "Which?", answer: "A" }];
 
   const { body: answer } = await post(base, body([PLAN, PLAN], exchange));
@@ -230,7 +247,6 @@ test("takes added text in the exchange", async (t) => {
     {
       plan: PLAN.plan,
       report: {
-        results: [],
         failure: { step: 1, code: "interrupted", message: "added text" },
       },
     },
@@ -258,7 +274,6 @@ test("answers a cancelled plan with a stop, without the planner", async (t) => {
   const cancelled = {
     plan: { steps: [], final: true },
     report: {
-      results: [],
       failure: { step: 1, code: "cancelled", message: "cancelled" },
     },
   };
@@ -428,8 +443,44 @@ const BAD_BODIES: [string, unknown][] = [
     { text: "a", time: TIME, state: {}, exchange: [{ plan: {} }] },
   ],
   [
-    "a report without results",
-    { text: "a", time: TIME, state: {}, exchange: [{ plan: {}, report: {} }] },
+    "a time in UTC with Z",
+    { text: "a", time: "2026-10-28T14:20:00Z", state: {}, exchange: [] },
+  ],
+  [
+    "a report that is not an object",
+    { text: "a", time: TIME, state: {}, exchange: [{ plan: {}, report: [] }] },
+  ],
+  [
+    "outputs that are not an object",
+    {
+      text: "a",
+      time: TIME,
+      state: {},
+      exchange: [{ plan: {}, report: { outputs: [] } }],
+    },
+  ],
+  [
+    "tooLarge without sizes",
+    {
+      text: "a",
+      time: TIME,
+      state: {},
+      exchange: [{ plan: {}, report: { tooLarge: { "1": "big" } } }],
+    },
+  ],
+  [
+    "a failure item that is not a number",
+    {
+      text: "a",
+      time: TIME,
+      state: {},
+      exchange: [
+        {
+          plan: {},
+          report: { failure: { code: "x", message: "x", item: "2" } },
+        },
+      ],
+    },
   ],
   [
     "a failure without a code",
@@ -437,9 +488,7 @@ const BAD_BODIES: [string, unknown][] = [
       text: "a",
       time: TIME,
       state: {},
-      exchange: [
-        { plan: {}, report: { results: [], failure: { message: "x" } } },
-      ],
+      exchange: [{ plan: {}, report: { failure: { message: "x" } } }],
     },
   ],
   [
@@ -512,6 +561,80 @@ test("checks a plan against the context of the round", async (t) => {
   const { body: answer } = await post(base, { ...body([PLAN]), context });
 
   assert.equal(answer.answer.type, "stop");
+});
+
+const failed = (failure: object, outputs?: object) => ({
+  plan: PLAN.plan,
+  report: { ...(outputs ? { outputs } : {}), failure },
+});
+
+const OVER_LIMIT: [string, (b: any) => void, RegExp][] = [
+  [
+    "a text over 10000 characters",
+    (b) => (b.text = "x".repeat(10001)),
+    /^text is longer than 10000 characters$/,
+  ],
+  [
+    "an answer over 10000 characters",
+    (b) => b.exchange.push({ question: "Which?", answer: "x".repeat(10001) }),
+    /^exchange\[0\]\.answer is longer than 10000 characters$/,
+  ],
+  [
+    "an added text over 10000 characters",
+    (b) => b.exchange.push({ added: "x".repeat(10001) }),
+    /^exchange\[0\]\.added is longer than 10000 characters$/,
+  ],
+  [
+    "a state over 16 KB",
+    (b) => (b.state = { x: "x".repeat(16 * 1024) }),
+    /^state is larger than 16 KB$/,
+  ],
+  [
+    "a failure message over 200 characters",
+    (b) =>
+      b.exchange.push(failed({ step: 1, code: "x", message: "x".repeat(201) })),
+    /^exchange\[0\]\.report\.failure\.message is longer than 200 characters$/,
+  ],
+  [
+    "included outputs over 16 KB together",
+    (b) =>
+      b.exchange.push(
+        failed(
+          { step: 2, code: "x", message: "x", outputs: ["x".repeat(8 * 1024)] },
+          { "1": "x".repeat(8 * 1024) },
+        ),
+      ),
+    /^exchange\[0\]\.report has included outputs larger than 16 KB$/,
+  ],
+];
+
+for (const [name, change, message] of OVER_LIMIT) {
+  test(`400 for ${name}, naming the part`, async (t) => {
+    const base = await start(t);
+    const payload = body([PLAN]);
+    change(payload);
+
+    const { status, body: error } = await post(base, payload);
+
+    assert.equal(status, 400);
+    assert.match(error.error, message);
+  });
+}
+
+test("takes parts at their limits", async (t) => {
+  const base = await start(t);
+  const payload = body([PLAN]);
+  payload.exchange.push(
+    { question: "Which?", answer: "\u{1F600}".repeat(10000) },
+    failed(
+      { step: 2, code: "x", message: "x".repeat(200) },
+      { "1": "x".repeat(16 * 1024 - 20) },
+    ),
+  );
+
+  const { status } = await post(base, payload);
+
+  assert.equal(status, 200);
 });
 
 test("413 for a body over 1 MB", async (t) => {

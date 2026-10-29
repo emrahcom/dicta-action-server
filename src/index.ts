@@ -5,7 +5,7 @@ import { type AuthOptions, createServer } from "./server.ts";
 // RFC 7518: an HS256 key must be at least as long as the hash output.
 const MIN_SECRET_BYTES = 32;
 const PLANNERS = ["stub"];
-const MAX_ROUNDS = 100;
+const MAX_PLANS_LIMIT = 20;
 
 function fail(message: string): never {
   console.error(message);
@@ -30,15 +30,15 @@ if (!PLANNERS.includes(process.env.PLANNER ?? "")) {
   fail(`PLANNER must be one of: ${PLANNERS.join(", ")}`);
 }
 
-const maxRounds = Number(process.env.MAX_ROUNDS || 10);
-if (!Number.isInteger(maxRounds) || maxRounds < 1 || maxRounds > MAX_ROUNDS) {
-  fail(`MAX_ROUNDS must be a whole number from 1 to ${MAX_ROUNDS}`);
+const maxPlans = Number(process.env.MAX_PLANS || 10);
+if (!Number.isInteger(maxPlans) || maxPlans < 1 || maxPlans > MAX_PLANS_LIMIT) {
+  fail(`MAX_PLANS must be a whole number from 1 to ${MAX_PLANS_LIMIT}`);
 }
 
 const server = createServer({
   auth,
   planner: stubPlanner,
-  maxRounds,
+  maxPlans,
 });
 
 server.listen(port, () => {

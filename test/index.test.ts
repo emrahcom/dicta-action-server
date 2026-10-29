@@ -18,7 +18,7 @@ function startIndex(env: Record<string, string>) {
     JWT_SECRET,
     ALLOW_UNAUTHENTICATED,
     PLANNER,
-    MAX_ROUNDS,
+    MAX_PLANS,
     ...rest
   } = process.env;
   return spawn("node", ["src/index.ts"], {
@@ -96,8 +96,8 @@ test("warns when unauthenticated is allowed", async (t) => {
   assert.match(server.stderr(), /ALLOW_UNAUTHENTICATED is on/);
 });
 
-test("starts with MAX_ROUNDS=100", async (t) => {
-  const server = await startListening({ ...VALID_ENV, MAX_ROUNDS: "100" });
+test("starts with MAX_PLANS=20", async (t) => {
+  const server = await startListening({ ...VALID_ENV, MAX_PLANS: "20" });
   t.after(server.stop);
 });
 
@@ -110,10 +110,10 @@ const REFUSED: [string, Record<string, string | undefined>, RegExp][] = [
   ],
   ["without PLANNER", { PLANNER: undefined }, /PLANNER must be one of: stub/],
   ["with an unknown PLANNER", { PLANNER: "gpt" }, /PLANNER must be one of/],
-  ["with MAX_ROUNDS=0", { MAX_ROUNDS: "0" }, /MAX_ROUNDS must be a whole/],
-  ["with MAX_ROUNDS=101", { MAX_ROUNDS: "101" }, /MAX_ROUNDS must be a whole/],
-  ["with MAX_ROUNDS=2.5", { MAX_ROUNDS: "2.5" }, /MAX_ROUNDS must be a whole/],
-  ["with MAX_ROUNDS=abc", { MAX_ROUNDS: "abc" }, /MAX_ROUNDS must be a whole/],
+  ["with MAX_PLANS=0", { MAX_PLANS: "0" }, /MAX_PLANS must be a whole/],
+  ["with MAX_PLANS=21", { MAX_PLANS: "21" }, /MAX_PLANS must be a whole/],
+  ["with MAX_PLANS=2.5", { MAX_PLANS: "2.5" }, /MAX_PLANS must be a whole/],
+  ["with MAX_PLANS=abc", { MAX_PLANS: "abc" }, /MAX_PLANS must be a whole/],
 ];
 
 for (const [name, changes, message] of REFUSED) {

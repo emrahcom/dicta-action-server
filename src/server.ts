@@ -19,7 +19,7 @@ export type AuthOptions =
 export type ServerOptions = {
   auth: AuthOptions;
   planner: Planner;
-  maxRounds: number;
+  maxPlans: number;
 };
 
 class HttpError extends Error {
@@ -90,7 +90,7 @@ async function handleRound(
     }
     throw err;
   }
-  const answer = await answerRound(round, options.planner, options.maxRounds);
+  const answer = await answerRound(round, options.planner, options.maxPlans);
   send(response, 200, { requestId: round.requestId ?? randomUUID(), answer });
 }
 
