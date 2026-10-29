@@ -15,8 +15,8 @@ dicta-action-js (browser) --HTTP--> dicta-action-server --> LLM
 4. The browser runs the plan and always reports back in a new round of the same
    user request: the original text, the plans so far with their reports, and the
    user's answer if there was a question. The server decides the next reply: a
-   new plan, a question to the user, done or a stop. So the server sees every
-   outcome.
+   new plan, a question to the user, done, a stop or an info. So the server sees
+   every outcome.
 
 Message formats are in `contract-protocol.md`.
 
@@ -79,7 +79,7 @@ As in dicta-server:
 
 ## Planner
 
-- Turns a round into a reply: a plan, a question, done or a stop.
+- Turns a round into a reply: a plan, a question, done, a stop or an info.
 - Chosen per server. The first one is `stub`: no LLM and no key, for tests. LLM
   planners come later.
 - `stub` takes its replies from the request text: a JSON array of replies

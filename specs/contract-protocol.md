@@ -139,8 +139,8 @@ complete.
     shown. The client keeps the response's `requestId` and sends a new round of
     the same request with the `added` items, and nothing about the dropped
     response;
-  - after done or a stop, the request is over, and the held text starts a new
-    request, with a new `requestId` from the server.
+  - after done, a stop or an info, the request is over, and the held text starts
+    a new request, with a new `requestId` from the server.
 - When a question is open, the text is its answer.
 - While a confirmation is open, text is ignored: only a click on its buttons
   answers it.
@@ -193,9 +193,14 @@ logs. The server creates it in the first round and repeats it in every reply.
 - `done`: the request is finished. `text`, when present, is a short summary for
   the user; without it, the client only shows that it is done.
 - `stop`: the request ends without finishing. `text` says why, for the user.
+- `info`: the request was a question about the site itself, such as how to do
+  something on it, and `text` answers it from the site context. The request is
+  over. The client shows the text until the user closes it. A question about the
+  site's data is not one: it gets a plan that reads the data, then done.
 
 The user wants the task done fast, not to read. Every `text` is one short
-sentence, and each option a few words (Limits).
+sentence, and each option a few words (Limits). Only an `info` text is longer:
+plain text, with an empty line between paragraphs.
 
 ```json
 {
@@ -208,10 +213,10 @@ sentence, and each option a few words (Limits).
 }
 ```
 
-The server checks every reply before it sends it: `type` is one of the four, a
-question and a stop have a `text`, `options` is a list of strings, and the
-limits hold. A reply that fails the check is never sent; the round gets a stop
-instead. A plan is checked as well (`contract-plan.md`, Failures).
+The server checks every reply before it sends it: `type` is one of the five, a
+question, a stop and an info have a `text`, `options` is a list of strings, and
+the limits hold. A reply that fails the check is never sent; the round gets a
+stop instead. A plan is checked as well (`contract-plan.md`, Failures).
 
 Clients ignore fields they do not know. A reply type they do not know ends the
 request as an error, as an HTTP error does (Errors), so a newer server never
@@ -247,7 +252,7 @@ only guards against a client that breaks them.
 - A plan: at most 16 KB and 50 top-level steps (`contract-plan.md`, Limits).
 - The included outputs of a report: at most 16 KB together (Report).
 - Plans in a request: at most `MAX_PLANS`, which is at most 20.
-- The `text` of a reply: at most 200 characters. A question's `options`: at most
-  5, each at most 50 characters.
+- The `text` of a reply: at most 200 characters, of an `info` 2000. A question's
+  `options`: at most 5, each at most 50 characters.
 
 Questions and added texts have no count limit: a person writes each of them.

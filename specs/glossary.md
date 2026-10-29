@@ -28,21 +28,23 @@ detail.
 ## A request
 
 - User request: one thing the user asks for, in plain text, for example "move
-  the selected tasks to Friday". It lasts until done, a stop or cancel.
+  the selected tasks to Friday". It lasts until done, a stop, an info or cancel.
 - `requestId`: the server's id for one user request, the same in all its rounds.
 - Round: one HTTP request from the client to the server and its response. A user
   request takes one or more rounds (`contract-protocol.md`).
 - Exchange: everything that happened so far in a user request, oldest first:
   plans with their reports, questions with their answers and added text. The
   client sends all of it in every round.
-- Reply: what the server's response to a round carries: a plan, a question, done
-  or a stop.
+- Reply: what the server's response to a round carries: a plan, a question,
+  done, a stop or an info.
 - Question: the server asks the user something it needs to go on. The user's
   answer goes back in the next round.
 - Done: the user request is finished.
 - Stop: the user request ends without finishing, with a reason for the user.
-- Outcome: how a user request ended: done, a stop, cancel or an error, with the
-  text the user saw, if any.
+- Info: the answer to a question about the site itself, from the site context.
+  It ends the user request.
+- Outcome: how a user request ended: done, a stop, an info, cancel or an error,
+  with the text the user saw, if any.
 - Added text: text the user gives while a request runs. It interrupts the plan
   and goes to the planner.
 - Cancel: the user ends the request. Nothing after the current step runs.

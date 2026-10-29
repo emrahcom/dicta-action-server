@@ -141,10 +141,11 @@ go into the site context like any other capability. Their names are in the
 
   `time` is when the request ended (`contract-protocol.md`, Request body).
   `text` is the user's request, cut to 200 characters. `outcome` is how the
-  request ended: its `type` is `done`, `stop`, `cancelled` (the user cancelled
-  it) or `error` (an HTTP error or a reply type the client does not know ended
-  it; `contract-protocol.md`, Errors and Response body), and its `text` is the
-  text of the server's done or stop, left out when there was none.
+  request ended: its `type` is `done`, `stop`, `info`, `cancelled` (the user
+  cancelled it) or `error` (an HTTP error or a reply type the client does not
+  know ended it; `contract-protocol.md`, Errors and Response body), and its
+  `text` is the text of the server's done, stop or info, left out when there was
+  none.
 
 - `dicta.getHistory` (`read`): one request in full, by its `requestId`, which is
   required: its `requestId`, `time`, whole `text`, `exchange` as it was sent
@@ -154,10 +155,10 @@ go into the site context like any other capability. Their names are in the
 Both can be in one plan: `dicta.listHistory` with `limit` 1, then
 `dicta.getHistory` with the reference `$1.0.requestId` for the latest request.
 
-The client stores each request once, when it ends: on done, a stop, cancel or an
-error. A request that ended before it got a `requestId` ran nothing and is not
-stored. When the browser's storage is full, the client drops the oldest
-requests.
+The client stores each request once, when it ends: on done, a stop, an info,
+cancel or an error. A request that ended before it got a `requestId` ran nothing
+and is not stored. When the browser's storage is full, the client drops the
+oldest requests.
 
 ## Rights
 

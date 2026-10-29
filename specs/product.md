@@ -37,8 +37,8 @@ functions. The browser runs the plan with `dicta-action-js`.
 - Not a generic browser agent. It does not click through unknown sites.
 - Not a code generator at run time. A plan is data: steps that call known
   functions, never code to run.
-- Not a chat bot. It replies with plans, and with a question only when it needs
-  one to go on.
+- Not a chat bot. It replies with plans, with a question only when it needs one
+  to go on, and with a short info when the user asks how the site works.
 
 ## First version
 
