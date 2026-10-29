@@ -45,8 +45,10 @@ Without `final`, or after a halt, the planner decides. The client ignores
 
 - `call`: runs one capability, by its name in the site context, with `args`, a
   JSON object. Its output is any JSON value.
-- `forEach`: runs the `call` steps in `do` once for each item of an array. `do`
-  holds only `call` steps; a `forEach` cannot hold another `forEach`.
+- `forEach`: runs the `call` steps in `do` once for each item of an array. The
+  array is a reference to an earlier step, or to a list inside its output, such
+  as `$1` or `$1.items`; a list written in the plan is not allowed. `do` holds
+  only `call` steps; a `forEach` cannot hold another `forEach`.
 
 A top-level step can also have `includeOutput` (Include output).
 
@@ -99,6 +101,7 @@ it before it sends it:
 - every `args` matches that capability's schema, with no properties the schema
   does not name;
 - every reference points to an earlier step or to a `forEach` item;
+- every `forEach` refers to an earlier step;
 - `includeOutput` is a boolean, and only on top-level steps.
 
 A step fails when its capability throws, when a reference has no value or a
