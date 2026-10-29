@@ -103,4 +103,4 @@ Environment variables:
 - `CONTEXT_FILE`: the path of the site context file. Required.
 - `PLANNER`: the planner. Required. Values: `stub`.
 - `MAX_PLANS`: the most plans per user request (Requests), a whole number from
-  `1` to `100`. Default `10`.
+  `1` to `20`. Default `10`.

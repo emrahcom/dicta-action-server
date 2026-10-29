@@ -39,18 +39,20 @@ a new one.
 
 - `requestId`: left out in the first round. In later rounds, the id the server
   gave in its first answer.
-- `text`: the user's request, the same in every round.
+- `text`: the user's request, the same in every round (Limits).
 - `time`: the user's current time, sent new in every round, so the planner can
   read words like "today" or "tomorrow".
 - `state`: what the page shows now, as a JSON object. Sent new in every round.
-  Kept small. The client does not choose it: it comes from the site's own state
-  function, which the site context describes.
+  At most 16 KB (Limits). The client does not choose it: it comes from the
+  site's own state function, which the site context describes.
 - `exchange`: what happened so far, oldest first. Empty in the first round. The
   client only adds to it, and sends all of it in every round. Each item is one
   of:
   - a plan the server sent, with the client's `report` on it;
   - a question the server asked, with the user's `answer`;
   - `added`: text the user gave while the request was running (Added text).
+
+  An answer and an added text have the same limit as `text` (Limits).
 
 Every time in the contracts is the user's local time with its offset, in ISO
 8601, for example `2026-10-28T15:20:00+01:00`.
@@ -86,14 +88,14 @@ failed one, or every step when there is no failure.
   than 100 items), `invalid` (the plan failed the client's check before any step
   ran), `cancelled` (the user cancelled the request), `interrupted` (the user
   added text; Added text). For `capability`, the capability's own error code and
-  message are used when it gives them. When the failed step is a `forEach`,
-  `item` is the number of the failed item and `do` the number of the failed call
-  in its `do`, both from 0. The items before it are done, and in the failed
-  item, the calls before the failed one; nothing after it ran. When the step has
-  `includeOutput`, `failure.outputs` holds every item that ran, in the form of a
-  `forEach` output; the last entry holds only the calls of the failed item that
-  are done. In this example items 0 to 2 are done and item 3 failed at its first
-  call:
+  message are used when it gives them; the client cuts a message to 200
+  characters. When the failed step is a `forEach`, `item` is the number of the
+  failed item and `do` the number of the failed call in its `do`, both from 0.
+  The items before it are done, and in the failed item, the calls before the
+  failed one; nothing after it ran. When the step has `includeOutput`,
+  `failure.outputs` holds every item that ran, in the form of a `forEach`
+  output; the last entry holds only the calls of the failed item that are done.
+  In this example items 0 to 2 are done and item 3 failed at its first call:
 
 ```json
 {
@@ -188,10 +190,28 @@ Clients ignore fields and answer types they do not know.
 The server answers a round it cannot take with an HTTP error and a JSON body
 `{ "error": "..." }`:
 
-- `400`: the body is not valid.
+- `400`: the body is not valid, or a part of it is over its limit (Limits). The
+  `error` names the part.
 - `401`: the token is missing, not valid or expired. The client gets a new token
   and sends the round again, once; a second `401` ends the request.
 - `413`: the body is larger than 1 MB.
 - `500`: an unexpected server error.
 
-A planner failure is not an HTTP error; the round gets a `stop`.
+Every other error ends the request too. A planner failure is not an HTTP error;
+the round gets a `stop`.
+
+## Limits
+
+Each part of a round has a limit, which keeps a round well under 1 MB. The `413`
+only guards against a client that breaks them.
+
+- `text`, each answer and each added text: at most 10000 characters (Unicode
+  code points). The client does not take longer input from the user.
+- `state`: at most 16 KB, counted as the UTF-8 bytes of its JSON. Keeping it
+  small is the site's job (`contract-capability.md`, State).
+- A failure `message`: at most 200 characters. The client cuts longer ones.
+- A plan: at most 16 KB and 50 top-level steps (`contract-plan.md`, Limits).
+- The included outputs of a report: at most 16 KB together (Report).
+- Plans in a request: at most `MAX_PLANS`, which is at most 20.
+
+Questions and added texts have no count limit: a person writes each of them.

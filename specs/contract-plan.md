@@ -93,7 +93,7 @@ start with `$` itself is written with `$$`.
 The client checks the whole plan before it runs any step, and the server checks
 it before it sends it:
 
-- it has at most 50 top-level steps (Limits);
+- it has at most 50 top-level steps and 16 KB (Limits);
 - every `call` names a capability;
 - every `args` matches that capability's schema, with no properties the schema
   does not name;
@@ -110,8 +110,8 @@ step and reports the outputs asked for so far and the failure.
 
 ## Limits
 
-- At most 50 top-level steps in a plan. A longer plan fails the check
-  (Failures).
+- At most 50 top-level steps in a plan, and at most 16 KB, counted as the UTF-8
+  bytes of its JSON. A longer or larger plan fails the check (Failures).
 - At most 100 items in a `forEach`. A larger array fails the step with the code
   `limit` before any item runs.
 

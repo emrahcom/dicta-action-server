@@ -84,14 +84,15 @@ developers can change it. Without it, it is 10.
 
 A capability that fails throws. When the error has a string `code`, for example
 `not_found`, the client reports that code and the error's `message`; otherwise
-it reports `capability` (`contract-protocol.md`, Report). Messages are short and
-contain no secrets.
+it reports `capability` (`contract-protocol.md`, Report). Messages are short, at
+most 200 characters, and contain no secrets; the client cuts longer ones.
 
 ## State
 
-`state.run` returns what the page shows now, as a small JSON object. The client
-calls it before every round and sends what it returns as `state`. Its
-`description` tells the planner what the fields mean.
+`state.run` returns what the page shows now, as a small JSON object, at most 16
+KB (`contract-protocol.md`, Limits). The client calls it before every round and
+sends what it returns as `state`. Its `description` tells the planner what the
+fields mean.
 
 ## Built-in capabilities
 
