@@ -16,7 +16,7 @@ detail.
 - Capability module: the site's one module that holds all its capabilities and
   its state function, bundled into the site.
 - Built-in capability: a capability the client brings itself, in the `dicta`
-  group, for example `dicta.history`.
+  group, for example `dicta.listHistory`.
 - Level: how risky a capability is: `read`, `write`, `destructive` or
   `external`.
 - Site context: the JSON file the server reads at startup: what the planner
@@ -40,11 +40,13 @@ detail.
   reply is the answer to the question.
 - Done: the user request is finished.
 - Stop: the user request ends without finishing, with a reason for the user.
+- Outcome: how a user request ended: done, a stop, cancel or an error, with the
+  text the user saw, if any.
 - Added text: text the user gives while a request runs. It interrupts the plan
   and goes to the planner.
 - Cancel: the user ends the request. Nothing after the current step runs.
 - History: finished user requests of the browser tab, kept by the client and
-  read with `dicta.history`.
+  read with `dicta.listHistory` and `dicta.getHistory`.
 - `MAX_PLANS`: the most plans one user request may have.
 
 ## A plan

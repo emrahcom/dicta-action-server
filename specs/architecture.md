@@ -31,8 +31,8 @@ Message formats are in `contract-protocol.md`.
 - `dicta-action-js` keeps the exchange while the user's request runs. It
   survives only a page load that the plan itself causes, so a request can go on
   on the next page; a request ends when the user opens or reloads the page. When
-  a request ends, the client keeps it as history for `dicta.history`
-  (`contract-capability.md`, Built-in capabilities).
+  a request ends, the client keeps it as history for `dicta.listHistory` and
+  `dicta.getHistory` (`contract-capability.md`, Built-in capabilities).
 - A limit on plans per user request (`MAX_PLANS`) stops runaway loops and their
   cost. It is not a target: one plan can hold many steps. The server counts the
   earlier plans in the exchange. When the planner answers with a new plan and

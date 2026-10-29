@@ -100,27 +100,42 @@ fields mean.
 Their names are in the `dicta` group, which sites cannot use. They are not in
 the module or the context file; the server adds them to every site context.
 
-- `dicta.history` (`read`): earlier requests of this browser tab, for requests
-  that refer to the past, such as "undo that" or "the same for Friday". No
-  history is sent unless the planner calls it. It takes one of:
-  - `list: true`: every finished request of the tab, short: an array of
-    `{ "requestId", "time", "text", "end" }`, newest first. `time` is when the
-    request ended (`contract-protocol.md`, Request body); `end` is the type of
-    the server's last answer and its text, if any, or `cancelled` when the user
-    cancelled the request.
-  - `requestId`: one request in full: its `text`, its `time`, its `exchange`
-    (`contract-protocol.md`) and its `end`, as in `list`. An id that is not kept
-    fails with the code `not_found`.
+- `dicta.listHistory` (`read`): earlier requests of this browser tab, newest
+  first, for requests that refer to the past, such as "undo that" or "the same
+  for Friday". No history is sent unless the planner calls it. `limit`, a whole
+  number from 1, is the most requests it returns; 10 when left out. A smaller
+  number fails with the code `capability`. Each request is a short entry:
 
-  A call with neither or both of them fails with the code `capability`.
+  ```json
+  [
+    {
+      "requestId": "r2",
+      "time": "2026-10-29T10:15:00+01:00",
+      "text": "move the selected tasks to Friday",
+      "outcome": { "type": "done", "text": "Moved 2 tasks to Friday" }
+    }
+  ]
+  ```
 
-  Both can be in one plan: `list`, then `requestId` with the reference
-  `$1.0.requestId` for the latest request.
+  `time` is when the request ended (`contract-protocol.md`, Request body).
+  `text` is the user's request, cut to 200 characters. `outcome` is how the
+  request ended: its `type` is `done`, `stop`, `cancelled` (the user cancelled
+  it) or `error` (an HTTP error ended it; `contract-protocol.md`, Errors), and
+  its `text` is the text of the server's done or stop, left out when there was
+  none.
 
-  The client stores each request once, when it ends: on done, a stop or cancel.
-  A request that ended before it got a `requestId` ran nothing and is not
-  stored. When the browser's storage is full, the client drops the oldest
-  requests.
+- `dicta.getHistory` (`read`): one request in full, by its `requestId`, which is
+  required: its `requestId`, `time`, whole `text`, `exchange` as it was sent
+  (`contract-protocol.md`) and `outcome`. An id that is not kept fails with the
+  code `not_found`.
+
+Both can be in one plan: `dicta.listHistory` with `limit` 1, then
+`dicta.getHistory` with the reference `$1.0.requestId` for the latest request.
+
+The client stores each request once, when it ends: on done, a stop, cancel or an
+error. A request that ended before it got a `requestId` ran nothing and is not
+stored. When the browser's storage is full, the client drops the oldest
+requests.
 
 ## Rights
 
