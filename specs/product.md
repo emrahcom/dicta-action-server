@@ -42,11 +42,12 @@ functions. The browser runs the plan with `dicta-action-js`.
 
 ## First version
 
-- A request, the page state and the site context in, a plan out.
-- Plans with steps that call capabilities, use the outputs of earlier steps in
-  the same plan and repeat calls for each item of an output.
-- After each plan the report comes back, with the outputs the plan asked for,
-  and the server replies with a new plan, a question to the user, done, a stop
-  or an info.
-- Capability levels: read, write, destructive and external. Risky steps wait for
-  the user to confirm.
+- The browser sends the user's request, the page state and the site context. The
+  server replies with a plan.
+- A plan is a list of steps that call the capabilities of the site.
+- A step can use what an earlier step of the same plan returned.
+- A step can repeat calls for each item of a list that an earlier step returned.
+- After each plan, the browser reports back. The server then replies with a new
+  plan, a question to the user, done, a stop or an info.
+- Each capability has a level: read, write, destructive or external. Before a
+  risky step, the user confirms.
