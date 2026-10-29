@@ -12,10 +12,13 @@ functions. The browser runs the plan with `dicta-action-js`.
 
 - `dicta-action-harness`: a developer opens their AI agent in it, points it to
   their site's source code and test environment, and builds the site's action
-  layer: capability functions and a site context.
+  layer: the capability module, which holds the capability functions and the
+  site context.
 - Capability functions: small functions that wrap what the site's own buttons
   already call. They are reviewed and bundled into the site like any other code.
-- Site context: what the LLM needs to know about the site, kept on the server.
+- Site context: what the LLM needs to know about the site. It ships with the
+  capability module, and the browser sends it in every round, so the planner
+  always knows exactly what the page can run.
 - dicta-action-server: turns a request into a plan, using an LLM and the site
   context.
 - `dicta-action-js`: runs the plan in the page, asks the user to confirm risky
@@ -25,8 +28,8 @@ functions. The browser runs the plan with `dicta-action-js`.
 
 - A planner. It never acts on the site itself and never holds user credentials;
   the browser runs every step with the user's own rights.
-- Site specific. It knows one site well, from its context, instead of guessing
-  from the screen.
+- Site specific. It knows the site well, from the context each round brings,
+  instead of guessing from the screen.
 - For sites whose team has the source code and a test environment.
 
 ## What it is not
@@ -39,7 +42,7 @@ functions. The browser runs the plan with `dicta-action-js`.
 
 ## First version
 
-- A request and the page state in, a plan out.
+- A request, the page state and the site context in, a plan out.
 - Plans with steps that call capabilities, use the outputs of earlier steps and
   repeat steps for each item of an output.
 - After each plan the report comes back, with the outputs the plan asked for,

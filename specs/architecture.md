@@ -4,12 +4,12 @@
 
 ```
 dicta-action-js (browser) --HTTP--> dicta-action-server --> LLM
-                          <-plan---  (site context)     <--
+(site context)            <-plan---                     <--
 ```
 
 1. The application's own backend signs a JWT for its user.
-2. `dicta-action-js` sends the request text, the user's time, the page state and
-   the token to dicta-action-server.
+2. `dicta-action-js` sends the request text, the user's time, the page state,
+   the site context and the token to dicta-action-server.
 3. The server verifies the token, asks the planner for a plan, checks the plan
    against the site's capabilities and returns it.
 4. The browser runs the plan and always reports back in a new round of the same
@@ -25,9 +25,10 @@ Message formats are in `contract-protocol.md`.
 - Plain HTTP: one `POST` per round, JSON in and out. A round needs no streaming.
   A WebSocket would also close at each page load, and keeping the exchange on
   the server would need sticky load balancing.
-- Stateless. Each round carries the whole exchange of the user's request: the
-  text, the page state, and every earlier plan with its report. The server keeps
-  nothing between rounds, so any instance can serve any round.
+- Stateless. Each round carries the site context and the whole exchange of the
+  user's request: the text, the page state, and every earlier plan with its
+  report. The server keeps nothing between rounds, so any instance can serve any
+  round.
 - `dicta-action-js` keeps the exchange while the user's request runs. It
   survives only a page load that the plan itself causes, so a request can go on
   on the next page; a request ends when the user opens or reloads the page. When
@@ -59,10 +60,19 @@ As in dicta-server:
 
 ## Site context
 
-- One site per server instance. The site context is a file, read at startup; the
-  server does not start without a valid one.
+- The site context comes from the capability module and ships with it in the
+  site. The client sends it in every round. So the module and the context are
+  always the same version, and one server can serve any number of sites.
 - It lists the site's capabilities with their arguments and levels, and what the
   planner needs to know about the site. Its format is in `contract-context.md`.
+  The server checks it in every round; a round with a context that is not valid
+  gets a `400`.
+- It is sent and read in every round, so it is kept small. The planner puts it
+  first in its prompt, so the LLM provider's prompt caching makes repeated
+  rounds cheap.
+- It comes from the browser, so the server does not trust it. It only shapes
+  plans: every step runs in the browser with the user's own rights, and
+  confirmations come from the module.
 - The server adds the built-in capabilities of `dicta-action-js` to it
   (`contract-capability.md`, Built-in capabilities), so plans can call them like
   any other capability.
@@ -100,7 +110,6 @@ Environment variables:
   unless `ALLOW_UNAUTHENTICATED` is `true`.
 - `ALLOW_UNAUTHENTICATED`: when `true`, tokens are not checked. For development
   only. Default `false`. The server logs a warning at startup when it is on.
-- `CONTEXT_FILE`: the path of the site context file. Required.
 - `PLANNER`: the planner. Required. Values: `stub`.
 - `MAX_PLANS`: the most plans per user request (Requests), a whole number from
   `1` to `20`. Default `10`.

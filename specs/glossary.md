@@ -19,8 +19,9 @@ detail.
   group, for example `dicta.listHistory`.
 - Level: how risky a capability is: `read`, `write`, `destructive` or
   `external`.
-- Site context: the JSON file the server reads at startup: what the planner
-  knows about the site (`contract-context.md`).
+- Site context: what the planner knows about the site: its capabilities and
+  notes. It ships with the capability module, and the client sends it in every
+  round (`contract-context.md`).
 - State: a small JSON object that says what the page shows now. The site's state
   function makes it, and the client sends it in every round.
 
