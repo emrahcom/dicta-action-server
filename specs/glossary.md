@@ -28,8 +28,7 @@ detail.
 ## A request
 
 - User request: one thing the user asks for, in plain text, for example "move
-  the selected tasks to Friday". It lasts until done, a stop, an info, cancel,
-  an error or a page change outside a step.
+  the selected tasks to Friday", from start to its outcome.
 - `requestId`: the server's id for one user request, the same in all its rounds.
 - Round: one HTTP request from the client to the server and its response. A user
   request takes one or more rounds (`contract-protocol.md`).
@@ -49,9 +48,8 @@ detail.
 - Added text: text the user gives while a request runs. It interrupts the plan
   and goes to the planner.
 - Cancel: the user ends the request. Nothing after the current step runs.
-- Page change: a page load in the middle of a request. During a step, the
-  request goes on on the new page, and the plan halts there with `navigated`; at
-  any other time, the request ends (`contract-protocol.md`, Page changes).
+- Page change: a page load in the middle of a request (`contract-protocol.md`,
+  Page changes).
 - History: finished user requests of the browser tab, kept by the client and
   read with `dicta.listHistory` and `dicta.getHistory`.
 - `MAX_PLANS`: the most plans one user request may have.
@@ -71,9 +69,8 @@ detail.
 - Label: the plan's `text`, shown while the plan runs.
 - Final: a plan the planner marks as the whole job. When it succeeds, the server
   replies with done without asking the planner again.
-- Confirmation: before a `destructive` or `external` step, or a `forEach` of
-  `write` calls over more items than `confirmOver`, the client shows the
-  capability's `confirm` text and the user clicks Continue or Cancel.
+- Confirmation: the client asks the user to click Continue or Cancel before a
+  risky step (`contract-plan.md`, Confirmation).
 
 ## After a plan
 
@@ -83,9 +80,5 @@ detail.
   report. Outputs that are not included stay in the browser.
 - Report: what the client sends back about a plan: the included outputs, the
   included outputs that were too large and the halt, if any.
-- Halt: where and why a plan stopped before its end: the step, a code and a
-  message. The cause can be an error (`capability`, `reference`, `limit`,
-  `invalid`, or a capability's own error code such as `not_found`) or not
-  (`cancelled`, `interrupted`, `navigated`). When it is in a `forEach`, the halt
-  also names the item and call, and holds the included outputs of the items that
-  ran (`halt.outputs`).
+- Halt: where and why a plan stopped before its end (`contract-protocol.md`,
+  Report).
