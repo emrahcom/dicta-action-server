@@ -70,9 +70,11 @@ detail.
 
 - Result: the JSON value a step returns. For a `forEach`, an array with one
   entry for each item.
-- Show: a mark on a top-level step that puts its result in the report. Results
-  that are not shown stay in the browser.
-- Report: what the client sends back about a plan: the shown results, the shown
-  results that were too large and the failure, if any.
+- `reportResult`: a mark on a top-level step that puts its result in the report.
+  Results that are not reported stay in the browser.
+- Report: what the client sends back about a plan: the reported results, the
+  reported results that were too large and the failure, if any.
 - Failure: the step that failed, with a code and a message, for example
   `capability`, `reference`, `limit`, `invalid`, `cancelled` or `interrupted`.
+  When it is a `forEach`, the failure also names the failed item and call, and
+  holds the reported results of the items that ran (`failure.results`).
