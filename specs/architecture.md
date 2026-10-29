@@ -34,9 +34,10 @@ Message formats are in `contract-protocol.md`.
   storage, and the new page continues it. A page change at any other time, for
   example while a question or a confirmation is open, ends the request
   (`contract-protocol.md`, Page changes).
-- When a request ends, the client adds it to the tab's history, also in session
-  storage. The planner reads it with `dicta.listHistory` and `dicta.getHistory`
-  (`contract-capability.md`, Built-in capabilities).
+- When a request ends, the client adds it to the history, a list of finished
+  requests that it keeps in the tab's session storage. The planner reads it with
+  `dicta.listHistory` and `dicta.getHistory` (`contract-capability.md`, Built-in
+  capabilities).
 - A limit on plans per user request (`MAX_PLANS`) stops runaway loops and their
   cost. It is not a target: one plan can hold many steps. The server counts the
   earlier plans in the exchange. When the planner replies with a new plan and
