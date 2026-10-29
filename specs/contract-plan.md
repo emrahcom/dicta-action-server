@@ -37,9 +37,9 @@ stop.
 
 `final` is for the server only. The planner sets it to `true` when the plan is
 the whole job. When a plan with `final: true` reports that all its steps
-succeeded, the server answers done without asking the planner again. Without
-`final`, or after a failure, the planner decides. The client ignores `final` and
-sends the plan back unchanged in the exchange.
+succeeded, the server replies with done without asking the planner again.
+Without `final`, or after a failure, the planner decides. The client ignores
+`final` and sends the plan back unchanged in the exchange.
 
 ## Steps
 

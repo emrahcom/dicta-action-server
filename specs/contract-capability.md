@@ -142,7 +142,7 @@ go into the site context like any other capability. Their names are in the
   `time` is when the request ended (`contract-protocol.md`, Request body).
   `text` is the user's request, cut to 200 characters. `outcome` is how the
   request ended: its `type` is `done`, `stop`, `cancelled` (the user cancelled
-  it) or `error` (an HTTP error or an answer type the client does not know ended
+  it) or `error` (an HTTP error or a reply type the client does not know ended
   it; `contract-protocol.md`, Errors and Response body), and its `text` is the
   text of the server's done or stop, left out when there was none.
 

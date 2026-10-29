@@ -37,7 +37,7 @@ functions. The browser runs the plan with `dicta-action-js`.
 - Not a generic browser agent. It does not click through unknown sites.
 - Not a code generator at run time. A plan is data: steps that call known
   functions, never code to run.
-- Not a chat bot. It answers with plans, and with a question only when it needs
+- Not a chat bot. It replies with plans, and with a question only when it needs
   one to go on.
 
 ## First version
@@ -46,7 +46,7 @@ functions. The browser runs the plan with `dicta-action-js`.
 - Plans with steps that call capabilities, use the outputs of earlier steps and
   repeat steps for each item of an output.
 - After each plan the report comes back, with the outputs the plan asked for,
-  and the server answers with a new plan, a question to the user, done or a
+  and the server replies with a new plan, a question to the user, done or a
   stop.
 - Capability levels: read, write, destructive and external. Destructive and
   external steps wait for the user to confirm.

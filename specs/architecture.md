@@ -14,7 +14,7 @@ dicta-action-js (browser) --HTTP--> dicta-action-server --> LLM
    against the site's capabilities and returns it.
 4. The browser runs the plan and always reports back in a new round of the same
    user request: the original text, the plans so far with their reports, and the
-   user's answer if there was a question. The server decides the next answer: a
+   user's answer if there was a question. The server decides the next reply: a
    new plan, a question to the user, done or a stop. So the server sees every
    outcome.
 
@@ -37,10 +37,10 @@ Message formats are in `contract-protocol.md`.
   (`contract-capability.md`, Built-in capabilities).
 - A limit on plans per user request (`MAX_PLANS`) stops runaway loops and their
   cost. It is not a target: one plan can hold many steps. The server counts the
-  earlier plans in the exchange. When the planner answers with a new plan and
-  the limit is already reached, the round gets a stop instead; every other
-  answer goes through, so a request that has finished its job is never stopped
-  by the limit.
+  earlier plans in the exchange. When the planner replies with a new plan and
+  the limit is already reached, the round gets a stop instead; every other reply
+  goes through, so a request that has finished its job is never stopped by the
+  limit.
 - All paths start with `/dicta-action/`, so the server can share a domain with
   the application behind a proxy.
 - CORS allows any origin. The token is sent in the `Authorization` header, not
@@ -79,23 +79,23 @@ As in dicta-server:
 
 ## Planner
 
-- Turns a round into an answer: a plan, a question, done or a stop.
+- Turns a round into a reply: a plan, a question, done or a stop.
 - Chosen per server. The first one is `stub`: no LLM and no key, for tests. LLM
   planners come later.
-- `stub` takes its answers from the request text: a JSON array of answers
+- `stub` takes its replies from the request text: a JSON array of replies
   (`contract-protocol.md`, Response body), for example
   `[{"type": "plan", "plan": {...}}, {"type": "done"}]`. In each round it gives
-  the answer whose index is the number of items in the exchange, so the first
+  the reply whose index is the number of items in the exchange, so the first
   round gets the first one. When the text is not such an array, or the array has
-  no answer for the round, it answers with a stop.
+  no reply for the round, it replies with a stop.
 - A report on a plan marked final whose steps all succeeded gets done from the
   server, without the planner (`contract-plan.md`, Reporting).
 - A report with the failure code `cancelled` gets a stop from the server,
   without the planner (`contract-protocol.md`, Added text and cancel).
-- The server checks every answer before it leaves (`contract-protocol.md`,
+- The server checks every reply before it leaves (`contract-protocol.md`,
   Response body). For a plan: each step calls a capability of the site context,
   with arguments that match its schema, and each reference points to an earlier
-  step; the full list is in `contract-plan.md` (Failures). An answer that fails
+  step; the full list is in `contract-plan.md` (Failures). A reply that fails
   the check is never sent; the round gets a stop instead.
 
 ## State

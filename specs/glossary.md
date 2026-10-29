@@ -8,7 +8,7 @@ detail.
 - Site: the web application that uses dicta actions.
 - Client: `dicta-action-js`, in the user's browser. It runs plans, asks for
   confirmations and talks to the server.
-- Server: dicta-action-server. It turns a request into answers; it never acts on
+- Server: dicta-action-server. It turns a request into replies; it never acts on
   the site.
 - Planner: the LLM behind the server that writes plans and questions.
 - Capability: a function of the site that a plan can call, with a name, a level,
@@ -35,10 +35,10 @@ detail.
 - Exchange: everything that happened so far in a user request, oldest first:
   plans with their reports, questions with their answers and added text. The
   client sends all of it in every round.
-- Answer (of the server): what a round's response carries: a plan, a question,
-  done or a stop.
+- Reply: what the server's response to a round carries: a plan, a question, done
+  or a stop.
 - Question: the server asks the user something it needs to go on. The user's
-  reply is the answer to the question.
+  answer goes back in the next round.
 - Done: the user request is finished.
 - Stop: the user request ends without finishing, with a reason for the user.
 - Outcome: how a user request ended: done, a stop, cancel or an error, with the
@@ -64,7 +64,7 @@ detail.
   example `$1.id` or `$item.id`.
 - Label: the plan's `text`, shown while the plan runs.
 - Final: a plan the planner marks as the whole job. When it succeeds, the server
-  answers done without asking the planner again.
+  replies with done without asking the planner again.
 - Confirmation: before a `destructive` or `external` step, or a `forEach` of
   `write` calls over more items than `confirmOver`, the client shows the
   capability's `confirm` text and the user clicks Continue or Cancel.

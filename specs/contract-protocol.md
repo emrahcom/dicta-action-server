@@ -39,7 +39,7 @@ a new one.
 ```
 
 - `requestId`: left out in the first round. In later rounds, the id the server
-  gave in its first answer.
+  gave in its first reply.
 - `text`: the user's request, the same in every round (Limits).
 - `time`: the user's current time, sent new in every round, so the planner can
   read words like "today" or "tomorrow".
@@ -146,7 +146,7 @@ all complete.
 - While a confirmation is open, text is ignored: only a click on its buttons
   answers it.
 - Cancel: the client reports the plan with the failure code `cancelled` at the
-  step or item where it stopped, and the request ends. The server answers with a
+  step or item where it stopped, and the request ends. The server replies with a
   stop without asking the planner. Cancel while a confirmation is open reports
   `cancelled` at that step, which does not run. When the client was waiting for
   the server's response, or a question was open, it reports nothing more.
@@ -178,14 +178,14 @@ after a page load in the same tab only when a step was running:
 ```json
 {
   "requestId": "...",
-  "answer": { "type": "plan", "plan": { "steps": ["..."], "final": true } }
+  "reply": { "type": "plan", "plan": { "steps": ["..."], "final": true } }
 }
 ```
 
 `requestId` identifies the user request across its rounds, for the server's
-logs. The server creates it in the first round and repeats it in every answer.
+logs. The server creates it in the first round and repeats it in every reply.
 
-`answer` has a `type`:
+`reply` has a `type`:
 
 - `plan`: run `plan` (`contract-plan.md`) and report back.
 - `question`: show `text` to the user and send their answer in the next round.
@@ -201,7 +201,7 @@ sentence, and each option a few words (Limits).
 ```json
 {
   "requestId": "...",
-  "answer": {
+  "reply": {
     "type": "question",
     "text": "Which Friday?",
     "options": ["This week", "Next week"]
@@ -209,18 +209,18 @@ sentence, and each option a few words (Limits).
 }
 ```
 
-The server checks every answer before it sends it: `type` is one of the four, a
+The server checks every reply before it sends it: `type` is one of the four, a
 question and a stop have a `text`, `options` is a list of strings, and the
-limits hold. An answer that fails the check is never sent; the round gets a stop
+limits hold. A reply that fails the check is never sent; the round gets a stop
 instead. A plan is checked as well (`contract-plan.md`, Failures).
 
-Clients ignore fields they do not know. An answer type they do not know ends the
+Clients ignore fields they do not know. A reply type they do not know ends the
 request as an error, as an HTTP error does (Errors), so a newer server never
 leaves an older client waiting.
 
 ## Errors
 
-The server answers a round it cannot take with an HTTP error and a JSON body
+The server responds to a round it cannot take with an HTTP error and a JSON body
 `{ "error": "..." }`:
 
 - `400`: the body is not valid, or a part of it is over its limit (Limits). The
@@ -248,7 +248,7 @@ only guards against a client that breaks them.
 - A plan: at most 16 KB and 50 top-level steps (`contract-plan.md`, Limits).
 - The included outputs of a report: at most 16 KB together (Report).
 - Plans in a request: at most `MAX_PLANS`, which is at most 20.
-- The `text` of an answer: at most 200 characters. A question's `options`: at
-  most 5, each at most 50 characters.
+- The `text` of a reply: at most 200 characters. A question's `options`: at most
+  5, each at most 50 characters.
 
 Questions and added texts have no count limit: a person writes each of them.
