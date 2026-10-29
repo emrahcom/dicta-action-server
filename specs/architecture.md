@@ -13,7 +13,7 @@ dicta-action-js (browser) --HTTP--> dicta-action-server --> LLM
 3. The server verifies the token, asks the planner for a plan, checks the plan
    against the site's capabilities and returns it.
 4. The browser runs the plan and always reports back in a new round of the same
-   user request: the original text, the plans so far with their results, and the
+   user request: the original text, the plans so far with their reports, and the
    user's answer if there was a question. The server decides the next answer: a
    new plan, a question to the user, done or a stop. So the server sees every
    outcome.
@@ -26,8 +26,8 @@ Message formats are in `contract-protocol.md`.
   A WebSocket would also close at each page load, and keeping the exchange on
   the server would need sticky load balancing.
 - Stateless. Each round carries the whole exchange of the user's request: the
-  text, the page state, and every earlier plan with its results. The server
-  keeps nothing between rounds, so any instance can serve any round.
+  text, the page state, and every earlier plan with its report. The server keeps
+  nothing between rounds, so any instance can serve any round.
 - `dicta-action-js` keeps the exchange while the user's request runs. It
   survives only a page load that the plan itself causes, so a request can go on
   on the next page; a request ends when the user opens or reloads the page. When

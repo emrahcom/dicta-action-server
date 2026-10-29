@@ -47,9 +47,29 @@ sends the plan back unchanged in the exchange.
 - `forEach`: runs the `call` steps in `do` once for each item of an array. `do`
   holds only `call` steps; a `forEach` cannot hold another `forEach`.
 
+A top-level step can also have `show` (Show).
+
 Steps run one after the other, in order. Nothing else exists: no conditions, no
 expressions and no arithmetic. Decisions are made by the server in the next
 round, and values are computed when the plan is written.
+
+## Show
+
+`"show": true` on a top-level step puts its result in the report, so the planner
+can read it in the next round (`contract-protocol.md`, Report). Without it, the
+planner learns only that the step succeeded. References in the plan use every
+result, shown or not.
+
+The planner shows a result only when it has to read it to decide what comes
+next, for example a list the user asks about. A result that only feeds later
+steps of the same plan is not shown. A `forEach` with `show` shows its whole
+result; steps in a `do` have no `show`.
+
+```json
+{
+  "steps": [{ "call": "tasks.list", "args": { "due": "today" }, "show": true }]
+}
+```
 
 ## References
 
@@ -75,6 +95,7 @@ it before it sends it:
 - every `args` matches that capability's schema, with no properties the schema
   does not name;
 - every reference points to an earlier step or to a `forEach` item;
+- `show` is `true` when it is set, and only on top-level steps;
 - a capability that `navigates` is called only in the last step, never inside a
   `forEach`.
 
@@ -82,7 +103,7 @@ A step fails when its capability throws, when a reference has no value or a
 value that does not fit where it is used, or when a limit is reached. The client
 checks each call's arguments against the schema again once their references are
 filled in, and a `forEach` needs an array. The client stops at the first failed
-step and reports the results so far and the failure.
+step and reports the shown results so far and the failure.
 
 ## Limits
 

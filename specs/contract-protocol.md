@@ -26,7 +26,7 @@ a new one.
   "exchange": [
     {
       "plan": { "steps": ["..."] },
-      "report": { "results": ["..."] }
+      "report": { "results": { "1": "..." } }
     },
     {
       "question": "Which Friday, this week or next week?",
@@ -59,30 +59,39 @@ Every time in the contracts is the user's local time with its offset, in ISO
 
 ```json
 {
-  "results": [{ "id": "t1" }],
-  "failure": { "step": 2, "code": "not_found", "message": "No such task" }
+  "results": { "1": [{ "id": "t1", "title": "Budget review" }] },
+  "tooLarge": { "3": 48210 },
+  "failure": { "step": 4, "code": "not_found", "message": "No such task" }
 }
 ```
 
-- `results`: one entry for each top-level step that succeeded, in order; the
-  failed step is only in `failure`. The whole round must stay under 1 MB: when a
-  step's result would push it over, that step fails with the code `limit`. The
+The report holds only the results the plan shows (`contract-plan.md`, Show).
+Which steps succeeded follows from `failure`: every step before the failed one,
+or every step when there is no failure.
+
+- `results`: the result of each top-level step with `show` that succeeded, by
+  its number, from 1 as in references. Steps without `show` have no entry. The
   result of a `forEach` step is an array with one entry for each item: the array
-  of the results of its `do` steps.
+  of the results of its `do` steps. Left out when there is no entry.
+- `tooLarge`: shown results that did not fit, by step number, each with its size
+  in bytes. The shown results of one report, in `results` and `failure.results`,
+  are at most 16 KB together, counted as the UTF-8 bytes of their JSON. The
+  client adds them in step order and leaves out each one that would go over. The
+  step itself succeeded; the planner can ask again for less, with a narrower
+  call. Left out when there is no entry.
 - `failure`: only when a step failed: the number of the top-level step, from 1
   as in references (left out for `invalid`), a `code` and a `message`. Codes:
   `capability` (the capability threw), `reference` (a reference had no value, or
   a value that does not fit where it is used), `limit` (a `forEach` over more
-  than 100 items, or the round size was reached), `invalid` (the plan failed the
-  client's check before any step ran), `cancelled` (the user cancelled the
-  request), `interrupted` (the user added text; Added text). For `capability`,
-  the capability's own error code and message are used when it gives them. When
-  the failed step is a `forEach`, `item` is the number of the failed item and
-  `do` the number of the failed call in its `do`, both from 0. The items before
-  it are done, and in the failed item, the calls before the failed one; nothing
-  after it ran. `results` then holds every item that ran, in the form of a
-  `forEach` result; the last entry holds only the calls of the failed item that
-  are done.
+  than 100 items), `invalid` (the plan failed the client's check before any step
+  ran), `cancelled` (the user cancelled the request), `interrupted` (the user
+  added text; Added text). For `capability`, the capability's own error code and
+  message are used when it gives them. When the failed step is a `forEach`,
+  `item` is the number of the failed item and `do` the number of the failed call
+  in its `do`, both from 0. The items before it are done, and in the failed
+  item, the calls before the failed one; nothing after it ran. When the step has
+  `show`, `results` then holds every item that ran, in the form of a `forEach`
+  result; the last entry holds only the calls of the failed item that are done.
 
 ## Added text and cancel
 
@@ -90,7 +99,8 @@ The user can add text or cancel while a request runs. The client never stops in
 the middle of a step: it finishes the step it is in, or in a `forEach` all calls
 of the current item, and runs nothing after it. The failure's `step` and, in a
 `forEach`, `item` name the first one that did not run; `do` is not set, and
-`failure.results` holds the items that ran, all complete.
+`failure.results`, when the step has `show`, holds the items that ran, all
+complete.
 
 - Added text: the client reports the plan with the failure code `interrupted` at
   the step or item where it stopped, followed by an `added` item with the text,
