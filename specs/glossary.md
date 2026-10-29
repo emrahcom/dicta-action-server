@@ -69,6 +69,8 @@ detail.
 - Label: the plan's `text`, shown while the plan runs.
 - Final: a plan the planner marks as the whole job. When it succeeds, the server
   replies with done without asking the planner again.
+- `includeOutput`: a mark on a top-level step that puts its output in the
+  report. Outputs that are not included stay in the browser.
 - Confirmation: the client asks the user to click Continue or Cancel before a
   risky step (`contract-plan.md`, Confirmation).
 
@@ -76,8 +78,6 @@ detail.
 
 - Output: the JSON value a step returns. For a `forEach`, an array with one
   entry for each item.
-- `includeOutput`: a mark on a top-level step that puts its output in the
-  report. Outputs that are not included stay in the browser.
 - Report: what the client sends back about a plan: the included outputs, the
   included outputs that were too large and the halt, if any.
 - Halt: where and why a plan stopped before its end (`contract-protocol.md`,
