@@ -13,9 +13,10 @@ dicta-action-js (browser) --request, context--> dicta-action-server --> LLM
    dicta-action-server.
 3. The server verifies the token, asks the planner for a reply, checks it and
    returns it.
-4. After a plan, the browser reports back in a new round of the same user
-   request; after a question, it sends the user's answer. The server decides the
-   next reply, until done, a stop or an info ends the request.
+4. When the reply is a plan, the browser runs it and reports back in a new round
+   of the same user request. When it is a question, the browser sends the user's
+   answer in a new round. The server decides the next reply, until done, a stop
+   or an info ends the request.
 
 Message formats are in `contract-protocol.md`.
 
