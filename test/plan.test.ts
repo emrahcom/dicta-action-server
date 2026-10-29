@@ -31,22 +31,24 @@ const CONTEXT = checkContext({
       },
     },
     {
-      name: "tasks.open",
-      level: "read",
-      description: "Loads the page of a task.",
+      name: "tasks.move",
+      level: "write",
+      description: "Moves a task.",
       args: {
         type: "object",
-        properties: { id: { type: "string" } },
+        properties: {
+          id: { type: "string" },
+          to: { type: "object", properties: { project: { type: "string" } } },
+        },
         required: ["id"],
       },
-      navigates: true,
     },
   ],
 });
 
 const list = { call: "tasks.list", args: {} };
 const create = (args: unknown) => ({ call: "tasks.create", args });
-const open = { call: "tasks.open", args: { id: "t1" } };
+const move = (args: unknown) => ({ call: "tasks.move", args });
 
 const VALID: [string, unknown][] = [
   ["an empty plan", { steps: [] }],
@@ -74,10 +76,7 @@ const VALID: [string, unknown][] = [
   [
     "a forEach over an earlier step",
     {
-      steps: [
-        list,
-        { forEach: "$1", as: "task", do: [create({ title: "$task.title" })] },
-      ],
+      steps: [list, { forEach: "$1", do: [create({ title: "$item.title" })] }],
     },
   ],
   [
@@ -86,11 +85,46 @@ const VALID: [string, unknown][] = [
       steps: [
         list,
         list,
-        { forEach: "$2", as: "t", do: [create({ title: "$1.0.title" })] },
+        { forEach: "$2", do: [create({ title: "$1.0.title" })] },
       ],
     },
   ],
-  ["a navigating call as the last step", { steps: [list, open] }],
+  [
+    "nested arguments the schema names",
+    { steps: [move({ id: "t1", to: { project: "p1" } })] },
+  ],
+  [
+    "$item in nested arguments",
+    {
+      steps: [
+        list,
+        {
+          forEach: "$1",
+          do: [move({ id: "$item.id", to: { project: "$item.project" } })],
+        },
+      ],
+    },
+  ],
+  [
+    "includeOutput on calls",
+    {
+      steps: [
+        { ...list, includeOutput: true },
+        { ...list, includeOutput: false },
+      ],
+    },
+  ],
+  [
+    "includeOutput on a forEach",
+    { steps: [list, { forEach: "$1", do: [list], includeOutput: true }] },
+  ],
+  [
+    "a plan of 16 KB",
+    {
+      steps: [],
+      text: "a".repeat(16 * 1024 - '{"steps":[],"text":""}'.length),
+    },
+  ],
   ["50 steps", { steps: Array(50).fill(list) }],
 ];
 
@@ -107,6 +141,11 @@ const INVALID: [string, unknown, RegExp][] = [
   ["final that is not a boolean", { steps: [], final: "yes" }, /final must be/],
   ["a label that is not text", { steps: [], text: 5 }, /text must be a string/],
   ["51 steps", { steps: Array(51).fill(list) }, /at most 50 steps/],
+  [
+    "a plan over 16 KB",
+    { steps: [], text: "a".repeat(16 * 1024) },
+    /at most 16 KB/,
+  ],
   ["a step that is neither", { steps: [{ wait: 1 }] }, /a call or a forEach/],
   [
     "an unknown capability",
@@ -123,6 +162,16 @@ const INVALID: [string, unknown, RegExp][] = [
     "a missing required argument",
     { steps: [create({})] },
     /args\.title is required/,
+  ],
+  [
+    "an argument the schema does not name",
+    { steps: [create({ title: "a", owner: "chen" })] },
+    /args\.owner is not in the schema/,
+  ],
+  [
+    "a nested argument the schema does not name",
+    { steps: [move({ id: "t1", to: { project: "p1", board: "b" } })] },
+    /args\.to\.board is not in the schema/,
   ],
   [
     "an argument of the wrong type",
@@ -160,9 +209,14 @@ const INVALID: [string, unknown, RegExp][] = [
     /\$0 does not point/,
   ],
   [
-    "an item reference outside a forEach",
+    "$item outside a forEach",
+    { steps: [list, create({ title: "$item.title" })] },
+    /\$item\.title is used outside a forEach/,
+  ],
+  [
+    "a reference that is neither a step nor $item",
     { steps: [list, create({ title: "$task.title" })] },
-    /\$task\.title names no forEach item/,
+    /\$task\.title is not a step number or \$item/,
   ],
   [
     "a reference with an empty path part",
@@ -171,53 +225,37 @@ const INVALID: [string, unknown, RegExp][] = [
   ],
   [
     "a forEach over a later step",
-    { steps: [{ forEach: "$1", as: "t", do: [list] }] },
+    { steps: [{ forEach: "$1", do: [list] }] },
     /\$1 does not point/,
   ],
   [
     "a forEach over an item name",
-    { steps: [list, { forEach: "$task", as: "t", do: [list] }] },
+    { steps: [list, { forEach: "$item", do: [list] }] },
     /forEach must refer to an earlier step/,
   ],
   [
-    "a forEach without a name",
-    { steps: [list, { forEach: "$1", as: "1x", do: [list] }] },
-    /as must be a name/,
+    "a forEach with as",
+    { steps: [list, { forEach: "$1", as: "t", do: [list] }] },
+    /has as/,
+  ],
+  [
+    "includeOutput that is not a boolean",
+    { steps: [{ ...list, includeOutput: "yes" }] },
+    /includeOutput must be true or false/,
+  ],
+  [
+    "includeOutput on a call in a do",
+    {
+      steps: [list, { forEach: "$1", do: [{ ...list, includeOutput: true }] }],
+    },
+    /do\[0\] has includeOutput/,
   ],
   [
     "a forEach inside a forEach",
     {
-      steps: [
-        list,
-        {
-          forEach: "$1",
-          as: "a",
-          do: [{ forEach: "$1", as: "b", do: [list] }],
-        },
-      ],
+      steps: [list, { forEach: "$1", do: [{ forEach: "$1", do: [list] }] }],
     },
     /do\[0\] must be a call/,
-  ],
-  [
-    "a reference to another forEach's item",
-    {
-      steps: [
-        list,
-        { forEach: "$1", as: "a", do: [list] },
-        { forEach: "$1", as: "b", do: [create({ title: "$a.title" })] },
-      ],
-    },
-    /\$a\.title names no forEach item/,
-  ],
-  [
-    "a navigating call before the last step",
-    { steps: [open, list] },
-    /must be the last step/,
-  ],
-  [
-    "a navigating call inside a forEach",
-    { steps: [list, { forEach: "$1", as: "t", do: [open] }] },
-    /not in a forEach/,
   ],
 ];
 

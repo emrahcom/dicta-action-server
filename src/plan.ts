@@ -4,6 +4,7 @@
 import type { Schema, SiteContext } from "./context.ts";
 
 const MAX_STEPS = 50;
+const MAX_BYTES = 16 * 1024;
 
 export class BadPlan extends Error {}
 
@@ -32,8 +33,8 @@ function isReference(value: unknown): value is string {
 }
 
 // What a reference may point to where it is used: the top-level steps before
-// this one, and the item of the forEach it is in.
-type Scope = { earlierSteps: number; item?: string };
+// this one, and $item inside the do of a forEach.
+type Scope = { earlierSteps: number; inForEach: boolean };
 
 function checkReference(ref: string, scope: Scope, path: string) {
   const [head = "", ...rest] = ref.slice(1).split(".");
@@ -47,8 +48,11 @@ function checkReference(ref: string, scope: Scope, path: string) {
     }
     return;
   }
-  if (head === "" || head !== scope.item) {
-    throw new BadPlan(`${path}: ${ref} names no forEach item here`);
+  if (head !== "item") {
+    throw new BadPlan(`${path}: ${ref} is not a step number or $item`);
+  }
+  if (!scope.inForEach) {
+    throw new BadPlan(`${path}: ${ref} is used outside a forEach`);
   }
 }
 
@@ -109,7 +113,15 @@ function matches(value: unknown, schema: Schema, path: string) {
         throw new BadPlan(`${path}.${name} is required`);
       }
     }
-    for (const [name, property] of Object.entries(schema.properties ?? {})) {
+    const properties = schema.properties;
+    if (properties !== undefined) {
+      for (const name of Object.keys(value)) {
+        if (!(name in properties)) {
+          throw new BadPlan(`${path}.${name} is not in the schema`);
+        }
+      }
+    }
+    for (const [name, property] of Object.entries(properties ?? {})) {
       if (name in value) {
         matches(value[name], property, `${path}.${name}`);
       }
@@ -121,26 +133,34 @@ function matches(value: unknown, schema: Schema, path: string) {
   }
 }
 
+function checkIncludeOutput(step: Record<string, unknown>, path: string) {
+  if (
+    step.includeOutput !== undefined &&
+    typeof step.includeOutput !== "boolean"
+  ) {
+    throw new BadPlan(`${path}.includeOutput must be true or false`);
+  }
+}
+
 function checkCall(
   step: Record<string, unknown>,
   context: SiteContext,
   scope: Scope,
-  isLast: boolean,
   path: string,
 ) {
-  onlyKeys(step, ["call", "args"], path);
+  // Only a top-level step may have includeOutput.
+  onlyKeys(
+    step,
+    scope.inForEach ? ["call", "args"] : ["call", "args", "includeOutput"],
+    path,
+  );
+  checkIncludeOutput(step, path);
   const capability = context.capabilities.find((c) => c.name === step.call);
   if (!capability) {
     throw new BadPlan(`${path}.call names no capability: ${String(step.call)}`);
   }
   if (!isObject(step.args)) {
     throw new BadPlan(`${path}.args must be an object`);
-  }
-  // Calls inside a forEach are never the last step.
-  if (capability.navigates && !isLast) {
-    throw new BadPlan(
-      `${path}: ${capability.name} loads another page, so it must be the last step and not in a forEach`,
-    );
   }
   checkReferences(step.args, scope, `${path}.args`);
   matches(step.args, capability.args, `${path}.args`);
@@ -150,6 +170,9 @@ function checkCall(
 export function checkPlan(plan: unknown, context: SiteContext) {
   if (!isObject(plan)) {
     throw new BadPlan("the plan must be an object");
+  }
+  if (Buffer.byteLength(JSON.stringify(plan)) > MAX_BYTES) {
+    throw new BadPlan("a plan is at most 16 KB");
   }
   onlyKeys(plan, ["steps", "text", "final"], "plan");
   if (plan.text !== undefined && typeof plan.text !== "string") {
@@ -167,36 +190,33 @@ export function checkPlan(plan: unknown, context: SiteContext) {
   }
   steps.forEach((step, i) => {
     const path = `steps[${i}]`;
-    const isLast = i === steps.length - 1;
-    const scope: Scope = { earlierSteps: i };
+    const scope: Scope = { earlierSteps: i, inForEach: false };
     if (!isObject(step)) {
       throw new BadPlan(`${path} must be an object`);
     }
     if ("call" in step) {
-      checkCall(step, context, scope, isLast, path);
+      checkCall(step, context, scope, path);
       return;
     }
     if (!("forEach" in step)) {
       throw new BadPlan(`${path} must be a call or a forEach`);
     }
-    onlyKeys(step, ["forEach", "as", "do"], path);
+    onlyKeys(step, ["forEach", "do", "includeOutput"], path);
+    checkIncludeOutput(step, path);
     if (!isReference(step.forEach) || !/^\$\d/.test(step.forEach)) {
       throw new BadPlan(`${path}.forEach must refer to an earlier step`);
     }
     checkReference(step.forEach, scope, `${path}.forEach`);
-    if (typeof step.as !== "string" || !/^[A-Za-z_]\w*$/.test(step.as)) {
-      throw new BadPlan(`${path}.as must be a name`);
-    }
     if (!Array.isArray(step.do)) {
       throw new BadPlan(`${path}.do must be an array`);
     }
-    const inner: Scope = { earlierSteps: i, item: step.as };
+    const inner: Scope = { earlierSteps: i, inForEach: true };
     step.do.forEach((call: unknown, j) => {
       const innerPath = `${path}.do[${j}]`;
       if (!isObject(call) || !("call" in call)) {
         throw new BadPlan(`${innerPath} must be a call`);
       }
-      checkCall(call, context, inner, false, innerPath);
+      checkCall(call, context, inner, innerPath);
     });
   });
 }
