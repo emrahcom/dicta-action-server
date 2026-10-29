@@ -168,7 +168,7 @@ test("asks the planner after a final plan that failed", async (t) => {
   const failed = {
     plan: { steps: [], final: true },
     report: {
-      failure: { step: 1, code: "not_found", message: "No such task" },
+      halt: { step: 1, code: "not_found", message: "No such task" },
     },
   };
 
@@ -307,7 +307,7 @@ test("takes added text in the exchange", async (t) => {
     {
       plan: PLAN.plan,
       report: {
-        failure: { step: 1, code: "interrupted", message: "added text" },
+        halt: { step: 1, code: "interrupted", message: "added text" },
       },
     },
     { added: "no, Friday" },
@@ -334,13 +334,34 @@ test("replies to a cancelled plan with a stop, without the planner", async (t) =
   const cancelled = {
     plan: { steps: [], final: true },
     report: {
-      failure: { step: 1, code: "cancelled", message: "cancelled" },
+      halt: { step: 1, code: "cancelled", message: "cancelled" },
     },
   };
 
   const { body: response } = await post(base, body([], [cancelled]));
 
   assert.equal(response.reply.type, "stop");
+  assert.equal(calls, 0);
+});
+
+test("does not read failure as a halt", async (t) => {
+  let calls = 0;
+  const base = await start(t, {
+    planner: async () => {
+      calls++;
+      return { type: "done" };
+    },
+  });
+  const old = {
+    plan: { steps: [], final: true },
+    report: {
+      failure: { step: 1, code: "cancelled", message: "cancelled" },
+    },
+  };
+
+  const { body: response } = await post(base, body([], [old]));
+
+  assert.deepEqual(response.reply, { type: "done" });
   assert.equal(calls, 0);
 });
 
@@ -529,7 +550,7 @@ const BAD_BODIES: [string, unknown][] = [
     },
   ],
   [
-    "a failure item that is not a number",
+    "a halt item that is not a number",
     {
       text: "a",
       time: TIME,
@@ -537,18 +558,18 @@ const BAD_BODIES: [string, unknown][] = [
       exchange: [
         {
           plan: {},
-          report: { failure: { code: "x", message: "x", item: "2" } },
+          report: { halt: { code: "x", message: "x", item: "2" } },
         },
       ],
     },
   ],
   [
-    "a failure without a code",
+    "a halt without a code",
     {
       text: "a",
       time: TIME,
       state: {},
-      exchange: [{ plan: {}, report: { failure: { message: "x" } } }],
+      exchange: [{ plan: {}, report: { halt: { message: "x" } } }],
     },
   ],
   [
@@ -623,9 +644,9 @@ test("checks a plan against the context of the round", async (t) => {
   assert.equal(response.reply.type, "stop");
 });
 
-const failed = (failure: object, outputs?: object) => ({
+const halted = (halt: object, outputs?: object) => ({
   plan: PLAN.plan,
-  report: { ...(outputs ? { outputs } : {}), failure },
+  report: { ...(outputs ? { outputs } : {}), halt },
 });
 
 const OVER_LIMIT: [string, (b: any) => void, RegExp][] = [
@@ -650,16 +671,16 @@ const OVER_LIMIT: [string, (b: any) => void, RegExp][] = [
     /^state is larger than 16 KB$/,
   ],
   [
-    "a failure message over 200 characters",
+    "a halt message over 200 characters",
     (b) =>
-      b.exchange.push(failed({ step: 1, code: "x", message: "x".repeat(201) })),
-    /^exchange\[0\]\.report\.failure\.message is longer than 200 characters$/,
+      b.exchange.push(halted({ step: 1, code: "x", message: "x".repeat(201) })),
+    /^exchange\[0\]\.report\.halt\.message is longer than 200 characters$/,
   ],
   [
     "included outputs over 16 KB together",
     (b) =>
       b.exchange.push(
-        failed(
+        halted(
           { step: 2, code: "x", message: "x", outputs: ["x".repeat(8 * 1024)] },
           { "1": "x".repeat(8 * 1024) },
         ),
@@ -686,7 +707,7 @@ test("takes parts at their limits", async (t) => {
   const payload = body([PLAN]);
   payload.exchange.push(
     { question: "Which?", answer: "\u{1F600}".repeat(10000) },
-    failed(
+    halted(
       { step: 2, code: "x", message: "x".repeat(200) },
       { "1": "x".repeat(16 * 1024 - 20) },
     ),

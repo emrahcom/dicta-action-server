@@ -7,7 +7,7 @@ import { BadPlan, checkPlan } from "./plan.ts";
 export type Report = {
   outputs?: Record<string, unknown>;
   tooLarge?: Record<string, number>;
-  failure?: {
+  halt?: {
     step?: number;
     item?: number;
     do?: number;
@@ -93,25 +93,25 @@ function checkReport(value: unknown, path: string): Report {
   ) {
     throw new BadRound(`${path}.tooLarge must map steps to sizes`);
   }
-  const f = value.failure;
+  const f = value.halt;
   if (f !== undefined) {
     if (
       !isObject(f) ||
       typeof f.code !== "string" ||
       typeof f.message !== "string"
     ) {
-      throw new BadRound(`${path}.failure must have a code and a message`);
+      throw new BadRound(`${path}.halt must have a code and a message`);
     }
     if (
       !isOptionalWhole(f.step) ||
       !isOptionalWhole(f.item) ||
       !isOptionalWhole(f.do)
     ) {
-      throw new BadRound(`${path}.failure step, item and do must be numbers`);
+      throw new BadRound(`${path}.halt step, item and do must be numbers`);
     }
     if (chars(f.message) > MAX_MESSAGE_CHARS) {
       throw new BadRound(
-        `${path}.failure.message is longer than ${MAX_MESSAGE_CHARS} characters`,
+        `${path}.halt.message is longer than ${MAX_MESSAGE_CHARS} characters`,
       );
     }
   }
@@ -268,14 +268,14 @@ export async function pickReply(
   maxPlans: number,
 ): Promise<Reply> {
   const last = round.exchange.at(-1);
-  if (last && "plan" in last && last.report.failure?.code === "cancelled") {
+  if (last && "plan" in last && last.report.halt?.code === "cancelled") {
     return { type: "stop", text: "Cancelled." };
   }
   if (
     last &&
     "plan" in last &&
     last.plan.final === true &&
-    last.report.failure === undefined
+    last.report.halt === undefined
   ) {
     return { type: "done" };
   }
