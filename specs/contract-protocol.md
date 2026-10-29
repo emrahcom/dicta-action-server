@@ -86,21 +86,23 @@ failed one, or every step when there is no failure.
   their JSON. The client adds them in step order and leaves out each one that
   would go over. This does not make the step fail; the planner can ask again for
   less, with a narrower call. Left out when there is no entry.
-- `failure`: only when a step failed: the number of the top-level step, from 1
-  as in references (left out for `invalid`), a `code` and a `message`. Codes:
-  `capability` (the capability threw), `reference` (a reference had no value, or
-  a value that does not fit where it is used), `limit` (a `forEach` over more
-  than 100 items), `invalid` (the plan failed the client's check before any step
-  ran), `cancelled` (the user cancelled the request), `interrupted` (the user
-  added text; Added text). For `capability`, the capability's own error code and
-  message are used when it gives them; the client cuts a message to 200
-  characters. When the failed step is a `forEach`, `item` is the number of the
-  failed item and `do` the number of the failed call in its `do`, both from 0.
-  The items before it are done, and in the failed item, the calls before the
-  failed one; nothing after it ran. When the step has `includeOutput`,
-  `failure.outputs` holds every item that ran, in the form of a `forEach`
-  output; the last entry holds only the calls of the failed item that are done.
-  In this example items 0 to 2 are done and item 3 failed at its first call:
+- `failure`: only when the plan did not finish: the number of the top-level
+  step, from 1 as in references (left out for `invalid`), a `code` and a
+  `message`. Codes: `capability` (the capability threw), `reference` (a
+  reference had no value, or a value that does not fit where it is used),
+  `limit` (a `forEach` over more than 100 items), `invalid` (the plan failed the
+  client's check before any step ran), `cancelled` (the user cancelled the
+  request), `interrupted` (the user added text; Added text), `navigated` (the
+  page changed during the step; Page changes). For `capability`, the
+  capability's own error code and message are used when it gives them; the
+  client cuts a message to 200 characters. When the failed step is a `forEach`,
+  `item` is the number of the failed item and `do` the number of the failed call
+  in its `do`, both from 0. The items before it are done, and in the failed
+  item, the calls before the failed one; nothing after it ran. When the step has
+  `includeOutput`, `failure.outputs` holds every item that ran, in the form of a
+  `forEach` output; the last entry holds only the calls of the failed item that
+  are done. In this example items 0 to 2 are done and item 3 failed at its first
+  call:
 
 ```json
 {
@@ -151,6 +153,25 @@ all complete.
 
 Nothing that was done is undone. The report tells exactly what was done, so a
 later request can fix it.
+
+## Page changes
+
+Any capability may load another page, and so may the user. A request goes on
+after a page load in the same tab only when a step was running:
+
+- When the page is left (the browser's `pagehide` event) while a step runs, the
+  client saves the request in the tab's session storage: the exchange, the
+  report so far and the step that was running, in a `forEach` with its item and
+  call.
+- When `dicta-action-js` starts on a page, it looks for a saved request and
+  takes it out. One saved at most 60 seconds ago goes on: the client reports the
+  plan with the failure code `navigated` at the step that was running, with the
+  outputs so far, and sends the new page's `state`. The running step may or may
+  not have finished; nothing after it ran. The client does not run the rest of
+  the plan, which was written for the old page; the planner decides what comes
+  next. An older saved request is dropped.
+- A page load at any other time, while the client waits for the server's
+  response or a question is open, ends the request. It is not kept in history.
 
 ## Response body
 

@@ -98,9 +98,7 @@ it before it sends it:
 - every `args` matches that capability's schema, with no properties the schema
   does not name;
 - every reference points to an earlier step or to a `forEach` item;
-- `includeOutput` is a boolean, and only on top-level steps;
-- a capability that `navigates` is called only in the last step, never inside a
-  `forEach`.
+- `includeOutput` is a boolean, and only on top-level steps.
 
 A step fails when its capability throws, when a reference has no value or a
 value that does not fit where it is used, or when a limit is reached. The client

@@ -89,10 +89,16 @@ developers can change it. Without it, it is 10.
   (`contract-plan.md`, Confirmation). The wording of a confirmation comes only
   from here, never from a plan, so a plan cannot make a risky step look
   harmless, and the user sees exactly what will happen.
-- `navigates`: `true` when the capability loads another page. It is always the
-  last step of a plan, and it never opens a new tab or window. Its output is
-  `null`: the client sends the report from the new page, once it has loaded,
-  with that page's `state`.
+
+## Page changes
+
+Any capability may load another page; the client cannot know it in advance. The
+request goes on on the new page (`contract-protocol.md`, Page changes). A
+capability that loads a page says so in its `desc`, so the planner knows that
+the steps after it will not run.
+
+For this, every page of the site loads `dicta-action-js` and the module, and a
+capability that loads a page stays on the site's own origin.
 
 ## Errors
 

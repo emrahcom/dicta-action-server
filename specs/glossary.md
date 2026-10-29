@@ -77,7 +77,8 @@ detail.
   report. Outputs that are not included stay in the browser.
 - Report: what the client sends back about a plan: the included outputs, the
   included outputs that were too large and the failure, if any.
-- Failure: the step that failed, with a code and a message, for example
-  `capability`, `reference`, `limit`, `invalid`, `cancelled` or `interrupted`.
-  When it is a `forEach`, the failure also names the failed item and call, and
-  holds the included outputs of the items that ran (`failure.outputs`).
+- Failure: where and why a plan did not finish: the step, a code and a message.
+  The cause can be an error (`capability`, `reference`, `limit`, `invalid`) or
+  not (`cancelled`, `interrupted`, `navigated`). When it is a `forEach`, the
+  failure also names the failed item and call, and holds the included outputs of
+  the items that ran (`failure.outputs`).

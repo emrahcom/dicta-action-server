@@ -37,8 +37,8 @@ module (`contract-capability.md`) and sends it as `context` in every round
 - `state`: the `desc` of the site's state function (`contract-capability.md`,
   State).
 - `capabilities`: one entry for each capability of the module, with its `name`,
-  `level`, `desc`, `args` and, when set, `navigates`. The client takes them from
-  the module, so they always match it.
+  `level`, `desc` and `args`. The client takes them from the module, so they
+  always match it.
 
 ## Checks
 
