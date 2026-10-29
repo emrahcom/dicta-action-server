@@ -28,7 +28,7 @@ detail.
 ## A request
 
 - User request: one thing the user asks for, in plain text, for example "move
-  the selected tasks to Friday", from start to its outcome.
+  the selected tasks to Friday". It can take several rounds.
 - `requestId`: the server's id for one user request, the same in all its rounds.
 - Round: one HTTP request from the client to the server and its response. A user
   request takes one or more rounds (`contract-protocol.md`).
