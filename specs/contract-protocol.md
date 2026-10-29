@@ -217,7 +217,7 @@ plain text, with an empty line between paragraphs.
 
 The server checks every reply before it sends it: `type` is one of the five, a
 question, a stop and an info have a `text`, `options` is a list of strings, and
-the limits hold. A reply that fails the check is never sent; the round gets a
+the limits hold. A reply that fails the check is never sent; the server sends a
 stop instead. A plan is checked as well (`contract-plan.md`, Failures).
 
 Clients ignore fields they do not know. A reply type they do not know ends the
@@ -237,7 +237,7 @@ The server responds to a round it cannot take with an HTTP error and a JSON body
 - `500`: an unexpected server error.
 
 Every other error ends the request too. A planner failure is not an HTTP error;
-the round gets a `stop`.
+the server sends a `stop`.
 
 ## Limits
 

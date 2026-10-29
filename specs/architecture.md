@@ -41,9 +41,9 @@ Message formats are in `contract-protocol.md`.
 - A limit on plans per user request (`MAX_PLANS`) stops runaway loops and their
   cost. It is not a target: one plan can hold many steps. The server counts the
   earlier plans in the exchange. When the planner replies with a new plan and
-  the limit is already reached, the round gets a stop instead; every other reply
-  goes through, so a request that has finished its job is never stopped by the
-  limit.
+  the limit is already reached, the server sends a stop instead of the plan;
+  every other reply goes through, so a request that has finished its job is
+  never stopped by the limit.
 - All paths start with `/dicta-action/`, so the server can share a domain with
   the application behind a proxy.
 - CORS allows any origin. The token is sent in the `Authorization` header, not
@@ -99,7 +99,7 @@ As in dicta-server:
   Response body). For a plan: each step calls a capability of the site context,
   with arguments that match its schema, and each reference points to an earlier
   step; the full list is in `contract-plan.md` (Failures). A reply that fails
-  the check is never sent; the round gets a stop instead.
+  the check is never sent; the server sends a stop instead.
 
 ## State
 
