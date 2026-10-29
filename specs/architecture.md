@@ -11,13 +11,12 @@ dicta-action-js (browser) --request, context--> dicta-action-server --> LLM
 2. `dicta-action-js` sends the request text, the user's current local time (for
    words like "today"), the page state, the site context and the token to
    dicta-action-server.
-3. The server verifies the token, asks the planner for a plan, checks the plan
-   against the site's capabilities and returns it.
-4. The browser runs the plan and always reports back in a new round of the same
-   user request: the original text, the plans so far with their reports, and the
-   user's answer if there was a question. The server decides the next reply: a
-   new plan, a question to the user, done, a stop or an info. So the server sees
-   every outcome.
+3. The server verifies the token, asks the planner for a reply, checks it and
+   returns it.
+4. After a plan, the browser reports back in a new round of the same user
+   request; after a question, it sends the user's answer. The server decides the
+   next reply, until done, a stop or an info ends the request. So the server
+   sees every outcome.
 
 Message formats are in `contract-protocol.md`.
 
