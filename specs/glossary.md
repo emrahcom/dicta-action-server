@@ -78,9 +78,9 @@ detail.
 
 ## After a plan
 
-- **Output**: the JSON value a step returns (`outputs` in the report). For a
-  `forEach`, an array with one entry for each item.
 - **Report**: what the client sends back about a plan (`report`): the included
   outputs, the included outputs that were too large and the halt, if any.
+- **Output**: the JSON value a step returns (`outputs` in the report). For a
+  `forEach`, an array with one entry for each item.
 - **Halt**: where and why a plan stopped before its end (`halt`;
   `contract-protocol.md`, Report).
