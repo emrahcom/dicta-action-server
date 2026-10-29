@@ -214,6 +214,8 @@ only guards against a client that breaks them.
   code points). The client does not take longer input from the user.
 - `state`: at most 16 KB, counted as the UTF-8 bytes of its JSON. Keeping it
   small is the site's job (`contract-capability.md`, State).
+- `context`: at most 64 KB, counted as the UTF-8 bytes of its JSON. Keeping it
+  small is the site's job (`contract-context.md`).
 - A failure `message`: at most 200 characters. The client cuts longer ones.
 - A plan: at most 16 KB and 50 top-level steps (`contract-plan.md`, Limits).
 - The included outputs of a report: at most 16 KB together (Report).

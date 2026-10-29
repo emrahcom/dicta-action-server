@@ -44,5 +44,6 @@ module (`contract-capability.md`) and sends it as `context` in every round
 
 A round whose context is not valid gets a `400` (`contract-protocol.md`,
 Errors), with an `error` that names the problem: a field is missing or has the
-wrong type, two capabilities share a name, a level is not one of the four, or
-`args` uses more than the JSON Schema keywords the capability contract allows.
+wrong type, two capabilities share a name, a level is not one of the four,
+`args` uses more than the JSON Schema keywords the capability contract allows,
+or the context is larger than 64 KB (`contract-protocol.md`, Limits).

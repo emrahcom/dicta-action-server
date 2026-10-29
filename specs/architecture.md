@@ -67,9 +67,9 @@ As in dicta-server:
   planner needs to know about the site. Its format is in `contract-context.md`.
   The server checks it in every round; a round with a context that is not valid
   gets a `400`.
-- It is sent and read in every round, so it is kept small. The planner puts it
-  first in its prompt, so the LLM provider's prompt caching makes repeated
-  rounds cheap.
+- It is sent and read in every round, so it is kept small, at most 64 KB
+  (`contract-protocol.md`, Limits). The planner puts it first in its prompt, so
+  the LLM provider's prompt caching makes repeated rounds cheap.
 - It comes from the browser, so the server does not trust it. It only shapes
   plans: every step runs in the browser with the user's own rights, and
   confirmations come from the module.
