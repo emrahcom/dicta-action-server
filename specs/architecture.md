@@ -30,11 +30,12 @@ Message formats are in `contract-protocol.md`.
   the page state, the site context and the exchange so far of this user request,
   with its plans and reports, questions and answers and added text. The server
   keeps nothing between rounds, so any instance can serve any round.
-- `dicta-action-js` keeps the exchange while the user's request runs. When the
-  page changes during a step, it saves the request in the tab, and the request
-  goes on on the new page; a page change at any other time ends the request
-  (`contract-protocol.md`, Page changes). When a request ends, the client keeps
-  it as history for `dicta.listHistory` and `dicta.getHistory`
+- `dicta-action-js` keeps the running request in the page's memory. If the page
+  changes during a step, the client saves the request in the tab's session
+  storage, and the new page continues it. A page change at any other time ends
+  the request (`contract-protocol.md`, Page changes).
+- When a request ends, the client adds it to the tab's history, also in session
+  storage. The planner reads it with `dicta.listHistory` and `dicta.getHistory`
   (`contract-capability.md`, Built-in capabilities).
 - A limit on plans per user request (`MAX_PLANS`) stops runaway loops and their
   cost. It is not a target: one plan can hold many steps. The server counts the
