@@ -161,7 +161,8 @@ complete.
   or item where it stopped, and the request ends. The server replies with a stop
   without asking the planner. Cancel while a confirmation is open reports
   `cancelled` at that step, which does not run. When the client was waiting for
-  the server's response, or a question was open, it reports nothing more.
+  the server's response, or a question was open, no step is running: the request
+  ends without another round, and a response that arrives later is ignored.
 
 Nothing that was done is undone. The report tells exactly what was done, so a
 later request can fix it.
