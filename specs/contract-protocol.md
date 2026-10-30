@@ -82,12 +82,13 @@ where the plan halted, or every step when there is no halt.
   succeeded, by its number, from 1 as in references. Other steps have no entry.
   The output of a `forEach` step is an array with one entry for each item: the
   array of the outputs of its `do` steps. Left out when there is no entry.
-- `tooLarge`: included outputs that did not fit, by step number, each with its
-  size in bytes. The included outputs of one report, in `outputs` and
-  `halt.outputs`, are at most 16 KB together, counted as the UTF-8 bytes of
-  their JSON. The client adds them in step order and leaves out each one that
-  would go over. This does not make the step fail; the planner can ask again for
-  less, with a narrower call. Left out when there is no entry.
+- `tooLarge`: the outputs of succeeded steps that did not fit, by step number,
+  each with its size in bytes. The included outputs of one report, in `outputs`
+  and `halt.outputs`, are at most 16 KB together, counted as the UTF-8 bytes of
+  their JSON. The client adds them in step order, `halt.outputs` last, and
+  leaves out each one that would go over. This does not make the step fail; the
+  planner can ask again for less, with a narrower call. Left out when there is
+  no entry.
 - `halt`: only when the plan halted before its end: the number of the top-level
   step where it halted, from 1 as in references (left out for `invalid`), a
   `code` and a `message`. Codes: `capability` (the capability threw),
@@ -103,8 +104,9 @@ where the plan halted, or every step when there is no halt.
   and in that item, the calls before that call; nothing after it ran. When the
   step has `includeOutput`, `halt.outputs` holds every item that ran, in the
   form of a `forEach` output; the last entry holds only the calls of that item
-  that are done. In this example items 0 to 2 are done and item 3 failed at its
-  first call:
+  that are done. When `halt.outputs` does not fit (`tooLarge`), it is left out
+  and `halt.tooLarge` holds its size in bytes. In this example items 0 to 2 are
+  done and item 3 failed at its first call:
 
 ```json
 {
