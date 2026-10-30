@@ -169,9 +169,9 @@ later request can fix it.
 
 ## Page changes
 
-Any capability may load another page, and so may the user. When the page is left
-in the middle of a request, the request goes on in the new page only if a step
-was running; otherwise it ends:
+Any capability may load a page, a new one or the same one again, and so may the
+user. When the page is left in the middle of a request, the request goes on in
+the new page only if a step was running; otherwise it ends:
 
 - When the page is left (the browser's `pagehide` event) while a step runs, the
   client saves the request in the tab's session storage: the exchange, the
