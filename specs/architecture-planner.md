@@ -21,11 +21,11 @@ The order of the request body does not matter; the planner picks the order of
 the prompt.
 
 ```
-instructions               same for every site    cached
-site context               same for one site      cached, cache point
-request text               same for one request
-exchange                   grows every round
-time, state, plans left    new every round
+instructions             same for every site   cached
+site context             same for one site     cached, cache point
+request text             same for one request  cached from round 2
+exchange                 grows every round     cached from round 2, cache point
+time, state, plans left  new every round
 ```
 
 ## Caching
@@ -33,15 +33,18 @@ time, state, plans left    new every round
 LLM providers cache the start of a prompt across separate calls, up to the first
 byte that differs, and bill the cached part at a fraction of the input price.
 The instructions and the site context are the same in every round and for every
-user of a site, so they come first, with the cache point after the site context.
+user of a site, so they come first, with the first cache point after the site
+context.
 
 - The server still sends the whole prompt on every call. The cache saves price
   and time at the provider, not sending.
 - The planner writes the site context into the prompt the same way in every
   round: the same serialization, no reordered keys and nothing before it that
   changes, such as the date or the plans left.
-- The request text stays the same and the exchange only grows, so a second cache
-  point after the exchange is possible if long requests need it.
+- A second cache point goes after the exchange, in every round. The request text
+  stays the same and the exchange only grows, so the next round of the same
+  request reads both from the cache. The planner writes each exchange item the
+  same way in every round.
 - The planner checks the provider's cache counters to confirm hits.
 
 ## Rules for the LLM
