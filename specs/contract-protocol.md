@@ -92,7 +92,7 @@ make a step fail; the planner can ask again for less, with a narrower call.
   each with its size in bytes. Left out when there is no entry.
 - `halt`: only when the plan halted before its end:
   - `step`: the number of the top-level step where it halted, from 1 as in
-    references. Left out for `invalid`.
+    references. Left out for `invalid`, since no step ran.
   - `code`: why it halted. For `capability`, the capability's own code is used
     when it gives one.
     - `capability`: the capability threw.
