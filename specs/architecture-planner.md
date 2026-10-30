@@ -62,6 +62,8 @@ context.
 - When no plans are left, the LLM replies done (the job is finished) or a stop
   (with what was done), never a plan, a question or an info. The server's stop
   at the limit (`architecture.md`, Requests) stays as a guard.
+- Every text for the user, the label, a question with its options, done, a stop
+  and an info, is in the language of the user's request.
 - An info only answers a question about the site itself. A question about the
   user's data gets a plan that reads it, then done.
 - A request that is not about the site gets a short stop, such as "I can only
