@@ -36,11 +36,12 @@ text and cancel). The server always decides what comes next: a new plan, a
 question to the user, done, a stop or an info. The client never decides to go on
 or to stop.
 
-`final` is for the server only. The planner sets it to `true` when the plan is
-the whole job. When a plan with `final: true` reports that all its steps
-succeeded, and no added text follows it, the server replies with done without
-asking the planner again. Without `final`, or after a halt, the planner decides.
-The client ignores `final` and sends the plan back unchanged in the exchange.
+`final` is for the server only. The planner sets it to `true` when the plan does
+the rest of the job, so nothing is left once it succeeds. When a plan with
+`final: true` reports that all its steps succeeded, and no added text follows
+it, the server replies with done without asking the planner again. Without
+`final`, or after a halt, the planner decides. The client ignores `final` and
+sends the plan back unchanged in the exchange.
 
 ## Steps
 

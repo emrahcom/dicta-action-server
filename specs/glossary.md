@@ -70,7 +70,7 @@ detail.
 - **Reference**: a string starting with `$` that stands for an earlier output,
   for example `$1.id` or `$item.id`.
 - **Label**: the plan's `text`, shown while the plan runs.
-- **Final**: a plan the planner marks as the whole job (`final`). When it
+- **Final**: a plan the planner marks as the rest of the job (`final`). When it
   succeeds, the server replies with done without asking the planner again.
 - **Include output**: a mark on a top-level step that puts its output in the
   report (`includeOutput`). Outputs that are not included stay in the browser.
