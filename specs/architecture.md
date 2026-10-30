@@ -98,14 +98,11 @@ As in dicta-server:
   `cancelled`. The server replies with a stop, without asking the planner
   (`contract-protocol.md`, Added text and cancel).
 - The server checks every reply before it leaves (`contract-protocol.md`,
-  Response body). For a plan: each step calls a capability of the site context,
-  with arguments that match its schema, and each reference points to an earlier
-  step; the full list is in `contract-plan.md` (Failures). A reply that fails
-  the check is never sent; the server sends a stop instead.
-
-## State
-
-Instances share nothing and keep nothing between rounds.
+  Response body). For a plan, it checks, among other things, that each step
+  calls a capability of the site context, with arguments that match its schema,
+  and that each reference points to an earlier step (`contract-plan.md`,
+  Failures). A reply that fails the check is never sent; the server sends a stop
+  instead.
 
 ## Configuration
 
