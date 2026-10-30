@@ -1,12 +1,9 @@
 # dicta-action-server
 
 The action server of dicta. dicta actions let users control a web application in
-their own words, through AI. This server is where the AI works: it takes a
-user's request as text, with the current state of the page and the site context,
-and replies with a plan (steps that call the site's capability functions), a
-question to the user, done, a stop or an info. After each plan it gets the
-report back and replies again. It holds the LLM keys. It never acts on the site
-itself; the browser runs the plan.
+their own words, through AI. This server is where the AI works: it turns a
+user's request into replies, such as a plan that the browser runs. It holds the
+LLM keys and never acts on the site itself. The details are in `specs/`.
 
 ## Specs and tasks
 
