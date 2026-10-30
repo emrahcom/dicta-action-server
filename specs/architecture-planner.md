@@ -1,4 +1,4 @@
-# LLM planner
+# Architecture: planner
 
 The design to start from for the first LLM planner (`architecture.md`, Planner).
 It is not built yet; this file changes when it is.
