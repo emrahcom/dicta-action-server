@@ -45,8 +45,9 @@ sends the plan back unchanged in the exchange.
 ## Steps
 
 - `call`: runs one capability, by its name in the site context, with `args`, a
-  JSON object. Its output is what the capability returns, described by its
-  `output` when it has one (`contract-capability.md`).
+  JSON object, always present: `{}` when the capability takes no arguments. Its
+  output is what the capability returns, described by its `output` when it has
+  one (`contract-capability.md`).
 - `forEach`: runs the `call` steps in `do` once for each item of an array. The
   array is a reference: the output of an earlier step, such as `$1`, or an array
   inside that output, reached by a path, such as `$1.items`. A list written in
