@@ -50,8 +50,9 @@ context.
 
 ## Rules for the LLM
 
-- The prompt gives the plans left and the plan limits: 50 steps, 16 KB, 100
-  items in a `forEach` and 16 KB of included outputs.
+- The instructions give the plan limits: 50 steps, 16 KB, 100 items in a
+  `forEach` and 16 KB of included outputs. The last part of the prompt gives the
+  plans left.
 - When no plans are left, the LLM replies done (the job is finished), a stop
   (with what was done) or a question, never a plan and never an info. An info
   would put an answered question in the history, not an unfinished action. The
