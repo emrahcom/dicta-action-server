@@ -12,7 +12,7 @@ calling one of the site's capabilities. It is JSON data, never code.
       "do": [
         {
           "call": "tasks.update",
-          "args": { "id": "$item.id", "due": "2026-11-01" }
+          "args": { "id": "$item.id", "due": "2026-10-30" }
         }
       ]
     }
