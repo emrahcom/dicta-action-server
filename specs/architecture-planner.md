@@ -20,6 +20,9 @@ The planner builds one LLM call for each round, from the request body
 The order of the request body does not matter; the planner picks the order of
 the prompt.
 
+Each part is labeled by its source. The state, outputs and history are given as
+JSON values, never as free text.
+
 ```
 instructions             same for every site   cached
 site context             same for one site     cached, cache point
