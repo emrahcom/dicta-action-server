@@ -85,8 +85,9 @@ developers can change it. Without it, it is 10.
   (`contract-plan.md`, References). It can be left out when the output is never
   referred to.
 - `run`: an async function. It takes the arguments, already checked against
-  `args`, and returns a JSON value that matches `output` when it is set: small,
-  a summary rather than whole data.
+  `args`, and returns a JSON value, matching `output` when it is set. It returns
+  only what a planner needs, such as ids, names and dates, not whole records:
+  included outputs share 16 KB in a report (`contract-protocol.md`, Report).
 - `confirm`: for `write`, `destructive` and `external` capabilities, an async
   function that takes the arguments and returns a short text naming the action
   and what it acts on, for example
