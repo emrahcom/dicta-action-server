@@ -25,16 +25,15 @@ calling one of the site's capabilities. It is JSON data, never code.
 ## Label
 
 `text`, when present, is one short sentence the client shows while the plan
-runs, so the user sees what is happening. Without it, the client shows only the
-progress.
+runs.
 
 ## Reporting
 
 After a plan, the client always sends a new round with its report, whether the
-plan finished or halted, except after a cancel (`contract-protocol.md`, Added
-text and cancel). The server always decides what comes next: a new plan, a
-question to the user, done, a stop or an info. The client never decides to go on
-or to stop.
+plan finished or halted, except when the request ends during it: a cancel or a
+page change (`contract-protocol.md`, Added text and cancel and Page changes).
+The server always decides what comes next: a new plan, a question to the user,
+done, a stop or an info. The client never decides to go on or to stop.
 
 `final` is for the server only. The planner sets it to `true` when the plan does
 the rest of the job, so nothing is left once it succeeds. When a plan with
@@ -68,10 +67,8 @@ the next round (`contract-protocol.md`, Report). With `false`, the planner
 learns only that the step succeeded. References in the plan use every output,
 included or not.
 
-The planner asks for an output only when it has to read it to decide what comes
-next, for example a list the user asks about. An output that only feeds later
-steps of the same plan is not included. A `forEach` with `includeOutput`
-includes its whole output; steps in a `do` have no `includeOutput`.
+A `forEach` with `includeOutput` includes its whole output; steps in a `do` have
+no `includeOutput`.
 
 ```json
 {
@@ -129,10 +126,9 @@ capabilities. Before a step that calls a destructive or external capability, the
 client calls the capability's `confirm` with the step's arguments, references
 filled in, and asks the user with the text it returns.
 
-A `forEach` asks when `do` holds a destructive or external call, or a `write`
-call and more items than the module's `confirmOver` (`contract-capability.md`).
-The calls that ask are then the destructive and external ones, plus the `write`
-ones when the items are over `confirmOver`.
+A `forEach` asks when one of its calls asks: a destructive or external call, or
+a `write` call when there are more items than the module's `confirmOver`
+(`contract-capability.md`).
 
 It asks once for all items, before the first item runs. It fills in and checks
 the arguments of every item first, so a bad item halts the step before the user
