@@ -45,7 +45,8 @@ context.
   stays the same and the exchange only grows, so the next round of the same
   request reads both from the cache. Each exchange item is its own block of the
   prompt, written the same way in every round.
-- The planner checks the provider's cache counters to confirm hits.
+- The planner logs the provider's cache counters with each call, so tests and
+  logs show whether the cache hits.
 
 ## Rules for the LLM
 
