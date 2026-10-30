@@ -131,42 +131,50 @@ and exports them as `dictaCapabilities`. The module adds them to its
 go into the site context like any other capability. Their names are in the
 `dicta` group, which only they use.
 
-- `dicta.listHistory` (`read`): earlier requests of this browser tab, newest
-  first, for requests that refer to the past, such as "undo that" or "the same
-  for Friday". No history is sent unless the planner calls it.
-  - Argument: `limit`, optional, a whole number from 1: the most requests it
-    returns; 10 when left out. A smaller number fails with the code
-    `capability`.
-  - Output: an array with a short entry for each request:
+### `dicta.listHistory`
 
-    ```json
-    [
-      {
-        "requestId": "r2",
-        "time": "2026-10-29T10:15:00+01:00",
-        "text": "move the selected tasks to Friday",
-        "outcome": { "type": "done", "text": "Moved 2 tasks to Friday" }
-      }
-    ]
-    ```
+A `read` capability: earlier requests of this browser tab, newest first, for
+requests that refer to the past, such as "undo that" or "the same for Friday".
+No history is sent unless the planner calls it.
 
-    - `requestId`: the request's id.
-    - `time`: when the request ended (`contract-protocol.md`, Request body).
-    - `text`: the user's request, cut to 200 characters.
-    - `outcome`: how the request ended.
-      - `type`: `done`, `stop`, `info`, `cancelled` (the user cancelled it, or
-        left the page outside a step) or `error` (an HTTP error or a reply type
-        the client does not know ended it; `contract-protocol.md`, Errors and
-        Response body).
-      - `text`: the text of the server's done, stop or info, cut to 200
-        characters. Left out when there was none.
+Argument: `limit`, optional, a whole number from 1: the most requests it
+returns; 10 when left out. A smaller number fails with the code `capability`.
 
-- `dicta.getHistory` (`read`): one request in full.
-  - Argument: `requestId`, required: the request to return. An id that is not
-    kept fails with the code `not_found`.
-  - Output: the fields of a `dicta.listHistory` entry, with `text` and the
-    outcome's `text` not cut, and the request's `exchange` with its reports
-    (`contract-protocol.md`).
+Output: an array with a short entry for each request:
+
+```json
+[
+  {
+    "requestId": "r2",
+    "time": "2026-10-29T10:15:00+01:00",
+    "text": "move the selected tasks to Friday",
+    "outcome": { "type": "done", "text": "Moved 2 tasks to Friday" }
+  }
+]
+```
+
+- `requestId`: the request's id.
+- `time`: when the request ended (`contract-protocol.md`, Request body).
+- `text`: the user's request, cut to 200 characters.
+- `outcome.type`: how the request ended: `done`, `stop`, `info`, `cancelled`
+  (the user cancelled it, or left the page outside a step) or `error` (an HTTP
+  error or a reply type the client does not know ended it;
+  `contract-protocol.md`, Errors and Response body).
+- `outcome.text`: the text of the server's done, stop or info, cut to 200
+  characters. Left out when there was none.
+
+### `dicta.getHistory`
+
+A `read` capability: one request in full.
+
+Argument: `requestId`, required: the request to return. An id that is not kept
+fails with the code `not_found`.
+
+Output: the fields of a `dicta.listHistory` entry, with `text` and
+`outcome.text` not cut, and the request's `exchange` with its reports
+(`contract-protocol.md`).
+
+### History
 
 Both can be in one plan: `dicta.listHistory` with `limit` 1, then
 `dicta.getHistory` with the reference `$1.0.requestId` for the latest request.
