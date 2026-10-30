@@ -3,7 +3,9 @@
 The action server of dicta. dicta actions let users control a web application in
 their own words, through AI. This server is where the AI works: it turns a
 user's request into replies, such as a plan that the browser runs. It holds the
-LLM keys and never acts on the site itself. The details are in `specs/`.
+LLM keys and never acts on the site itself. One server serves any number of
+sites: everything site-specific comes from the client in each round. Keep it
+that way. The details are in `specs/`.
 
 ## Specs and tasks
 

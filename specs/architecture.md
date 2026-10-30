@@ -4,13 +4,13 @@
 
 ```
 dicta-action-js (browser) --request, context--> dicta-action-server --> LLM
-                          <-------reply---------                      <--
+                          <-------reply--------                     <--
 ```
 
 1. The application's own backend signs a JWT for its user.
 2. `dicta-action-js` sends the request text, the user's current local time (for
    words like "today"), the page state, the site context and the token to
-   dicta-action-server.
+   `dicta-action-server`.
 3. The server verifies the token, asks the planner for a reply, checks it and
    returns it.
 4. When the reply is a plan, the browser runs it and reports back in a new round
