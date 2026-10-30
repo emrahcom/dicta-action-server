@@ -376,7 +376,7 @@ test("takes added text in the exchange", async (t) => {
   assert.deepEqual(response.reply, PLAN);
 });
 
-test("replies to a cancelled plan with a stop, without the planner", async (t) => {
+test("asks the planner after a cancelled plan, like any halt", async (t) => {
   let calls = 0;
   const base = await start(t, {
     planner: async () => {
@@ -393,8 +393,8 @@ test("replies to a cancelled plan with a stop, without the planner", async (t) =
 
   const { body: response } = await post(base, body([], [cancelled]));
 
-  assert.equal(response.reply.type, "stop");
-  assert.equal(calls, 0);
+  assert.deepEqual(response.reply, PLAN);
+  assert.equal(calls, 1);
 });
 
 test("does not read failure as a halt", async (t) => {

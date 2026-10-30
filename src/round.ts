@@ -281,9 +281,6 @@ export async function pickReply(
   maxPlans: number,
 ): Promise<Reply> {
   const last = round.exchange.at(-1);
-  if (last && "plan" in last && last.report.halt?.code === "cancelled") {
-    return { type: "stop", text: "Cancelled." };
-  }
   if (
     last &&
     "plan" in last &&
