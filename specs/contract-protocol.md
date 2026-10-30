@@ -142,8 +142,9 @@ complete.
   the step or item where it stopped, followed by an `added` item with the text,
   and the planner decides what comes next. Each text the user gives is its own
   `added` item, in order; several texts before the client stops follow the one
-  report. Text that comes after the last step, before the report is sent, leaves
-  the plan done: the report has no halt, and the `added` items follow it.
+  report. If the text comes when all steps have run but the report is not sent
+  yet, nothing is stopped: the report has no halt, and the `added` items follow
+  it.
 - Text that comes while the client waits for the server's response is added text
   too, since no question is open yet. The client holds it until the response
   arrives:
