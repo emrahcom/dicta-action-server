@@ -208,7 +208,7 @@ logs. The server creates it in the first round and repeats it in every reply.
   `options`, when present, is a list of short answers the user can pick with one
   tap; the user can also answer in their own words.
 - `done`: the request is finished. `text`, when present, is a short summary for
-  the user; without it, the client only shows that it is done.
+  the user.
 - `stop`: the request ends without finishing. `text` says why, for the user.
 - `info`: the request was a question about the site itself, such as how to do
   something on it, and `text` answers it from the site context. The request is
