@@ -40,8 +40,6 @@ user of a site, so they come first, with the cache point after the site context.
 - The planner writes the site context into the prompt the same way in every
   round: the same serialization, no reordered keys and nothing before it that
   changes, such as the date or the plans left.
-- A prompt start below the provider's minimum size is not cached. A context that
-  small is cheap anyway.
 - The request text stays the same and the exchange only grows, so a second cache
   point after the exchange is possible if long requests need it.
 - The planner checks the provider's cache counters to confirm hits.
