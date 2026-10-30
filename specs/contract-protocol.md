@@ -74,18 +74,17 @@ planner could take the wrong day for "today".
 }
 ```
 
-The report holds only the outputs the plan asks for (`contract-plan.md`, Include
-output). Which steps succeeded follows from `halt`: every step before the one
-where the plan halted, or every step when there is no halt.
+Which steps succeeded follows from `halt`: every step before the one where the
+plan halted, or every step when there is no halt.
 
 Included outputs, in `outputs` and `halt.outputs`, are at most 16 KB together,
 counted as the UTF-8 bytes of their JSON. The client adds them in step order,
 `halt.outputs` last, and leaves out each one that would go over: a succeeded
-step goes into `tooLarge`, the halted step into `halt.tooLarge`. This does not
-make a step fail; the planner can ask again for less, with a narrower call.
+step goes into `tooLarge`, the halted step into `halt.tooLarge`. Leaving an
+output out does not make its step fail.
 
-- `outputs`: the output of each top-level step with `includeOutput` that
-  succeeded, by its number, from 1 as in references. Other steps have no entry.
+- `outputs`: the output of each succeeded top-level step with `includeOutput`
+  (`contract-plan.md`, Include output), by its number, from 1 as in references.
   The output of a `forEach` step is an array with one entry for each item: the
   array of the outputs of its `do` steps. Left out when there is no entry.
 - `tooLarge`: the outputs of succeeded steps that did not fit, by step number,
@@ -103,9 +102,8 @@ make a step fail; the planner can ask again for less, with a narrower call.
     - `cancelled`: the user cancelled the request.
     - `interrupted`: the user added text (Added text).
     - `navigated`: the page changed during the step (Page changes).
-  - `message`: what happened, at most 200 characters; the client cuts longer
-    ones. For `capability`, the capability's own message is used when it gives
-    one.
+  - `message`: what happened, at most 200 characters (Limits). For `capability`,
+    the capability's own message is used when it gives one.
   - `item` and `do`: only when the plan halted in a `forEach`: the number of the
     item and of the call in its `do` where it halted, both from 0. The items
     before it are done, and in that item, the calls before that call; nothing
@@ -214,10 +212,9 @@ logs. The server creates it in the first round and repeats it in every reply.
   over. The client shows the text until the user closes it. A question about the
   site's data is not one: it gets a plan that reads the data, then done.
 
-The user wants the task done fast, not to read. Every `text` is one short
-sentence, at most 200 characters, and each option a few words, at most 50
-(Limits). Only an `info` text is longer, at most 2000 characters: plain text,
-with an empty line between paragraphs.
+Every `text` is one short sentence, at most 200 characters, and each option a
+few words, at most 50 (Limits). Only an `info` text is longer, at most 2000
+characters: plain text, with an empty line between paragraphs.
 
 ```json
 {
