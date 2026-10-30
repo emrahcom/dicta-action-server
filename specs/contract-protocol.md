@@ -90,24 +90,33 @@ make a step fail; the planner can ask again for less, with a narrower call.
   array of the outputs of its `do` steps. Left out when there is no entry.
 - `tooLarge`: the outputs of succeeded steps that did not fit, by step number,
   each with its size in bytes. Left out when there is no entry.
-- `halt`: only when the plan halted before its end: the number of the top-level
-  step where it halted, from 1 as in references (left out for `invalid`), a
-  `code` and a `message`. Codes: `capability` (the capability threw),
-  `reference` (a reference had no value, or a value that does not fit where it
-  is used), `limit` (a `forEach` over more than 100 items), `invalid` (the plan
-  failed the client's check before any step ran), `cancelled` (the user
-  cancelled the request), `interrupted` (the user added text; Added text),
-  `navigated` (the page changed during the step; Page changes). For
-  `capability`, the capability's own error code and message are used when it
-  gives them; the client cuts a message to 200 characters. When the plan halted
-  in a `forEach`, `item` is the number of the item and `do` the number of the
-  call in its `do` where it halted, both from 0. The items before it are done,
-  and in that item, the calls before that call; nothing after it ran. When the
-  step has `includeOutput`, `halt.outputs` holds every item that ran, in the
-  form of a `forEach` output; the last entry holds only the calls of that item
-  that are done. When `halt.outputs` does not fit, it is left out and
-  `halt.tooLarge` holds its size in bytes. In this example items 0 to 2 are done
-  and item 3 failed at its first call:
+- `halt`: only when the plan halted before its end:
+  - `step`: the number of the top-level step where it halted, from 1 as in
+    references. Left out for `invalid`.
+  - `code`: why it halted. For `capability`, the capability's own code is used
+    when it gives one.
+    - `capability`: the capability threw.
+    - `reference`: a reference had no value, or a value that does not fit where
+      it is used.
+    - `limit`: a `forEach` over more than 100 items.
+    - `invalid`: the plan failed the client's check before any step ran.
+    - `cancelled`: the user cancelled the request.
+    - `interrupted`: the user added text (Added text).
+    - `navigated`: the page changed during the step (Page changes).
+  - `message`: what happened, at most 200 characters; the client cuts longer
+    ones. For `capability`, the capability's own message is used when it gives
+    one.
+  - `item` and `do`: only when the plan halted in a `forEach`: the number of the
+    item and of the call in its `do` where it halted, both from 0. The items
+    before it are done, and in that item, the calls before that call; nothing
+    after it ran.
+  - `outputs`: only when that `forEach` step has `includeOutput`: every item
+    that ran, in the form of a `forEach` output. The last entry holds only the
+    calls of that item that are done.
+  - `tooLarge`: when `outputs` does not fit, its size in bytes; `outputs` is
+    then left out.
+
+In this example items 0 to 2 are done and item 3 failed at its first call:
 
 ```json
 {
