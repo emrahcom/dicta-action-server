@@ -21,8 +21,8 @@ call the site's capability functions. The browser runs the plan with
 - Site context: what the LLM needs to know about the site. It ships with the
   capability module, and the browser sends it in every round, so the planner
   always knows exactly what the page can run.
-- `dicta-action-server`: turns a request into a plan, using an LLM and the site
-  context.
+- `dicta-action-server`: turns a request into replies, such as a plan, using an
+  LLM and the site context.
 - `dicta-action-js`: runs the plan in the page, asks the user to confirm risky
   steps and shows the outcome.
 
