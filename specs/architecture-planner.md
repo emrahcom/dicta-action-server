@@ -24,11 +24,13 @@ Each part is labeled by its source. The state, outputs and history are given as
 JSON values, never as free text.
 
 ```
-instructions             same for every site   cached
-site context             same for one site     cached, cache point
-request text             same for one request  cached from round 2
-exchange                 grows every round     earlier items cached, cache point
-time, state, plans left  new every round
+part                     changes               read from cache
+-----------------------  --------------------  ---------------------------------
+instructions             same for every site   yes
+site context             same for one site     yes, cache point after it
+request text             same for one request  from the second round
+exchange                 grows every round     earlier rounds, cache point after
+time, state, plans left  new every round       never
 ```
 
 ## Caching
