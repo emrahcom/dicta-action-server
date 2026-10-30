@@ -27,7 +27,7 @@ JSON values, never as free text.
 instructions             same for every site   cached
 site context             same for one site     cached, cache point
 request text             same for one request  cached from round 2
-exchange                 grows every round     cached from round 2, cache point
+exchange                 grows every round     earlier items cached, cache point
 time, state, plans left  new every round
 ```
 
