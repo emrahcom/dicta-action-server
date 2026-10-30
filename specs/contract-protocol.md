@@ -150,8 +150,8 @@ complete.
   arrives:
   - a plan or a question is dropped: the plan is not run and the question is not
     shown. The client keeps the response's `requestId` and sends a new round of
-    the same request with the `added` items, and nothing about the dropped
-    response;
+    the same request: the exchange it sent before, followed by the `added`
+    items, with nothing about the dropped response;
   - after done, a stop or an info, the request is over, and the held text starts
     a new request, with a new `requestId` from the server.
 - When a question is open, the text is its answer.
