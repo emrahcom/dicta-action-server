@@ -101,10 +101,11 @@ developers can change it. Without it, it is 10.
 
 ## Page changes
 
-Any capability may load another page; the client cannot know it in advance. The
-request goes on on the new page (`contract-protocol.md`, Page changes). A
-capability that loads a page says so in its `desc`, so the planner knows that
-the steps after it will not run.
+Any capability may load a page, a new one or the same one again; the client
+cannot know it in advance. The request goes on in the new page
+(`contract-protocol.md`, Page changes). A capability that loads a page, always
+or only in some cases, says so in its `desc`, so the planner knows that the
+steps after it may not run.
 
 For this, every page of the site loads `dicta-action-js` and the module, and a
 capability that loads a page stays on the site's own origin.
