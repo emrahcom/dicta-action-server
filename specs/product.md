@@ -1,8 +1,8 @@
 # Product
 
-dicta actions let users tell a web application what they want, in their own
-words, and the application does it. The request is plain text; where it comes
-from (typing, `dicta-js` or anything else) does not matter.
+dicta actions let users control a web application through AI: they say what they
+want in their own words, and the application does it. The request is plain text;
+where it comes from (typing, `dicta-js` or anything else) does not matter.
 
 dicta-action-server is the server side. It takes a request, the current state of
 the page and the site context, and replies, usually with a plan: steps that call
