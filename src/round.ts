@@ -14,6 +14,7 @@ export type Report = {
     code: string;
     message: string;
     outputs?: unknown;
+    tooLarge?: number;
   };
 };
 
@@ -107,9 +108,12 @@ function checkReport(value: unknown, path: string): Report {
     if (
       !isOptionalWhole(f.step) ||
       !isOptionalWhole(f.item) ||
-      !isOptionalWhole(f.do)
+      !isOptionalWhole(f.do) ||
+      !isOptionalWhole(f.tooLarge)
     ) {
-      throw new BadRound(`${path}.halt step, item and do must be numbers`);
+      throw new BadRound(
+        `${path}.halt step, item, do and tooLarge must be numbers`,
+      );
     }
     if (chars(f.message) > MAX_MESSAGE_CHARS) {
       throw new BadRound(

@@ -180,6 +180,31 @@ test("asks the planner after a final plan that failed", async (t) => {
   assert.deepEqual(response.reply, { type: "stop", text: "Not found." });
 });
 
+test("takes a halt whose outputs were too large", async (t) => {
+  const base = await start(t);
+  const halted = {
+    plan: PLAN.plan,
+    report: {
+      halt: {
+        step: 2,
+        item: 3,
+        do: 0,
+        code: "not_found",
+        message: "No such task",
+        tooLarge: 48210,
+      },
+    },
+  };
+
+  const { status, body: response } = await post(
+    base,
+    body([PLAN, { type: "stop", text: "Not found." }], [halted]),
+  );
+
+  assert.equal(status, 200);
+  assert.deepEqual(response.reply, { type: "stop", text: "Not found." });
+});
+
 test("asks the planner after a plan that is not final", async (t) => {
   const base = await start(t);
   const exchange = [{ plan: PLAN.plan, report: {} }];
@@ -587,6 +612,20 @@ const BAD_BODIES: [string, unknown][] = [
         {
           plan: {},
           report: { halt: { code: "x", message: "x", item: "2" } },
+        },
+      ],
+    },
+  ],
+  [
+    "a halt tooLarge that is not a number",
+    {
+      text: "a",
+      time: TIME,
+      state: {},
+      exchange: [
+        {
+          plan: {},
+          report: { halt: { code: "x", message: "x", tooLarge: "big" } },
         },
       ],
     },
