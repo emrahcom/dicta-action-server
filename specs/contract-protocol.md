@@ -140,10 +140,10 @@ complete.
 
 - Added text: the client reports the plan with the halt code `interrupted` at
   the step or item where it stopped, followed by an `added` item with the text,
-  and the planner decides what comes next. Each text is its own `added` item, in
-  the order the user gave them; several texts before the client stops follow the
-  one report. Text that comes after the last step, before the report is sent,
-  leaves the plan done: the report has no halt, and the `added` items follow it.
+  and the planner decides what comes next. Each text the user gives is its own
+  `added` item, in order; several texts before the client stops follow the one
+  report. Text that comes after the last step, before the report is sent, leaves
+  the plan done: the report has no halt, and the `added` items follow it.
 - Text that comes while the client waits for the server's response is added text
   too, since no question is open yet. The client holds it until the response
   arrives:
