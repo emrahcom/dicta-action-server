@@ -2,8 +2,8 @@
 
 Capabilities are the functions a plan can call. A site has one capability
 module, made with `dicta-action-harness`, reviewed by the site's developers and
-bundled into the site. It calls the site's existing code, the same code its user
-interface uses.
+bundled into the site. It runs in the page with the user's rights, often through
+the same code the site's user interface uses.
 
 The module is the single source for each capability and for the rest of the site
 context: a capability's name, level, description, arguments and function sit

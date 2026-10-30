@@ -15,9 +15,9 @@ call the site's capability functions. The browser runs the plan with
   their site's source code and test environment, and builds the site's action
   layer: the capability module, which holds the capability functions and the
   site context.
-- Capability functions: small functions that call the site's existing code, the
-  same code its user interface uses. They are reviewed and bundled into the site
-  like any other code.
+- Capability functions: small functions that run in the page with the user's
+  rights, often by calling the same code the site's user interface uses. They
+  are reviewed and bundled into the site like any other code.
 - Site context: what the LLM needs to know about the site. It ships with the
   capability module, and the browser sends it in every round, so the planner
   always knows exactly what the page can run.
