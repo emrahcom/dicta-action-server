@@ -50,6 +50,16 @@ const CONTEXT = checkContext({
       },
     },
     {
+      name: "tasks.tag",
+      level: "write",
+      desc: "Tags a task.",
+      args: {
+        type: "object",
+        properties: { constructor: { type: "string" } },
+        required: ["constructor"],
+      },
+    },
+    {
       name: "tasks.clear",
       level: "write",
       desc: "Clears the done tasks.",
@@ -85,6 +95,10 @@ const VALID: [string, unknown][] = [
     { steps: [list, create({ title: "a", priority: "$1.length" })] },
   ],
   ["$$ as a plain string", { steps: [create({ title: "$$5 lunch" })] }],
+  [
+    "a required argument named like an inherited one",
+    { steps: [{ call: "tasks.tag", args: { constructor: "x" } }] },
+  ],
   [
     "empty objects for schemas that name no properties",
     {
@@ -194,6 +208,21 @@ const INVALID: [string, unknown, RegExp][] = [
     "a missing required argument",
     { steps: [create({})] },
     /args\.title is required/,
+  ],
+  [
+    "a missing required argument named like an inherited one",
+    { steps: [{ call: "tasks.tag", args: {} }] },
+    /args\.constructor is required/,
+  ],
+  [
+    "an argument named __proto__",
+    { steps: [create(JSON.parse('{"title":"a","__proto__":{"admin":true}}'))] },
+    /args\.__proto__ is not in the schema/,
+  ],
+  [
+    "an argument named toString",
+    { steps: [create({ title: "a", toString: "x" })] },
+    /args\.toString is not in the schema/,
   ],
   [
     "an argument the schema does not name",

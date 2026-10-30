@@ -108,8 +108,9 @@ function matches(value: unknown, schema: Schema, path: string) {
     throw new BadPlan(`${path} is not one of the allowed values`);
   }
   if (isObject(value)) {
+    // Only own properties count, never inherited ones such as __proto__.
     for (const name of schema.required ?? []) {
-      if (!(name in value)) {
+      if (!Object.hasOwn(value, name)) {
         throw new BadPlan(`${path}.${name} is required`);
       }
     }
@@ -117,12 +118,12 @@ function matches(value: unknown, schema: Schema, path: string) {
     // (contract-plan.md, Failures).
     const properties = schema.properties ?? {};
     for (const name of Object.keys(value)) {
-      if (!(name in properties)) {
+      if (!Object.hasOwn(properties, name)) {
         throw new BadPlan(`${path}.${name} is not in the schema`);
       }
     }
     for (const [name, property] of Object.entries(properties)) {
-      if (name in value) {
+      if (Object.hasOwn(value, name)) {
         matches(value[name], property, `${path}.${name}`);
       }
     }
