@@ -154,7 +154,7 @@ go into the site context like any other capability. Their names are in the
   cancelled it, or left the page outside a step) or `error` (an HTTP error or a
   reply type the client does not know ended it; `contract-protocol.md`, Errors
   and Response body), and its `text` is the text of the server's done, stop or
-  info, left out when there was none.
+  info, cut to 200 characters, left out when there was none.
 
 - `dicta.getHistory` (`read`): one request in full, by its `requestId`, which is
   required: its `requestId`, `time`, whole `text`, `exchange` with its reports
