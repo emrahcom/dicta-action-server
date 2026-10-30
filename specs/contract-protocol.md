@@ -1,6 +1,6 @@
 # Contract: protocol
 
-How `dicta-action-js` and dicta-action-server talk. One user request takes one
+How `dicta-action-js` and `dicta-action-server` talk. One user request takes one
 or more rounds; each round is one HTTP request and its response.
 
 ## Round
@@ -40,7 +40,8 @@ a new one.
 
 - `requestId`: left out in the first round. In later rounds, the id the server
   gave in its first reply.
-- `text`: the user's request, the same in every round (Limits).
+- `text`: the user's request, the same in every round. At most 10000 characters
+  (Limits).
 - `time`: the user's current time, sent new in every round, so the planner can
   read words like "today" or "tomorrow".
 - `state`: what the page shows now, as a JSON object. Sent new in every round.
@@ -55,7 +56,8 @@ a new one.
   - a question the server asked, with the user's `answer`;
   - `added`: text the user gave while the request was running (Added text).
 
-  An answer and an added text have the same limit as `text` (Limits).
+  An answer and an added text have the same limit as `text`: at most 10000
+  characters (Limits).
 
 Every time in the contracts is the user's local time with its offset, in ISO
 8601, for example `2026-10-28T15:20:00+01:00`. The offset is always written as
@@ -201,8 +203,9 @@ logs. The server creates it in the first round and repeats it in every reply.
   site's data is not one: it gets a plan that reads the data, then done.
 
 The user wants the task done fast, not to read. Every `text` is one short
-sentence, and each option a few words (Limits). Only an `info` text is longer:
-plain text, with an empty line between paragraphs.
+sentence, at most 200 characters, and each option a few words, at most 50
+(Limits). Only an `info` text is longer, at most 2000 characters: plain text,
+with an empty line between paragraphs.
 
 ```json
 {
