@@ -16,6 +16,11 @@ const CONTEXT = checkContext({
       args: { type: "object", properties: { q: { type: "string" } } },
     },
     {
+      name: "tasks.count",
+      level: "read",
+      desc: "Counts the tasks.",
+    },
+    {
       name: "tasks.create",
       level: "write",
       desc: "Adds a task.",
@@ -73,6 +78,10 @@ const VALID: [string, unknown][] = [
     { steps: [list, create({ title: "a", priority: "$1.length" })] },
   ],
   ["$$ as a plain string", { steps: [create({ title: "$$5 lunch" })] }],
+  [
+    "empty args for a capability without args",
+    { steps: [{ call: "tasks.count", args: {} }] },
+  ],
   [
     "a forEach over an earlier step",
     {
@@ -138,6 +147,16 @@ const INVALID: [string, unknown, RegExp][] = [
   ["a plan that is not an object", [], /plan must be an object/],
   ["a plan without steps", {}, /steps must be an array/],
   ["an unknown plan field", { steps: [], next: "go" }, /plan has next/],
+  [
+    "arguments for a capability without args",
+    { steps: [{ call: "tasks.count", args: { q: "a" } }] },
+    /args must be \{\} for tasks\.count/,
+  ],
+  [
+    "a call without args",
+    { steps: [{ call: "tasks.count" }] },
+    /args must be an object/,
+  ],
   ["final that is not a boolean", { steps: [], final: "yes" }, /final must be/],
   ["a label that is not text", { steps: [], text: 5 }, /text must be a string/],
   ["51 steps", { steps: Array(51).fill(list) }, /at most 50 steps/],

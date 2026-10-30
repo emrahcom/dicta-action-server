@@ -28,7 +28,7 @@ export type Capability = {
   name: string;
   level: Level;
   desc: string;
-  args: Schema;
+  args?: Schema;
   output?: Schema;
 };
 
@@ -109,7 +109,7 @@ function capability(value: unknown, path: string): Capability {
     name: string(c.name, `${path}.name`),
     level: level as Level,
     desc: string(c.desc, `${path}.desc`),
-    args: schema(c.args, `${path}.args`),
+    ...(c.args === undefined ? {} : { args: schema(c.args, `${path}.args`) }),
     ...(c.output === undefined
       ? {}
       : { output: schema(c.output, `${path}.output`) }),

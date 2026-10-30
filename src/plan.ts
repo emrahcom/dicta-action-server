@@ -163,6 +163,13 @@ function checkCall(
     throw new BadPlan(`${path}.args must be an object`);
   }
   checkReferences(step.args, scope, `${path}.args`);
+  if (capability.args === undefined) {
+    // A capability without args takes no arguments (contract-plan.md, Failures).
+    if (Object.keys(step.args).length > 0) {
+      throw new BadPlan(`${path}.args must be {} for ${capability.name}`);
+    }
+    return;
+  }
   matches(step.args, capability.args, `${path}.args`);
 }
 

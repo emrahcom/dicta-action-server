@@ -50,6 +50,12 @@ test("keeps the output schema of a capability", () => {
   assert.equal("output" in (c.capabilities[0] ?? {}), false);
 });
 
+test("accepts a capability without args", () => {
+  const c = checkContext(context((c) => delete c.capabilities[0].args));
+
+  assert.equal("args" in (c.capabilities[0] ?? {}), false);
+});
+
 test("keeps only the fields it knows", () => {
   const c = checkContext(
     context((c) => {
@@ -100,11 +106,6 @@ const INVALID: [string, (c: any) => void, RegExp][] = [
     "a capability without desc",
     (c) => delete c.capabilities[0].desc,
     /^context\.capabilities\[0\]\.desc must be a string$/,
-  ],
-  [
-    "a capability without args",
-    (c) => delete c.capabilities[0].args,
-    /^context\.capabilities\[0\]\.args must be an object$/,
   ],
   [
     "a schema keyword that is not allowed",
