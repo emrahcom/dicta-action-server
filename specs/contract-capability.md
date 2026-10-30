@@ -44,6 +44,7 @@ Users say "board" for a project and "card" for a task.`,
         },
         required: ["title"],
       },
+      output: { type: "object", properties: { id: { type: "string" } } },
       run: async ({ title, due }) => {
         const task = await api.createTask({ title, due });
         return { id: task.id };
@@ -77,8 +78,13 @@ developers can change it. Without it, it is 10.
 - `desc`: one or two sentences for the planner: what it does and when to use it.
 - `args`: a JSON Schema for the argument object. Only `type`, `properties`,
   `required`, `items`, `enum` and `description` are used.
+- `output`: optional, a JSON Schema for what `run` returns, with the same
+  keywords as `args`. The planner reads it to write references into the output
+  (`contract-plan.md`, References). It can be left out when the output is never
+  referred to.
 - `run`: an async function. It takes the arguments, already checked against
-  `args`, and returns a JSON value: small, a summary rather than whole data.
+  `args`, and returns a JSON value that matches `output` when it is set: small,
+  a summary rather than whole data.
 - `confirm`: for `write`, `destructive` and `external` capabilities, an async
   function that takes the arguments and returns a short text naming the action
   and what it acts on, for example

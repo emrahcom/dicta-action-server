@@ -22,6 +22,10 @@ module (`contract-capability.md`) and sends it as `context` in every round
         "type": "object",
         "properties": { "title": { "type": "string" } },
         "required": ["title"]
+      },
+      "output": {
+        "type": "object",
+        "properties": { "id": { "type": "string" } }
       }
     }
   ]
@@ -37,13 +41,14 @@ module (`contract-capability.md`) and sends it as `context` in every round
 - `state`: the `desc` of the site's state function (`contract-capability.md`,
   State).
 - `capabilities`: one entry for each capability of the module, with its `name`,
-  `level`, `desc` and `args`. The client takes them from the module, so they
-  always match it.
+  `level`, `desc`, `args` and, when set, `output`. The client takes them from
+  the module, so they always match it.
 
 ## Checks
 
 A round whose context is not valid gets a `400` (`contract-protocol.md`,
 Errors), with an `error` that names the problem: a field is missing or has the
 wrong type, two capabilities share a name, a level is not one of the four,
-`args` uses more than the JSON Schema keywords the capability contract allows,
-or the context is larger than 64 KB (`contract-protocol.md`, Limits).
+`args` or `output` uses more than the JSON Schema keywords the capability
+contract allows, or the context is larger than 64 KB (`contract-protocol.md`,
+Limits).
