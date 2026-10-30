@@ -95,9 +95,6 @@ As in dicta-server:
 - A report on a plan marked final whose steps all succeeded, with no added text
   after it, gets done from the server, without the planner (`contract-plan.md`,
   Reporting).
-- When the user cancels a plan, the client reports it with the halt code
-  `cancelled`. The server replies with a stop, without asking the planner
-  (`contract-protocol.md`, Added text and cancel).
 - The server checks every reply before it leaves (`contract-protocol.md`,
   Response body). For a plan, it checks, among other things, that each step
   calls a capability of the site context, with arguments that match its schema,

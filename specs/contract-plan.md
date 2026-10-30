@@ -31,9 +31,10 @@ progress.
 ## Reporting
 
 After a plan, the client always sends a new round with its report, whether the
-plan finished or halted. The server always decides what comes next: a new plan,
-a question to the user, done, a stop or an info. The client never decides to go
-on or to stop.
+plan finished or halted, except after a cancel (`contract-protocol.md`, Added
+text and cancel). The server always decides what comes next: a new plan, a
+question to the user, done, a stop or an info. The client never decides to go on
+or to stop.
 
 `final` is for the server only. The planner sets it to `true` when the plan is
 the whole job. When a plan with `final: true` reports that all its steps

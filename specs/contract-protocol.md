@@ -99,7 +99,8 @@ output out does not make its step fail.
       it is used.
     - `limit`: a `forEach` over more than 100 items.
     - `invalid`: the plan failed the client's check before any step ran.
-    - `cancelled`: the user cancelled the request.
+    - `cancelled`: the user cancelled the request. Only in the history, never
+      sent.
     - `interrupted`: the user added text (Added text).
     - `navigated`: the page changed during the step (Page changes).
   - `message`: what happened, at most 200 characters (Limits). For `capability`,
@@ -157,12 +158,11 @@ complete.
 - When a question is open, the text is its answer.
 - While a confirmation is open, text is ignored: only a click on its buttons
   answers it.
-- Cancel: the client reports the plan with the halt code `cancelled` at the step
-  or item where it stopped, and the request ends. The server replies with a stop
-  without asking the planner. Cancel while a confirmation is open reports
-  `cancelled` at that step, which does not run. When the client was waiting for
-  the server's response, or a question was open, no step is running: the request
-  ends without another round, and a response that arrives later is ignored.
+- Cancel: the request ends without another round. When a plan was running, the
+  client adds the request to history as cancelled, with a last report that has
+  the halt code `cancelled` at the step or item where it stopped. Cancel while a
+  confirmation is open stops at that step, which does not run. A response that
+  arrives after a cancel is ignored.
 
 Nothing that was done is undone. The report tells exactly what was done, so a
 later request can fix it.
