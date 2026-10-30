@@ -4,9 +4,9 @@ dicta actions let users control a web application through AI: they say what they
 want in their own words, and the application does it. The request is plain text;
 where it comes from (typing, `dicta-js` or anything else) does not matter.
 
-dicta-action-server is the server side. It takes a request, the current state of
-the page and the site context, and replies, usually with a plan: steps that call
-the site's capability functions. The browser runs the plan with
+`dicta-action-server` is the server side. It takes a request, the current state
+of the page and the site context, and replies, usually with a plan: steps that
+call the site's capability functions. The browser runs the plan with
 `dicta-action-js`.
 
 ## The parts
@@ -15,12 +15,13 @@ the site's capability functions. The browser runs the plan with
   their site's source code and test environment, and builds the site's action
   layer: the capability module, which holds the capability functions and the
   site context.
-- Capability functions: small functions that wrap what the site's own buttons
-  already call. They are reviewed and bundled into the site like any other code.
+- Capability functions: small functions that call the site's existing code, the
+  same code its user interface uses. They are reviewed and bundled into the site
+  like any other code.
 - Site context: what the LLM needs to know about the site. It ships with the
   capability module, and the browser sends it in every round, so the planner
   always knows exactly what the page can run.
-- dicta-action-server: turns a request into a plan, using an LLM and the site
+- `dicta-action-server`: turns a request into a plan, using an LLM and the site
   context.
 - `dicta-action-js`: runs the plan in the page, asks the user to confirm risky
   steps and shows the outcome.
