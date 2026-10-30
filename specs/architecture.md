@@ -74,7 +74,7 @@ As in dicta-server:
 - It is sent and read in every round, so it is kept small, at most 64 KB
   (`contract-protocol.md`, Limits). The planner puts it near the start of its
   prompt, so the LLM provider's prompt caching makes repeated rounds cheap
-  (`planner-llm.md`, Caching).
+  (`architecture-planner.md`, Caching).
 - It comes from the browser, so the server does not trust it. It only shapes
   plans: every step runs in the browser with the user's own rights, and
   confirmations come from the module.
@@ -85,7 +85,7 @@ As in dicta-server:
 
 - Turns a round into a reply: a plan, a question, done, a stop or an info.
 - Chosen per server. The first one is `stub`: no LLM and no key, for tests. LLM
-  planners come later; the design of the first is in `planner-llm.md`.
+  planners come later; the design of the first is in `architecture-planner.md`.
 - `stub` takes its replies from the request text: a JSON array of replies
   (`contract-protocol.md`, Response body), for example
   `[{"type": "plan", "plan": {...}}, {"type": "done"}]`. In each round it gives
