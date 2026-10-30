@@ -10,9 +10,11 @@ LLM keys and never acts on the site itself. The details are in `specs/`.
 - `specs/` is authoritative; code follows it. Specs are living documents: write
   only what the next task needs and update them whenever needed.
 - The action contracts are in `specs/` here: the protocol with
-  `dicta-action-js`, the plan format, the context format and the capability
+  `dicta-action-js`, the plan format, the capability format and the site context
   format. They are the source of truth for all action repos. The harness
   (`dicta-action-harness`) gets a copy of them.
+- `specs/glossary.md` lists the terms; update it with every term change, one
+  short meaning each.
 - Tasks are files in `tasks/open/` and `tasks/done/`, named
   `YYYY-MM-DD-HHMMSS-slug.md` (UTC). The folder is the status. `specs/tasks.md`
   defines the format, including how findings are handled.
