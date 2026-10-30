@@ -140,7 +140,7 @@ to the item, so all of them are known. It shows the number of items and the
 first three items, each with the texts of all its calls that ask; it calls
 `confirm` only for these. One `forEach` never asks twice.
 
-The client shows a confirmation as plain text and hides the plan's label while
-it is open, so the user sees only the module's words. The user answers with
+While a confirmation is open, the user sees only the module's words: the client
+shows the text as plain text and hides the plan's label. The user answers with
 Continue, which runs the step, or Cancel, which cancels the request
 (`contract-protocol.md`, Added text and cancel).
