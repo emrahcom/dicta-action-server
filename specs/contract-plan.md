@@ -49,9 +49,10 @@ sends the plan back unchanged in the exchange.
   JSON object. Its output is what the capability returns, described by its
   `output` when it has one (`contract-capability.md`).
 - `forEach`: runs the `call` steps in `do` once for each item of an array. The
-  array is a reference to an earlier step, or to a list inside its output, such
-  as `$1` or `$1.items`; a list written in the plan is not allowed. `do` holds
-  only `call` steps; a `forEach` cannot hold another `forEach`.
+  array is a reference: the output of an earlier step, such as `$1`, or an array
+  inside that output, reached by a path, such as `$1.items`. A list written in
+  the plan is not allowed. `do` holds only `call` steps; a `forEach` cannot hold
+  another `forEach`.
 
 A top-level step can also have `includeOutput` (Include output).
 
