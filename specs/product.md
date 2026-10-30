@@ -18,7 +18,7 @@ call the site's capability functions. The browser runs the plan with
 - Capability functions: small functions that run in the page with the user's
   rights, often by calling the same code the site's user interface uses. They
   are reviewed and bundled into the site like any other code.
-- Site context: what the LLM needs to know about the site. It ships with the
+- Site context: what the planner needs to know about the site. It ships with the
   capability module, and the browser sends it in every round, so the planner
   always knows exactly what the page can run.
 - `dicta-action-server`: turns a request into replies, such as a plan, using an
@@ -46,7 +46,7 @@ call the site's capability functions. The browser runs the plan with
 ## First version
 
 - The browser sends the user's request, the page state and the site context. The
-  server replies with a plan.
+  server replies, usually with a plan.
 - A plan is a list of steps that call the capabilities of the site.
 - A step can use what an earlier step of the same plan returned, for example the
   id of a task that the step before it created.
