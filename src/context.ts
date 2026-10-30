@@ -29,6 +29,7 @@ export type Capability = {
   level: Level;
   desc: string;
   args: Schema;
+  output?: Schema;
 };
 
 export type SiteContext = {
@@ -109,6 +110,9 @@ function capability(value: unknown, path: string): Capability {
     level: level as Level,
     desc: string(c.desc, `${path}.desc`),
     args: schema(c.args, `${path}.args`),
+    ...(c.output === undefined
+      ? {}
+      : { output: schema(c.output, `${path}.output`) }),
   };
 }
 

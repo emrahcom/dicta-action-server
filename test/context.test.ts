@@ -42,6 +42,14 @@ test("accepts the built-in capabilities like any other", () => {
   assert.equal(c.capabilities[3]?.name, "dicta.listHistory");
 });
 
+test("keeps the output schema of a capability", () => {
+  const output = { type: "object", properties: { id: { type: "string" } } };
+  const c = checkContext(context((c) => (c.capabilities[1].output = output)));
+
+  assert.deepEqual(c.capabilities[1]?.output, output);
+  assert.equal("output" in (c.capabilities[0] ?? {}), false);
+});
+
 test("keeps only the fields it knows", () => {
   const c = checkContext(
     context((c) => {
@@ -111,6 +119,20 @@ const INVALID: [string, (c: any) => void, RegExp][] = [
         items: { type: "string", pattern: "x" },
       }),
     /args\.properties\.tags\.items uses pattern/,
+  ],
+  [
+    "an output that is not an object",
+    (c) => (c.capabilities[0].output = "id"),
+    /^context\.capabilities\[0\]\.output must be an object$/,
+  ],
+  [
+    "a schema keyword not allowed in output",
+    (c) =>
+      (c.capabilities[0].output = {
+        type: "object",
+        additionalProperties: false,
+      }),
+    /^context\.capabilities\[0\]\.output uses additionalProperties, which is not allowed$/,
   ],
   [
     "required that is not a list of names",
