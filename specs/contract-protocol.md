@@ -54,7 +54,8 @@ a new one.
   of:
   - a plan the server sent, with the client's `report` on it;
   - a question the server asked, with the user's `answer`;
-  - `added`: text the user gave while the request was running (Added text).
+  - `added`: text the user gave while the request was running (Added text and
+    cancel).
 
   An answer and an added text have the same limit as `text`: at most 10000
   characters (Limits).
@@ -101,7 +102,7 @@ output out does not make its step fail.
     - `invalid`: the plan failed the client's check before any step ran.
     - `cancelled`: the user cancelled the request. Only in the history, never
       sent.
-    - `interrupted`: the user added text (Added text).
+    - `interrupted`: the user added text (Added text and cancel).
     - `navigated`: the page changed during the step (Page changes).
   - `message`: what happened, at most 200 characters (Limits). For `capability`,
     the capability's own message is used when it gives one.
