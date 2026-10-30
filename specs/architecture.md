@@ -92,8 +92,9 @@ As in dicta-server:
   the reply whose index is the number of items in the exchange, so the first
   round gets the first one. When the text is not such an array, or the array has
   no reply for the round, it replies with a stop.
-- A report on a plan marked final whose steps all succeeded gets done from the
-  server, without the planner (`contract-plan.md`, Reporting).
+- A report on a plan marked final whose steps all succeeded, with no added text
+  after it, gets done from the server, without the planner (`contract-plan.md`,
+  Reporting).
 - When the user cancels a plan, the client reports it with the halt code
   `cancelled`. The server replies with a stop, without asking the planner
   (`contract-protocol.md`, Added text and cancel).
