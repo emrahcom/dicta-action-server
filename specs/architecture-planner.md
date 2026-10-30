@@ -54,11 +54,10 @@ context.
   `forEach` and 16 KB of included outputs. The last part of the prompt gives the
   plans left.
 - When no plans are left, the LLM replies done (the job is finished) or a stop
-  (with what was done), never a plan, a question or an info. An info would put
-  an answered question in the history, not an unfinished action. The server's
-  stop at the limit (`architecture.md`, Requests) stays as a guard. If 200
-  characters prove too short for a stop, the stop's text limit is raised; an
-  info is not used instead.
+  (with what was done), never a plan, a question or an info. The server's stop
+  at the limit (`architecture.md`, Requests) stays as a guard. If 200 characters
+  prove too short for a stop, the stop's text limit is raised; an info is not
+  used instead.
 - An info only answers a question about the site itself. A question about the
   user's data gets a plan that reads it, then done.
 - A request that is not about the site gets a short stop, such as "I can only
