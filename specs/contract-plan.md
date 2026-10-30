@@ -126,8 +126,9 @@ step and reports the outputs asked for so far and the halt.
 
 The plan carries no levels and no confirmation text; both come from the
 capabilities. Before a step that calls a destructive or external capability, the
-client asks the user with the text that the capability's `confirm` returns for
-the step's arguments, after their references are filled in.
+client asks the user. It calls the capability's `confirm` with the arguments the
+step will run with, its references already replaced by their values, and shows
+the text `confirm` returns.
 
 A `forEach` asks when `do` holds a destructive or external call, or a `write`
 call and more items than the module's `confirmOver` (`contract-capability.md`).
