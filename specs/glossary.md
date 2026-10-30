@@ -12,7 +12,7 @@ detail.
   acts on the site.
 - **Planner**: the LLM behind the server that writes the replies.
 - **Capability**: a function of the site that a plan can call, with a name, a
-  level, a description, an argument schema and an output schema
+  level, a description and, when needed, an argument schema and an output schema
   (`contract-capability.md`).
 - **Capability module**: the site's one module that holds all its capabilities,
   its state function and the rest of the site context, bundled into the site.

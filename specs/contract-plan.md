@@ -102,7 +102,7 @@ it before it sends it:
 - it has at most 50 top-level steps, and its JSON is at most 16 KB (Limits);
 - every `call` names a capability;
 - every `args` matches that capability's schema, with no properties the schema
-  does not name;
+  does not name, or is `{}` when the capability has no `args`;
 - every reference points to an earlier step or to a `forEach` item;
 - every `forEach` refers to an earlier step;
 - `includeOutput` is a boolean, and only on top-level steps.

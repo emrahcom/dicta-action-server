@@ -77,9 +77,9 @@ developers can change it. Without it, it is 10.
   - `external` sends data out of the site or reaches other people: sharing,
     inviting, sending messages, publishing, paying.
 - `desc`: one or two sentences for the planner: what it does and when to use it.
-- `args`: a JSON Schema for the argument object, also when there are none:
-  `{ type: "object" }`. Only `type`, `properties`, `required`, `items`, `enum`
-  and `description` are used.
+- `args`: a JSON Schema for the argument object, left out when the capability
+  takes no arguments. Only `type`, `properties`, `required`, `items`, `enum` and
+  `description` are used.
 - `output`: optional, a JSON Schema for what `run` returns, with the same
   keywords as `args`. The planner reads it to write references into the output
   (`contract-plan.md`, References). It can be left out when the output is never
