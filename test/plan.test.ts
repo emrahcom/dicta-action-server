@@ -44,9 +44,16 @@ const CONTEXT = checkContext({
         properties: {
           id: { type: "string" },
           to: { type: "object", properties: { project: { type: "string" } } },
+          meta: { type: "object" },
         },
         required: ["id"],
       },
+    },
+    {
+      name: "tasks.clear",
+      level: "write",
+      desc: "Clears the done tasks.",
+      args: { type: "object" },
     },
   ],
 });
@@ -78,6 +85,12 @@ const VALID: [string, unknown][] = [
     { steps: [list, create({ title: "a", priority: "$1.length" })] },
   ],
   ["$$ as a plain string", { steps: [create({ title: "$$5 lunch" })] }],
+  [
+    "empty objects for schemas that name no properties",
+    {
+      steps: [{ call: "tasks.clear", args: {} }, move({ id: "t1", meta: {} })],
+    },
+  ],
   [
     "empty args for a capability without args",
     { steps: [{ call: "tasks.count", args: {} }] },
@@ -191,6 +204,16 @@ const INVALID: [string, unknown, RegExp][] = [
     "a nested argument the schema does not name",
     { steps: [move({ id: "t1", to: { project: "p1", board: "b" } })] },
     /args\.to\.board is not in the schema/,
+  ],
+  [
+    "an argument for a schema that names no properties",
+    { steps: [{ call: "tasks.clear", args: { all: true } }] },
+    /args\.all is not in the schema/,
+  ],
+  [
+    "a nested argument for a schema that names no properties",
+    { steps: [move({ id: "t1", meta: { color: "red" } })] },
+    /args\.meta\.color is not in the schema/,
   ],
   [
     "an argument of the wrong type",

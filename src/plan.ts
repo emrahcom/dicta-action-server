@@ -113,15 +113,15 @@ function matches(value: unknown, schema: Schema, path: string) {
         throw new BadPlan(`${path}.${name} is required`);
       }
     }
-    const properties = schema.properties;
-    if (properties !== undefined) {
-      for (const name of Object.keys(value)) {
-        if (!(name in properties)) {
-          throw new BadPlan(`${path}.${name} is not in the schema`);
-        }
+    // A property the schema does not name is refused, also when it names none
+    // (contract-plan.md, Failures).
+    const properties = schema.properties ?? {};
+    for (const name of Object.keys(value)) {
+      if (!(name in properties)) {
+        throw new BadPlan(`${path}.${name} is not in the schema`);
       }
     }
-    for (const [name, property] of Object.entries(properties ?? {})) {
+    for (const [name, property] of Object.entries(properties)) {
       if (name in value) {
         matches(value[name], property, `${path}.${name}`);
       }
