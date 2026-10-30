@@ -134,9 +134,10 @@ call and more items than the module's `confirmOver` (`contract-capability.md`).
 The calls that ask are then the destructive and external ones, plus the `write`
 ones when the items are over `confirmOver`.
 
-It asks once for all items, before the first item runs. It fills in the
-arguments of every item first; a call in `do` refers only to earlier steps and
-to the item, so all of them are known. It shows the number of items and the
+It asks once for all items, before the first item runs. It fills in and checks
+the arguments of every item first, so a bad item halts the step before the user
+is asked and before any item runs; a call in `do` refers only to earlier steps
+and to the item, so all of them are known. It shows the number of items and the
 first three items, each with the texts of all its calls that ask; it calls
 `confirm` only for these. One `forEach` never asks twice.
 
