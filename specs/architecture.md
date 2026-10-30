@@ -67,10 +67,10 @@ As in dicta-server:
 - The site context comes from the capability module and ships with it in the
   site. The client sends it in every round. So the module and the context are
   always the same version, and one server can serve any number of sites.
-- It lists the site's capabilities with their arguments and levels, and what the
-  planner needs to know about the site. Its format is in `contract-context.md`.
-  The server checks it in every round; a round with a context that is not valid
-  gets a `400`.
+- It lists the site's capabilities with their arguments, outputs and levels, and
+  what the planner needs to know about the site. Its format is in
+  `contract-context.md`. The server checks it in every round; a round with a
+  context that is not valid gets a `400`.
 - It is sent and read in every round, so it is kept small, at most 64 KB
   (`contract-protocol.md`, Limits). The planner puts it first in its prompt, so
   the LLM provider's prompt caching makes repeated rounds cheap.

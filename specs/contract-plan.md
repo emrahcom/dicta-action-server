@@ -44,7 +44,8 @@ Without `final`, or after a halt, the planner decides. The client ignores
 ## Steps
 
 - `call`: runs one capability, by its name in the site context, with `args`, a
-  JSON object. Its output is any JSON value.
+  JSON object. Its output is what the capability returns, described by its
+  `output` when it has one (`contract-capability.md`).
 - `forEach`: runs the `call` steps in `do` once for each item of an array. The
   array is a reference to an earlier step, or to a list inside its output, such
   as `$1` or `$1.items`; a list written in the plan is not allowed. `do` holds
