@@ -93,7 +93,8 @@ A string in `args` or in `forEach` that starts with `$` refers to an output:
 
 A reference is always a whole string; it is never put together with other text.
 Its value replaces the string as it is, with its JSON type. A string that should
-start with `$` itself is written with `$$`.
+start with `$` itself is written with `$$`; the client passes it on with a
+single `$`.
 
 ## Failures
 
