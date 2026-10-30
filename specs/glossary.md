@@ -8,7 +8,7 @@ detail.
 - **Site**: the web application that uses dicta actions.
 - **Client**: `dicta-action-js`, in the user's browser. It runs plans, asks for
   confirmations and talks to the server.
-- **Server**: dicta-action-server. It turns a request into replies; it never
+- **Server**: `dicta-action-server`. It turns a request into replies; it never
   acts on the site.
 - **Planner**: the LLM behind the server that writes the replies.
 - **Capability**: a function of the site that a plan can call, with a name, a

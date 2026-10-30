@@ -39,7 +39,8 @@ the site's capability functions. The browser runs the plan with
 - Not a code generator at run time. A plan is data: steps that call known
   functions, never code to run.
 - Not a chat bot. It replies with plans, with a question only when it needs one
-  to go on, and with a short info when the user asks how the site works.
+  to go on, and with a short info when the user asks how the site works. A
+  request that is not about the site gets a short stop.
 
 ## First version
 
