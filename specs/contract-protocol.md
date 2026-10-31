@@ -215,8 +215,9 @@ The server creates it in the first round and repeats it in every reply.
 - `stop`: the request ends without finishing. `text` says why, for the user.
 - `info`: the request was a question about the site itself, such as how to do
   something on it, and `text` answers it from the site context. The request is
-  over. The client shows the text until the user closes it. A question about the
-  site's data is not one: it gets a plan that reads the data, then done.
+  over. The client shows the text until the user closes it or gives new text. A
+  question about the site's data is not one: it gets a plan that reads the data,
+  then done.
 
 Every `text` is one short sentence, at most 200 characters, and each option a
 few words, at most 50 (Limits). Only an `info` text is longer, at most 2000
