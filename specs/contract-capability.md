@@ -107,17 +107,18 @@ cannot know it in advance. The request goes on in the new page
 or only in some cases, says so in its `desc`, so the planner knows that the
 steps after it may not run.
 
-A capability that loads a page does not return: after it starts the page load,
-its `run` returns a promise that never settles. The step is then still running
-when the page is left, so the request goes on in the new page. Starting a page
-load, for example by setting `location.href`, does not stop the code at once; a
-`run` that returned would let the client go on in the old page. A capability
-that loads a page only in some cases returns normally in the others.
+A page load means the browser leaves the document, for example after setting
+`location.href` or calling `location.reload()`. A change of the hash only, or
+through the history API, is not one.
+
+Starting a page load is the last thing a capability does: its `run` returns
+right after it. The client sees that a page load started and runs nothing after
+that step. A `run` that goes on working after it, for example with an `await`,
+may lose the page before it returns, and the request then ends.
 
 ```js
 run: async ({ id }) => {
   location.href = `/tasks/${id}`;
-  return new Promise(() => {});
 },
 ```
 

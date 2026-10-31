@@ -103,7 +103,7 @@ output out does not make its step fail.
     - `cancelled`: the user cancelled the request. Only in the history, never
       sent.
     - `interrupted`: the user added text (Added text and cancel).
-    - `navigated`: the page changed during the step (Page changes).
+    - `navigated`: a page load started before it could run (Page changes).
   - `message`: what happened, at most 200 characters (Limits). For `capability`,
     the capability's own message is used when it gives one.
   - `item` and `do`: only when the plan halted in a `forEach` after its first
@@ -156,6 +156,8 @@ complete.
     items, with nothing about the dropped response;
   - after done, a stop or an info, the request is over, and the held text starts
     a new request, with a new `requestId` from the server.
+- Text that comes while the client waits for a page load is held with the report
+  (Page changes).
 - When a question is open, the text is its answer.
 - While a confirmation is open, text is ignored: only a click on its buttons
   answers it.
@@ -171,26 +173,39 @@ later request can fix it.
 ## Page changes
 
 Any capability may load a page, a new one or the same one again, and so may the
-user. When the page is left in the middle of a request, the request goes on in
-the new page only if a step was running; otherwise it ends:
+user (`contract-capability.md`, Page changes). When the page is left in the
+middle of a request, the request goes on in the new page only if the page load
+started during a step; otherwise it ends:
 
-- When the page is left (the browser's `pagehide` event) while a step runs, the
-  client saves the request in the tab's session storage: the exchange and the
-  report so far, with the halt code `navigated` at the step that was running, in
-  a `forEach` with its item and call.
+- When a page load starts during a step (the browser's `navigate` event for
+  another document), the client runs nothing after that step, or in a `forEach`
+  after that call, once it returns. It makes the report: the halt code
+  `navigated` at the first step, item or call that did not run, or no halt when
+  none is left. It does not send the report and waits for the page to be left.
+- When the page is left (the browser's `pagehide` event) while the client waits
+  so, it saves the request in the tab's session storage: the exchange, the
+  report and any added text.
 - When `dicta-action-js` starts on a page, or the browser shows a page again
   from its back/forward cache, it looks for a saved request and takes it out.
-  One saved at most 60 seconds ago goes on: the client reports the plan with the
-  saved report and sends the new page's `state`. The running step may or may not
-  have finished; nothing after it ran. The client does not run the rest of the
-  plan, which was written for the old page; the planner decides what comes next.
-  An older saved request ends instead: the client adds it to history as
-  cancelled, with its report and the halt code `navigated` at the step that was
-  running.
-- A page load at any other time ends the request: while the client waits for the
-  server's response, or a question or a confirmation is open. On `pagehide`, the
-  client adds it to history as cancelled, with everything done so far, also a
-  report it had not sent yet (`contract-capability.md`, Built-in capabilities).
+  One saved at most 60 seconds ago goes on: the client sends the saved report,
+  followed by the added text, with the new page's `state`. The client does not
+  run the rest of the plan, which was written for the old page; the planner
+  decides what comes next. An older saved request ends instead: the client adds
+  it to history as cancelled, with its report and added text.
+- When the page load does not happen, for example the user stays on the page at
+  the browser's leave prompt, the client keeps waiting. Text the user adds is
+  held with the report, to be saved with it. Cancel adds the request to history
+  as cancelled, with the report and the held text.
+- A page load at any other time ends the request: while a step runs, while the
+  client waits for the server's response, or a question or a confirmation is
+  open. On `pagehide`, the client adds it to history as cancelled, with
+  everything done so far, also a report it had not sent yet
+  (`contract-capability.md`, Built-in capabilities).
+
+On `pagehide` the request is over in this page, whether it was saved or added to
+history: the client drops it, runs nothing more of it and ignores a step or a
+response that ends later. A page the browser shows again from its back/forward
+cache holds no request, only a saved one it may take out.
 
 ## Response body
 
