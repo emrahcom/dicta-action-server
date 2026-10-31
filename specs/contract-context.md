@@ -53,5 +53,8 @@ A round whose context is not valid gets a `400` (`contract-protocol.md`,
 Errors), with an `error` that names the problem: a field is missing or has the
 wrong type, two capabilities share a name, a level is not one of the four,
 `args` or `output` uses more than the JSON Schema keywords the capability
-contract allows, or the context is larger than 64 KB (`contract-protocol.md`,
-Limits).
+contract allows, a schema no plan can match, or the context is larger than 64 KB
+(`contract-protocol.md`, Limits). A schema no plan can match has a `type` that
+is not one of the seven JSON Schema types (`string`, `number`, `integer`,
+`boolean`, `object`, `array`, `null`), a `required` name that is not in its
+`properties`, or, for `args`, a `type` other than `object`.
