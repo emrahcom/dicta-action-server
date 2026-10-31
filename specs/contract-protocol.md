@@ -178,15 +178,15 @@ the new page only if a step was running; otherwise it ends:
   client saves the request in the tab's session storage: the exchange, the
   report so far and the step that was running, in a `forEach` with its item and
   call.
-- When `dicta-action-js` starts on a page, it looks for a saved request and
-  takes it out. One saved at most 60 seconds ago goes on: the client reports the
-  plan with the halt code `navigated` at the step that was running, with the
-  outputs so far, and sends the new page's `state`. The running step may or may
-  not have finished; nothing after it ran. The client does not run the rest of
-  the plan, which was written for the old page; the planner decides what comes
-  next. An older saved request ends instead: the client adds it to history as
-  cancelled, with its report and the halt code `navigated` at the step that was
-  running.
+- When `dicta-action-js` starts on a page, or the browser shows a page again
+  from its back/forward cache, it looks for a saved request and takes it out.
+  One saved at most 60 seconds ago goes on: the client reports the plan with the
+  halt code `navigated` at the step that was running, with the outputs so far,
+  and sends the new page's `state`. The running step may or may not have
+  finished; nothing after it ran. The client does not run the rest of the plan,
+  which was written for the old page; the planner decides what comes next. An
+  older saved request ends instead: the client adds it to history as cancelled,
+  with its report and the halt code `navigated` at the step that was running.
 - A page load at any other time ends the request: while the client waits for the
   server's response, or a question or a confirmation is open. On `pagehide`, the
   client adds it to history as cancelled, with everything done so far, also a
