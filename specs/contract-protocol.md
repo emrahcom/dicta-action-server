@@ -287,8 +287,10 @@ a planner failure. A planner failure is not an HTTP error; the server sends a
 
 ## Limits
 
-Each part of a round has a limit, which keeps a round well under 1 MB. The `413`
-only guards against a client that breaks them.
+Each part of a round has a limit. Together they keep a round under 1 MB in all
+but extreme cases, such as a request with the most plans, each with full
+outputs, and many long added texts. The `413` is the hard limit for the whole
+body; like any other error, it ends the request (Errors).
 
 - `text`, each answer and each added text: at most 10000 characters (Unicode
   code points). The client does not take longer input from the user.
