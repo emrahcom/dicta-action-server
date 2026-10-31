@@ -30,7 +30,7 @@ const CONTEXT = checkContext({
           title: { type: "string" },
           priority: { type: "integer" },
           tags: { type: "array", items: { type: "string" } },
-          color: { enum: ["red", "green"] },
+          color: { enum: ["red", "green", "$red", "$$green"] },
         },
         required: ["title"],
       },
@@ -172,6 +172,10 @@ const VALID: [string, unknown][] = [
     },
   ],
   ["50 steps", { steps: Array(50).fill(list) }],
+  [
+    "a $$ string whose single-$ value is in the enum",
+    { steps: [create({ title: "a", color: "$$red" })] },
+  ],
 ];
 
 for (const [name, plan] of VALID) {
@@ -277,6 +281,11 @@ const INVALID: [string, unknown, RegExp][] = [
   [
     "a value outside the enum",
     { steps: [create({ title: "a", color: "blue" })] },
+    /color is not one of/,
+  ],
+  [
+    "a $$ string whose single-$ value is not in the enum",
+    { steps: [create({ title: "a", color: "$$green" })] },
     /color is not one of/,
   ],
   [

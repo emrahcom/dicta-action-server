@@ -100,10 +100,16 @@ function matches(value: unknown, schema: Schema, path: string) {
   if (schema.type !== undefined && !hasType(value, schema.type)) {
     throw new BadPlan(`${path} must be of type ${schema.type}`);
   }
+  // A string written with $$ is compared as the capability gets it, with a
+  // single $ (contract-plan.md, References).
+  const literal =
+    typeof value === "string" && value.startsWith("$$")
+      ? value.slice(1)
+      : value;
   if (
     schema.enum !== undefined &&
     !schema.enum.some(
-      (option) => JSON.stringify(option) === JSON.stringify(value),
+      (option) => JSON.stringify(option) === JSON.stringify(literal),
     )
   ) {
     throw new BadPlan(`${path} is not one of the allowed values`);
