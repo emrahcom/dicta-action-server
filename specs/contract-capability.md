@@ -20,11 +20,11 @@ import { dictaCapabilities } from "dicta-action-js";
 export default {
   site: {
     name: "Teamboard",
-    desc: `A task list for small teams.
+    desc: `A task list.
 
 ## Words
 
-Users say "board" for a project and "card" for a task.`,
+A card is a task.`,
   },
   confirmOver: 10,
   state: {
