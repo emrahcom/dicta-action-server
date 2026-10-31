@@ -158,8 +158,8 @@ complete.
     a new request, with a new `requestId` from the server.
 - Text that comes after a page load started is ignored (Page changes).
 - When a question is open, the text is its answer.
-- While a confirmation is open, text is ignored: only a click on its buttons
-  answers it.
+- While a confirmation is open, text is ignored: only its buttons answer it,
+  pressed by pointer, keyboard or the system's voice control.
 - Cancel: the request ends without another round. When a plan was running, the
   client adds the request to history as cancelled, with a last report that has
   the halt code `cancelled` at the step or item where it stopped. Cancel while a

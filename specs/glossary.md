@@ -74,7 +74,7 @@ detail.
   succeeds, the server replies with done without asking the planner again.
 - **Include output**: a mark on a top-level step that puts its output in the
   report (`includeOutput`). Outputs that are not included stay in the browser.
-- **Confirmation**: the client asks the user to click Continue or Cancel before
+- **Confirmation**: the client asks the user to press Continue or Cancel before
   a risky step (`contract-plan.md`, Confirmation).
 
 ## After a plan
