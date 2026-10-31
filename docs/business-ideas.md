@@ -26,3 +26,16 @@ not store requests. You add this part.
 
 Each site needs its own capability functions and site context. Many site owners
 will want help to write and test them. You can offer this as a service.
+
+## Train a model for a platform
+
+Many sites run on the same platform, such as WordPress or Nextcloud. Each site
+has its own capability functions, but they share the same ideas: posts, pages,
+files, users. A smaller model trained for one platform can plan for all these
+sites. It is faster and cheaper than a large general model.
+
+- Train it on good plans from many sites of the platform. Then it learns to
+  follow each site's context, not the names of one site.
+- Ask users before you use their requests to train.
+- Train it again when the platform changes.
+- The action server stays the same. Only the model behind the planner changes.
