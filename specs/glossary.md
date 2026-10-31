@@ -48,8 +48,8 @@ detail.
   context. It ends the user request.
 - **Outcome**: how a user request ended (`outcome`): done, a stop, an info,
   cancel or an error, with the text the user saw, if any.
-- **Added text**: text the user gives while a request runs (`added`). It
-  interrupts the plan and goes to the planner.
+- **Added text**: text the user gives while a request runs (`added`). It goes to
+  the planner.
 - **Cancel**: the user ends the request. Nothing after the current step runs.
 - **Page change**: a page load in the middle of a request
   (`contract-protocol.md`, Page changes).

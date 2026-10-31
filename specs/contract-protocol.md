@@ -201,8 +201,8 @@ the new page only if a step was running; otherwise it ends:
 }
 ```
 
-`requestId` identifies the user request across its rounds, for the server's
-logs. The server creates it in the first round and repeats it in every reply.
+`requestId` identifies the user request across its rounds and in the history.
+The server creates it in the first round and repeats it in every reply.
 
 `reply` has a `type`:
 
