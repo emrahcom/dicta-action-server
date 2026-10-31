@@ -156,8 +156,7 @@ complete.
     items, with nothing about the dropped response;
   - after done, a stop or an info, the request is over, and the held text starts
     a new request, with a new `requestId` from the server.
-- Text that comes while the client waits for a page load is held with the report
-  (Page changes).
+- Text that comes after a page load started is ignored (Page changes).
 - When a question is open, the text is its answer.
 - While a confirmation is open, text is ignored: only a click on its buttons
   answers it.
@@ -183,8 +182,9 @@ started during a step; otherwise it ends:
   after that call, once it returns. It makes the report: the halt code
   `navigated` at the first step that did not run, in a `forEach` with its item
   and call, or no halt when none is left. This comes before added text: text
-  that came during the step is held with the report. The client does not send
-  the report and waits for the page to be left.
+  that came during the step before the page load started is held with the
+  report. Text that comes after it, until the page is left, is ignored. The
+  client does not send the report and waits for the page to be left.
 - When the page is left (the browser's `pagehide` event) while the client waits
   for it, it saves the request in the tab's session storage: the exchange, the
   report and any added text.
@@ -196,9 +196,9 @@ started during a step; otherwise it ends:
   decides what comes next. An older saved request ends instead: the client adds
   it to history as cancelled, with its report and added text.
 - When the page load does not happen, for example the user stays on the page at
-  the browser's leave prompt, the client keeps waiting. Text the user adds is
-  held with the report, to be saved with it. Cancel adds the request to history
-  as cancelled, with the report and the held text.
+  the browser's leave prompt, the client keeps waiting and text is still
+  ignored. Cancel adds the request to history as cancelled, with the report and
+  any added text.
 - A page load at any other time ends the request: while a step runs, while the
   client waits for the server's response, or a question or a confirmation is
   open. On `pagehide`, the client adds it to history as cancelled, with
