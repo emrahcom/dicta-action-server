@@ -62,7 +62,8 @@ A card is a task.`,
 ## Confirm over
 
 `confirmOver` is the most items a `forEach` may change without asking the user
-first (`contract-plan.md`, Confirmation). The harness sets it; the site's
+first, and the most top-level steps that may call one `write` capability without
+asking (`contract-plan.md`, Confirmation). The harness sets it; the site's
 developers can change it. Without it, it is 10.
 
 ## Capabilities

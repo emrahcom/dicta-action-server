@@ -141,6 +141,14 @@ with the texts of all its calls that ask, and the number of items when there are
 more than three; it calls `confirm` only for these. One `forEach` never asks
 twice.
 
+Top-level steps that call the same `write` capability ask together when there
+are more of them than `confirmOver`. Before the first of them runs, when the
+steps before it have run, the client fills in its arguments, calls `confirm`
+with them and asks once, with that text and the number of these steps. Continue
+runs all of them without asking again; Cancel stops at the first, which does not
+run. With `confirmOver` or fewer, they do not ask. The calls in a `forEach` are
+not counted here; the `forEach` has its own rule.
+
 While a confirmation is open, the user sees only the module's words: the client
 shows the text as plain text and hides the plan's label. The user answers with
 Continue, which runs the step, or Cancel, which cancels the request
