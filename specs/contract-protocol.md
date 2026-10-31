@@ -109,10 +109,13 @@ output out does not make its step fail.
   - `item` and `do`: only when the plan halted in a `forEach` after its first
     item started: the number of the item and of the call in its `do` where it
     halted, both from 0. The items before it are done, and in that item, the
-    calls before that call; nothing after it ran.
+    calls before that call; nothing after it ran. For `interrupted` and
+    `cancelled` between items, `do` is left out: `item` is the first item that
+    did not run (Added text and cancel).
   - `outputs`: only when `item` is set and the step has `includeOutput`: every
-    item that ran, in the form of a `forEach` output. The last entry holds only
-    the calls of that item that are done.
+    item that ran, in the form of a `forEach` output. With `do`, the last entry
+    holds only the calls of that item that are done; without it, every entry is
+    complete.
   - `tooLarge`: when `outputs` does not fit, its size in bytes; `outputs` is
     then left out.
 
