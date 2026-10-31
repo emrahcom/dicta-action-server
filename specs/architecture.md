@@ -92,6 +92,9 @@ As in dicta-server:
   the reply whose index is the number of items in the exchange, so the first
   round gets the first one. When the text is not such an array, or the array has
   no reply for the round, it replies with a stop.
+- A planner gets at most 45 seconds for a round, so the reply comes well within
+  the client's 60 seconds. One that takes longer is a planner failure, and the
+  server sends a stop (`contract-protocol.md`, Errors).
 - A report on a plan marked final whose steps all succeeded, with no added text
   after it, gets done from the server, without the planner (`contract-plan.md`,
   Reporting).
