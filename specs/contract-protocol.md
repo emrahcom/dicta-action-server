@@ -270,7 +270,8 @@ only guards against a client that breaks them.
 - `context`: at most 64 KB, counted as the UTF-8 bytes of its JSON. Keeping it
   small is the site's job (`contract-context.md`).
 - A halt `message`: at most 200 characters. The client cuts longer ones.
-- A plan: at most 16 KB and 50 top-level steps (`contract-plan.md`, Limits).
+- A plan: at most 16 KB and 50 top-level steps, and its label at most 200
+  characters (`contract-plan.md`, Limits).
 - The included outputs of a report: at most 16 KB together (Report).
 - Plans in a request: at most `MAX_PLANS`, which is at most 20.
 - The `text` of a reply: at most 200 characters, of an `info` 2000. A question's

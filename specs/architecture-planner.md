@@ -55,10 +55,10 @@ context.
 
 ## Rules for the LLM
 
-- The instructions give the plan limits: 50 steps, 16 KB, 100 items in a
-  `forEach` and 16 KB of included outputs, and the reply limits: 200 characters
-  of text, 2000 for an info and at most 5 options of 50 characters. The last
-  part of the prompt gives the plans left.
+- The instructions give the plan limits: 50 steps, 16 KB, a label of 200
+  characters, 100 items in a `forEach` and 16 KB of included outputs, and the
+  reply limits: 200 characters of text, 2000 for an info and at most 5 options
+  of 50 characters. The last part of the prompt gives the plans left.
 - When no plans are left, the LLM replies done (the job is finished) or a stop
   (with what was done), never a plan, a question or an info. The server's stop
   at the limit (`architecture.md`, Requests) stays as a guard.

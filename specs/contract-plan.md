@@ -25,7 +25,7 @@ calling one of the site's capabilities. It is JSON data, never code.
 ## Label
 
 `text`, when present, is one short sentence the client shows while the plan
-runs.
+runs, at most 200 characters (Limits).
 
 ## Reporting
 
@@ -99,7 +99,8 @@ single `$`.
 The client checks the whole plan before it runs any step, and the server checks
 it before it sends it:
 
-- it has at most 50 top-level steps, and its JSON is at most 16 KB (Limits);
+- it has at most 50 top-level steps, its JSON is at most 16 KB and its label at
+  most 200 characters (Limits);
 - every `call` names a capability;
 - every `args` matches that capability's schema, with no properties the schema
   does not name, or is `{}` when the capability has no `args`;
@@ -117,6 +118,7 @@ step and reports the outputs asked for so far and the halt.
 
 - At most 50 top-level steps in a plan, and at most 16 KB, counted as the UTF-8
   bytes of its JSON. A longer or larger plan fails the check (Failures).
+- The label: at most 200 characters. A longer one fails the check (Failures).
 - At most 100 items in a `forEach`. A larger array fails the step with the code
   `limit` before any item runs.
 
