@@ -136,9 +136,10 @@ a `write` call when there are more items than the module's `confirmOver`
 It asks once for all items, before the first item runs. It fills in and checks
 the arguments of every item first, so a bad item halts the step before the user
 is asked and before any item runs; a call in `do` refers only to earlier steps
-and to the item, so all of them are known. It shows the number of items and the
-first three items, each with the texts of all its calls that ask; it calls
-`confirm` only for these. One `forEach` never asks twice.
+and to the item, so all of them are known. It shows the first three items, each
+with the texts of all its calls that ask, and the number of items when there are
+more than three; it calls `confirm` only for these. One `forEach` never asks
+twice.
 
 While a confirmation is open, the user sees only the module's words: the client
 shows the text as plain text and hides the plan's label. The user answers with
