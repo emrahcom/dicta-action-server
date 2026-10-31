@@ -5,7 +5,12 @@ import { test, type TestContext } from "node:test";
 import { SignJWT } from "jose";
 import { readFileSync } from "node:fs";
 import { stubPlanner } from "../src/planners/stub.ts";
-import type { Planner, Reply } from "../src/round.ts";
+import {
+  checkRound,
+  pickReply,
+  type Planner,
+  type Reply,
+} from "../src/round.ts";
 import { type AuthOptions, createServer } from "../src/server.ts";
 
 const SECRET = "s".repeat(32);
@@ -483,6 +488,33 @@ test("a planner error gives a stop", async (t) => {
 
   assert.equal(status, 200);
   assert.equal(response.reply.type, "stop");
+});
+
+// The planner's time limit (architecture.md, Planner).
+
+test("a planner that answers within 45 seconds is used", async (t) => {
+  t.mock.timers.enable({ apis: ["setTimeout"] });
+  const planner: Planner = () =>
+    new Promise((resolve) =>
+      setTimeout(() => resolve({ type: "done", text: "Done." }), 44_000),
+    );
+  const reply = pickReply(checkRound(body([])), planner, 10);
+  t.mock.timers.tick(44_000);
+  assert.deepEqual(await reply, { type: "done", text: "Done." });
+});
+
+test("a planner that takes longer than 45 seconds gives a stop", async (t) => {
+  t.mock.timers.enable({ apis: ["setTimeout"] });
+  const planner: Planner = () =>
+    new Promise((resolve) =>
+      setTimeout(() => resolve({ type: "done", text: "Done." }), 46_000),
+    );
+  const reply = pickReply(checkRound(body([])), planner, 10);
+  t.mock.timers.tick(45_000);
+  assert.deepEqual(await reply, {
+    type: "stop",
+    text: "Something went wrong.",
+  });
 });
 
 for (const [name, headers] of [

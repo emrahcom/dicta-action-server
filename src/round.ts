@@ -273,6 +273,9 @@ function checkReply(reply: unknown, context: SiteContext): Reply {
   return reply as Reply;
 }
 
+// The longest a planner may take for a round (architecture.md, Planner).
+const PLANNER_MS = 45_000;
+
 // The rules before the planner, then the planner, its reply check and the plan
 // limit (architecture.md, Requests, Planner).
 export async function pickReply(
@@ -290,10 +293,23 @@ export async function pickReply(
     return { type: "done" };
   }
   let reply: Reply;
+  let timer: ReturnType<typeof setTimeout> | undefined;
   try {
-    reply = await planner(round);
+    // A planner that takes too long is a planner failure; its late reply is
+    // dropped.
+    reply = await Promise.race([
+      planner(round),
+      new Promise<never>((_, reject) => {
+        timer = setTimeout(
+          () => reject(new Error("the planner took too long")),
+          PLANNER_MS,
+        );
+      }),
+    ]);
   } catch {
     return { type: "stop", text: "Something went wrong." };
+  } finally {
+    clearTimeout(timer);
   }
   try {
     reply = checkReply(reply, round.context);
