@@ -77,6 +77,10 @@ const VALID: [string, unknown][] = [
   ["a final plan", { steps: [list], final: true }],
   ["a plan with a label", { steps: [list], text: "Listing the tasks" }],
   [
+    "a label of 200 characters",
+    { steps: [list], text: "\u{1F600}".repeat(200) },
+  ],
+  [
     "a call with all argument types",
     {
       steps: [create({ title: "a", priority: 2, tags: ["x"], color: "red" })],
@@ -157,8 +161,14 @@ const VALID: [string, unknown][] = [
   [
     "a plan of 16 KB",
     {
-      steps: [],
-      text: "a".repeat(16 * 1024 - '{"steps":[],"text":""}'.length),
+      steps: [
+        create({
+          title: "a".repeat(
+            16 * 1024 -
+              '{"steps":[{"call":"tasks.create","args":{"title":""}}]}'.length,
+          ),
+        }),
+      ],
     },
   ],
   ["50 steps", { steps: Array(50).fill(list) }],
@@ -186,10 +196,15 @@ const INVALID: [string, unknown, RegExp][] = [
   ],
   ["final that is not a boolean", { steps: [], final: "yes" }, /final must be/],
   ["a label that is not text", { steps: [], text: 5 }, /text must be a string/],
+  [
+    "a label of 201 characters",
+    { steps: [], text: "x".repeat(201) },
+    /text is longer than 200 characters/,
+  ],
   ["51 steps", { steps: Array(51).fill(list) }, /at most 50 steps/],
   [
     "a plan over 16 KB",
-    { steps: [], text: "a".repeat(16 * 1024) },
+    { steps: [create({ title: "a".repeat(16 * 1024) })] },
     /at most 16 KB/,
   ],
   ["a step that is neither", { steps: [{ wait: 1 }] }, /a call or a forEach/],

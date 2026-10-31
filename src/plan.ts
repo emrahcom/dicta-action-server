@@ -5,6 +5,7 @@ import type { Schema, SiteContext } from "./context.ts";
 
 const MAX_STEPS = 50;
 const MAX_BYTES = 16 * 1024;
+const MAX_LABEL_CHARS = 200;
 
 export class BadPlan extends Error {}
 
@@ -185,6 +186,14 @@ export function checkPlan(plan: unknown, context: SiteContext) {
   onlyKeys(plan, ["steps", "text", "final"], "plan");
   if (plan.text !== undefined && typeof plan.text !== "string") {
     throw new BadPlan("text must be a string");
+  }
+  // Characters are Unicode code points, as for every text (contract-plan.md,
+  // Limits).
+  if (
+    typeof plan.text === "string" &&
+    Array.from(plan.text).length > MAX_LABEL_CHARS
+  ) {
+    throw new BadPlan(`text is longer than ${MAX_LABEL_CHARS} characters`);
   }
   if (plan.final !== undefined && typeof plan.final !== "boolean") {
     throw new BadPlan("final must be true or false");
