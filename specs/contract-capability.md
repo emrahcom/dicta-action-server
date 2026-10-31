@@ -196,7 +196,9 @@ When the output would be over 16 KB, counted as the UTF-8 bytes of its JSON, the
 client leaves out the outputs in its reports: each one goes into its report's
 `tooLarge`, and `halt.outputs` into `halt.tooLarge`, with its size
 (`contract-protocol.md`, Report). The plans, halts, questions, answers and texts
-stay.
+stay. An output still over 16 KB then is not cut further: like any output that
+does not fit, it goes into the report's `tooLarge`, and the planner sees only
+its size.
 
 ### History
 
