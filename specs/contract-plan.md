@@ -92,7 +92,8 @@ A string in `args` or in `forEach` that starts with `$` refers to an output:
 A reference is always a whole string; it is never put together with other text.
 Its value replaces the string as it is, with its JSON type. A string that should
 start with `$` itself is written with `$$`; the client passes it on with a
-single `$`.
+single `$`. The plan check compares such a string with its schema as the
+capability gets it, with a single `$`.
 
 ## Failures
 
