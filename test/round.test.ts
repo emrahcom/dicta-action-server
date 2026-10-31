@@ -490,6 +490,20 @@ test("a planner error gives a stop", async (t) => {
   assert.equal(response.reply.type, "stop");
 });
 
+test("400 for a body nested too deeply", async (t) => {
+  const base = await start(t);
+  const deep = "[".repeat(20_000) + "]".repeat(20_000);
+  const payload = JSON.stringify(body([PLAN])).replace(
+    '{"page":"tasks"}',
+    `{"page":${deep}}`,
+  );
+
+  const { status, body: error } = await post(base, payload);
+
+  assert.equal(status, 400);
+  assert.deepEqual(error, { error: "the body is nested too deeply" });
+});
+
 // The planner's time limit (architecture.md, Planner).
 
 test("a planner that answers within 45 seconds is used", async (t) => {

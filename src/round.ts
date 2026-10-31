@@ -169,6 +169,16 @@ function isLocalTime(value: string) {
 
 // Checks a request body. Throws BadRound when it does not fit.
 export function checkRound(body: unknown): Round {
+  // Sizes are counted on the JSON, which a body nested too deeply cannot be
+  // turned back into.
+  try {
+    JSON.stringify(body);
+  } catch (err) {
+    if (err instanceof RangeError) {
+      throw new BadRound("the body is nested too deeply");
+    }
+    throw err;
+  }
   if (!isObject(body)) {
     throw new BadRound("the body must be an object");
   }
