@@ -255,8 +255,11 @@ The server responds to a round it cannot take with an HTTP error and a JSON body
 - `413`: the body is larger than 1 MB.
 - `500`: an unexpected server error.
 
-Every other error ends the request too. A planner failure is not an HTTP error;
-the server sends a `stop`.
+Every other error ends the request too, and so do a network failure and a round
+without a response after 60 seconds. The client does not try such a round again.
+The server replies well within the 60 seconds: a planner that takes too long is
+a planner failure. A planner failure is not an HTTP error; the server sends a
+`stop`.
 
 ## Limits
 

@@ -158,9 +158,10 @@ Output: an array with a short entry for each request:
 - `time`: when the request ended (`contract-protocol.md`, Request body).
 - `text`: the user's request, cut to 200 characters.
 - `outcome.type`: how the request ended: `done`, `stop`, `info`, `cancelled`
-  (the user cancelled it, or a page change ended it) or `error` (an HTTP error
-  or a reply type the client does not know ended it; `contract-protocol.md`,
-  Errors and Response body).
+  (the user cancelled it, or a page change ended it) or `error` (an HTTP error,
+  a network failure, a round without a response after 60 seconds or a reply type
+  the client does not know ended it; `contract-protocol.md`, Errors and Response
+  body).
 - `outcome.text`: the text of the server's done, stop or info, cut to 200
   characters. Left out when there was none.
 
