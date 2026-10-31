@@ -107,6 +107,20 @@ cannot know it in advance. The request goes on in the new page
 or only in some cases, says so in its `desc`, so the planner knows that the
 steps after it may not run.
 
+A capability that loads a page does not return: after it starts the page load,
+its `run` returns a promise that never settles. The step is then still running
+when the page is left, so the request goes on in the new page. Starting a page
+load, for example by setting `location.href`, does not stop the code at once; a
+`run` that returned would let the client go on in the old page. A capability
+that loads a page only in some cases returns normally in the others.
+
+```js
+run: async ({ id }) => {
+  location.href = `/tasks/${id}`;
+  return new Promise(() => {});
+},
+```
+
 For this, every page of the site loads `dicta-action-js` and the module, and a
 capability that loads a page stays on the site's own origin.
 
