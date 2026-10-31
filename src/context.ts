@@ -15,6 +15,17 @@ const SCHEMA_KEYWORDS = [
   "description",
 ];
 
+// The seven JSON Schema types (contract-context.md, Checks).
+const SCHEMA_TYPES = [
+  "string",
+  "number",
+  "integer",
+  "boolean",
+  "object",
+  "array",
+  "null",
+];
+
 export type Schema = {
   type?: string;
   properties?: Record<string, Schema>;
@@ -73,7 +84,12 @@ function schema(value: unknown, path: string): Schema {
     }
   }
   if (s.type !== undefined) {
-    string(s.type, `${path}.type`);
+    const type = string(s.type, `${path}.type`);
+    if (!SCHEMA_TYPES.includes(type)) {
+      throw new ContextError(
+        `${path}.type must be one of ${SCHEMA_TYPES.join(", ")}`,
+      );
+    }
   }
   if (s.description !== undefined) {
     string(s.description, `${path}.description`);
@@ -86,9 +102,16 @@ function schema(value: unknown, path: string): Schema {
     }
   }
   if (s.required !== undefined) {
-    array(s.required, `${path}.required`).forEach((name, i) =>
-      string(name, `${path}.required[${i}]`),
-    );
+    // A required name must be one of the properties, or no plan can match.
+    const properties = isObject(s.properties) ? s.properties : {};
+    array(s.required, `${path}.required`).forEach((value, i) => {
+      const name = string(value, `${path}.required[${i}]`);
+      if (!Object.hasOwn(properties, name)) {
+        throw new ContextError(
+          `${path}.required names ${name}, which is not in its properties`,
+        );
+      }
+    });
   }
   if (s.items !== undefined) {
     schema(s.items, `${path}.items`);
@@ -101,6 +124,14 @@ function schema(value: unknown, path: string): Schema {
 
 function capability(value: unknown, path: string): Capability {
   const c = object(value, path);
+  // The arguments are always an object (contract-context.md, Checks).
+  if (
+    isObject(c.args) &&
+    c.args.type !== undefined &&
+    c.args.type !== "object"
+  ) {
+    throw new ContextError(`${path}.args.type must be object`);
+  }
   const level = string(c.level, `${path}.level`);
   if (!(LEVELS as readonly string[]).includes(level)) {
     throw new ContextError(`${path}.level must be one of ${LEVELS.join(", ")}`);

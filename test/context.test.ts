@@ -70,6 +70,28 @@ test("keeps only the fields it knows", () => {
   assert.equal("navigates" in (c.capabilities[0] ?? {}), false);
 });
 
+test("accepts each of the seven JSON Schema types", () => {
+  const types = [
+    "string",
+    "number",
+    "integer",
+    "boolean",
+    "object",
+    "array",
+    "null",
+  ];
+  const c = checkContext(
+    context((c) => {
+      c.capabilities[0].output = {
+        type: "object",
+        properties: Object.fromEntries(types.map((type) => [type, { type }])),
+        required: types,
+      };
+    }),
+  );
+  assert.deepEqual(c.capabilities[0].output?.required, types);
+});
+
 const INVALID: [string, (c: any) => void, RegExp][] = [
   ["no site", (c) => delete c.site, /^context\.site must be an object$/],
   [
@@ -139,6 +161,35 @@ const INVALID: [string, (c: any) => void, RegExp][] = [
     "required that is not a list of names",
     (c) => (c.capabilities[1].args.required = "title"),
     /args\.required must be an array$/,
+  ],
+  [
+    "a type that is not a JSON Schema type",
+    (c) => (c.capabilities[1].args.properties.title.type = "date"),
+    /^context\.capabilities\[1\]\.args\.properties\.title\.type must be one of string, number, integer, boolean, object, array, null$/,
+  ],
+  [
+    "an unknown type inside output",
+    (c) =>
+      (c.capabilities[0].output = {
+        type: "array",
+        items: { type: "int" },
+      }),
+    /^context\.capabilities\[0\]\.output\.items\.type must be one of/,
+  ],
+  [
+    "a required name that is not in the properties",
+    (c) => (c.capabilities[1].args.required = ["t"]),
+    /^context\.capabilities\[1\]\.args\.required names t, which is not in its properties$/,
+  ],
+  [
+    "a required name inherited by every object",
+    (c) => (c.capabilities[1].args.required = ["toString"]),
+    /args\.required names toString, which is not in its properties$/,
+  ],
+  [
+    "args whose type is not object",
+    (c) => (c.capabilities[1].args = { type: "string" }),
+    /^context\.capabilities\[1\]\.args\.type must be object$/,
   ],
   [
     "two capabilities with one name",
