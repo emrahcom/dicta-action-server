@@ -20,7 +20,10 @@ module (`contract-capability.md`) and sends it as `context` in every round
       "desc": "Creates a task in the open project.",
       "args": {
         "type": "object",
-        "properties": { "title": { "type": "string" } },
+        "properties": {
+          "title": { "type": "string" },
+          "due": { "type": "string", "description": "Date, YYYY-MM-DD" }
+        },
         "required": ["title"]
       },
       "output": {
