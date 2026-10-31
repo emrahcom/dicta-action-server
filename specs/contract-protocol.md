@@ -164,8 +164,9 @@ complete.
 - Cancel: the request ends without another round. When a plan was running, the
   client adds the request to history as cancelled, with a last report that has
   the halt code `cancelled` at the step or item where it stopped. Cancel while a
-  confirmation is open stops at that step, which does not run. A response that
-  arrives after a cancel is ignored.
+  confirmation is open stops at that step, which does not run. Cancel while the
+  client waits for a page load keeps the report it holds (Page changes). A
+  response that arrives after a cancel is ignored.
 
 Nothing that was done is undone. The report tells exactly what was done, so a
 later request can fix it.
@@ -180,10 +181,12 @@ started during a step; otherwise it ends:
 - When a page load starts during a step (the browser's `navigate` event for
   another document), the client runs nothing after that step, or in a `forEach`
   after that call, once it returns. It makes the report: the halt code
-  `navigated` at the first step, item or call that did not run, or no halt when
-  none is left. It does not send the report and waits for the page to be left.
+  `navigated` at the first step that did not run, in a `forEach` with its item
+  and call, or no halt when none is left. This comes before added text: text
+  that came during the step is held with the report. The client does not send
+  the report and waits for the page to be left.
 - When the page is left (the browser's `pagehide` event) while the client waits
-  so, it saves the request in the tab's session storage: the exchange, the
+  for it, it saves the request in the tab's session storage: the exchange, the
   report and any added text.
 - When `dicta-action-js` starts on a page, or the browser shows a page again
   from its back/forward cache, it looks for a saved request and takes it out.
