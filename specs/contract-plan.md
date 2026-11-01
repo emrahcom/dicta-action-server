@@ -86,6 +86,8 @@ A string in `args` or in `forEach` that starts with `$` refers to an output:
 - `$1` is the output of the first step of the plan, `$2` of the second, and so
   on. Only top-level steps are numbered; a step can refer only to earlier ones.
 - `$item` is the current item inside the `do` of a `forEach`.
+- A call in a `do` cannot refer to another call of that `do`. When it needs one
+  call's output, the plan uses a second `forEach` over the first one's output.
 - A path follows with dots: `$1.id`, `$item.owner.name`, `$1.items.0.id` (array
   items by number, from 0).
 
@@ -137,11 +139,12 @@ a `write` call when there are more items than the module's `confirmOver`
 
 It asks once for all items, before the first item runs. It fills in and checks
 the arguments of every item first, so a bad item halts the step before the user
-is asked and before any item runs; a call in `do` refers only to earlier steps
-and to the item, so all of them are known. It shows the first three items, each
-with the texts of all its calls that ask, and the number of items when there are
-more than three; it calls `confirm` only for these. One `forEach` never asks
-twice.
+is asked and before any item runs, with the item's number, from 0, at the start
+of the halt's message, as in `item 3: ...`; a call in `do` refers only to
+earlier steps and to the item, so all of them are known. It shows the first
+three items, each with the texts of all its calls that ask, and the number of
+items when there are more than three; it calls `confirm` only for these. One
+`forEach` never asks twice.
 
 Top-level steps that call the same `write` capability ask together when there
 are more of them than `confirmOver`. Before the first of them runs, when the
