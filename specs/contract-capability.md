@@ -89,15 +89,16 @@ developers can change it. Without it, it is 10.
   `args`, and returns a JSON value, matching `output` when it is set. It returns
   only what a planner needs, such as ids, names and dates, not whole records:
   included outputs share 16 KB in a report (`contract-protocol.md`, Report).
-- `confirm`: for `write`, `destructive` and `external` capabilities, an async
-  function that takes the arguments and returns a short text naming the action
-  and what it acts on, for example
+- `confirm`: required for `write`, `destructive` and `external` capabilities, an
+  async function that takes the arguments and returns a short text naming the
+  action and what it acts on, for example
   `Share "Budget review" with chen@example.com`. It may read data through the
   site's own code, to turn ids into names the user knows, but it never changes
   anything. When it throws, the step fails as if `run` had thrown (Errors), and
-  nothing runs. The client shows the text when it asks the user
-  (`contract-plan.md`, Confirmation). The wording of a confirmation comes only
-  from here, never from a plan, so a plan cannot make a risky step look
+  nothing runs. When it is missing and the step asks, the step fails with
+  `capability`, and nothing runs. The client shows the text when it asks the
+  user (`contract-plan.md`, Confirmation). The wording of a confirmation comes
+  only from here, never from a plan, so a plan cannot make a risky step look
   harmless, and the user sees exactly what will happen.
 
 ## Page changes
