@@ -166,12 +166,13 @@ complete.
 - When a question is open, the text is its answer.
 - While a confirmation is open, text is ignored: only its buttons answer it,
   pressed by pointer, keyboard or the system's voice control.
-- Cancel: the request ends without another round, and the client adds it to
-  history as cancelled, at any point. When a plan was running, it adds a last
-  report that has the halt code `cancelled` at the step or item where it
-  stopped. Cancel while a confirmation is open stops at that step, which does
-  not run. Cancel while the client waits for a page load keeps the report it
-  holds (Page changes). A response that arrives after a cancel is ignored.
+- Cancel: the request ends without another round, at any point. Once it has a
+  `requestId`, the client adds it to history as cancelled. When a plan was
+  running, it adds a last report that has the halt code `cancelled` at the step
+  or item where it stopped. Cancel while a confirmation is open stops at that
+  step, which does not run. Cancel while the client waits for a page load keeps
+  the report it holds (Page changes). A response that arrives after a cancel is
+  ignored.
 
 Nothing that was done is undone. The report tells exactly what was done, so a
 later request can fix it.
@@ -209,11 +210,11 @@ it ends:
   any added text.
 - A page left at any other time ends the request: before a running step returns,
   while the client waits for the server's response, or while a question or a
-  confirmation is open. On `pagehide`, the client adds it to history as
-  cancelled, with everything done so far, also a report it had not sent yet
-  (`contract-capability.md`, Built-in capabilities). When a step was running,
-  that report has the halt code `cancelled` at that step, in a `forEach` with
-  its item and call: it may or may not have finished.
+  confirmation is open. On `pagehide`, once it has a `requestId`, the client
+  adds it to history as cancelled, with everything done so far, also a report it
+  had not sent yet (`contract-capability.md`, Built-in capabilities). When a
+  step was running, that report has the halt code `cancelled` at that step, in a
+  `forEach` with its item and call: it may or may not have finished.
 
 On `pagehide` the request is over in this page, whether it was saved or added to
 history: the client drops it, runs nothing more of it and ignores a step or a
