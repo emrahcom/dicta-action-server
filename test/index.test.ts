@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
+import { once } from "node:events";
 import { readFileSync } from "node:fs";
 import { test } from "node:test";
 
@@ -37,7 +38,8 @@ function exitWithError(env: Record<string, string>): Promise<string> {
       child.kill();
       reject(new Error("the server started instead of exiting"));
     });
-    child.on("exit", (code) => {
+    // close, not exit: stderr may still be open at exit.
+    child.on("close", (code) => {
       if (code === 1) {
         resolve(stderr);
       } else {
@@ -48,17 +50,23 @@ function exitWithError(env: Record<string, string>): Promise<string> {
 }
 
 // Starts the server with `env`, waits for its listening line and returns the
-// port, its stderr so far and a function that stops it.
+// port, its stderr so far and a function that stops it. Once stop() resolves,
+// stderr is complete.
 async function startListening(env: Record<string, string>) {
   const child = startIndex(env);
   let stderr = "";
   child.stderr.on("data", (chunk) => (stderr += chunk));
+  const closed = once(child, "close");
   const line = await new Promise<string>((resolve, reject) => {
     child.stdout.once("data", (chunk) => resolve(String(chunk)));
     child.once("exit", (code) => reject(new Error(`exited with ${code}`)));
   });
   const port = Number(/port (\d+)/.exec(line)?.[1]);
-  return { line, port, stderr: () => stderr, stop: () => child.kill() };
+  const stop = async () => {
+    child.kill();
+    await closed;
+  };
+  return { line, port, stderr: () => stderr, stop };
 }
 
 test("starts, logs one line and replies to rounds", async (t) => {
@@ -93,6 +101,8 @@ test("warns when unauthenticated is allowed", async (t) => {
   });
   t.after(server.stop);
 
+  // Stopped first, so stderr is complete: the pipes are not ordered.
+  await server.stop();
   assert.match(server.stderr(), /ALLOW_UNAUTHENTICATED is on/);
 });
 

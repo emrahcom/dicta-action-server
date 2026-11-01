@@ -168,6 +168,24 @@ test("replies with done without the planner after a final plan that succeeded", 
   assert.equal(calls, 0);
 });
 
+test("asks the planner when added text follows a final plan that succeeded", async (t) => {
+  let calls = 0;
+  const base = await start(t, {
+    planner: async () => {
+      calls++;
+      return PLAN as Reply;
+    },
+  });
+
+  const { body: response } = await post(
+    base,
+    body([], [DONE_PLAN, { added: "and the closed ones" }]),
+  );
+
+  assert.deepEqual(response.reply, PLAN);
+  assert.equal(calls, 1);
+});
+
 test("asks the planner after a final plan that failed", async (t) => {
   const base = await start(t);
   const failed = {
