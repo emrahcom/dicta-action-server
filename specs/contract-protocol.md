@@ -94,7 +94,7 @@ output out does not make its step fail.
   - `step`: the number of the top-level step where it halted, from 1 as in
     references. Left out for `invalid`, since no step ran.
   - `code`: why it halted. For `capability`, the capability's own code is used
-    when it gives one.
+    when it gives one that is not in this list.
     - `capability`: the capability threw.
     - `reference`: a reference had no value, or a value that does not fit where
       it is used.

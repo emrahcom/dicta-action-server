@@ -129,8 +129,9 @@ capability that loads a page stays on the site's own origin.
 ## Errors
 
 A capability that fails throws. When the error has a string `code`, for example
-`not_found`, the client reports that code and the error's `message`; otherwise
-it reports `capability` (`contract-protocol.md`, Report). Messages are short, at
+`not_found`, the client reports that code and the error's `message`; otherwise,
+or when the code is one of the client's own halt codes, such as `invalid`, it
+reports `capability` (`contract-protocol.md`, Report). Messages are short, at
 most 200 characters, and contain no secrets; the client cuts longer ones.
 
 ## State
