@@ -148,7 +148,19 @@ and exports them as `dictaCapabilities`. The module adds them to its
 go into the site context like any other capability. Their names are in the
 `dicta` group, which only they use.
 
-### `dicta.listHistory`
+### History
+
+The history is the earlier requests of this browser tab. The client stores each
+request once, when it ends: on done, a stop, an info, cancel, an error or a page
+change that ends it (`contract-protocol.md`, Page changes). A request that ended
+before it got a `requestId` ran nothing and is not stored. When the browser's
+storage is full, the client drops the oldest requests.
+
+Two capabilities read it. They can be in one plan: `dicta.listHistory` with
+`limit` 1, then `dicta.getHistory` with the reference `$1.0.requestId` for the
+latest request.
+
+#### `dicta.listHistory`
 
 A `read` capability: earlier requests of this browser tab, newest first, for
 requests that refer to the past, such as "undo that" or "the same for Friday".
@@ -181,7 +193,7 @@ Output: an array with a short entry for each request:
 - `outcome.text`: the text of the server's done, stop or info, cut to 200
   characters. Left out when there was none.
 
-### `dicta.getHistory`
+#### `dicta.getHistory`
 
 A `read` capability: one request in full.
 
@@ -199,17 +211,6 @@ client leaves out the outputs in its reports: each one goes into its report's
 stay. An output still over 16 KB then is not cut further: like any output that
 does not fit, it goes into the report's `tooLarge`, and the planner sees only
 its size.
-
-### History
-
-Both can be in one plan: `dicta.listHistory` with `limit` 1, then
-`dicta.getHistory` with the reference `$1.0.requestId` for the latest request.
-
-The client stores each request once, when it ends: on done, a stop, an info,
-cancel, an error or a page change that ends it (`contract-protocol.md`, Page
-changes). A request that ended before it got a `requestId` ran nothing and is
-not stored. When the browser's storage is full, the client drops the oldest
-requests.
 
 ## Rights
 
