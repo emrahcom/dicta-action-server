@@ -157,8 +157,9 @@ complete.
     shown. The client keeps the response's `requestId` and sends a new round of
     the same request: the exchange it sent before, followed by the `added`
     items, with nothing about the dropped response;
-  - after done, a stop or an info, the request is over, and the held text starts
-    a new request, with a new `requestId` from the server;
+  - after done, a stop or an info, the request is over, and the first held text
+    starts a new request, with a new `requestId` from the server; the others are
+    added text of that request;
   - when the round fails (Errors), the held text belongs to the failed request
     and is dropped with it.
 - Text that comes after a page load started is ignored (Page changes).
