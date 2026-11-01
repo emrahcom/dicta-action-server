@@ -104,7 +104,8 @@ it before it sends it:
   most 200 characters (Limits);
 - every `call` names a capability;
 - every `args` matches that capability's schema, with no properties the schema
-  does not name, or is `{}` when the capability has no `args`;
+  does not name in any object, or is `{}` when the capability has no `args`. A
+  reference matches any schema here: its value is known only when the step runs;
 - every reference points to an earlier step or to a `forEach` item;
 - every `forEach` refers to an earlier step;
 - `includeOutput` is a boolean, and only on top-level steps.
