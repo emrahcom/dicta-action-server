@@ -10,7 +10,8 @@ detail.
   confirmations and talks to the server.
 - **Server**: `dicta-action-server`. It turns a request into replies; it never
   acts on the site.
-- **Planner**: the LLM behind the server that writes the replies.
+- **Planner**: the part of the server that writes the replies: an LLM, or `stub`
+  for tests.
 - **Capability**: a function of the site that a plan can call, with a name, a
   level, a description and, when needed, an argument schema and an output schema
   (`contract-capability.md`).
@@ -47,12 +48,14 @@ detail.
 - **Info**: the answer to a question about the site itself, from the site
   context. It ends the user request.
 - **Outcome**: how a user request ended (`outcome`): done, a stop, an info,
-  cancel or an error, with the text the user saw, if any.
+  cancelled or an error, with the server's text, if any.
 - **Added text**: text the user gives while a request runs (`added`). It goes to
   the planner.
 - **Cancel**: the user ends the request. Nothing after the current step runs.
 - **Page change**: a page load in the middle of a request
   (`contract-protocol.md`, Page changes).
+- **Saved request**: a request the client keeps in the tab while a page loads,
+  so it goes on in the new page.
 - **History**: finished user requests of the browser tab, kept by the client and
   read with `dicta.listHistory` and `dicta.getHistory`.
 - **Plan limit**: the most plans one user request may have (`MAX_PLANS`).
@@ -76,6 +79,8 @@ detail.
   report (`includeOutput`). Outputs that are not included stay in the browser.
 - **Confirmation**: the client asks the user to press Continue or Cancel before
   a risky step (`contract-plan.md`, Confirmation).
+- **Confirm over**: the most changes of one `write` capability that run without
+  a confirmation (`confirmOver`).
 
 ## After a plan
 
