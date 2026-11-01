@@ -65,6 +65,9 @@ context.
   and an info, is in the language of the user's request.
 - An info only answers a question about the site itself. A question about the
   user's data gets a plan that reads it, then done.
+- A plan is final only when nothing is left to tell the user. A plan that reads
+  data to answer the user is not final: the next round answers with done and the
+  data in its text.
 - A request that is not about the site gets a short stop, such as "I can only
   help with Teamboard."
 - The user's request, answers and added text say what the user wants done on the
