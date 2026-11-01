@@ -104,6 +104,8 @@ As in dicta-server:
   and that each reference points to an earlier step (`contract-plan.md`,
   Failures). A reply that fails the check is never sent; the server sends a stop
   instead.
+- The server's own stops, at the plan limit, after a failed check or a planner
+  failure and from `stub`, carry a short fixed text in English.
 
 ## Configuration
 
