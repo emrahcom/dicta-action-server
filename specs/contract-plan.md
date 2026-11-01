@@ -102,8 +102,7 @@ capability gets it, with a single `$`.
 The client checks the whole plan before it runs any step, and the server checks
 it before it sends it:
 
-- it has at most 50 top-level steps, its JSON is at most 16 KB and its label at
-  most 200 characters (Limits);
+- its steps, size and label are within the limits (Limits);
 - every `call` names a capability;
 - every `args` matches that capability's schema, with no properties the schema
   does not name in any object, or is `{}` when the capability has no `args`. A
