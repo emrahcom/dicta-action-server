@@ -76,7 +76,8 @@ developers can change it. Without it, it is 10.
   - `write` changes the user's data or the page.
   - `destructive` deletes or overwrites what cannot easily be restored.
   - `external` sends data out of the site or reaches other people: sharing,
-    inviting, sending messages, publishing, paying.
+    inviting, sending messages, publishing, paying. A change to data that others
+    see in the site, such as a task on a team's board, is `write`.
 - `desc`: one or two sentences for the planner: what it does and when to use it.
 - `args`: a JSON Schema for the argument object, left out when the capability
   takes no arguments. Only `type`, `properties`, `required`, `items`, `enum` and
