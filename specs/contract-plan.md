@@ -102,6 +102,8 @@ capability gets it, with a single `$`.
 The client checks the whole plan before it runs any step, and the server checks
 it before it sends it:
 
+- it has only the fields this contract names, each of the right type, and each
+  step is either a `call` or a `forEach`;
 - its steps, size and label are within the limits (Limits);
 - every `call` names a capability;
 - every `args` matches that capability's schema, with no properties the schema

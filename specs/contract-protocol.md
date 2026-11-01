@@ -266,10 +266,10 @@ question, a stop and an info have a `text`, `options` is a list of strings, and
 the limits hold. A reply that fails the check is never sent; the server sends a
 stop instead. A plan is checked as well (`contract-plan.md`, Failures).
 
-Clients ignore fields they do not know. When the server sends a reply type the
-client does not know, the client ends the request as an error, as for an HTTP
-error (Errors), so an older client is never stuck on a reply from a newer
-server.
+Clients ignore fields they do not know, except in a plan (`contract-plan.md`,
+Failures). When the server sends a reply type the client does not know, the
+client ends the request as an error, as for an HTTP error (Errors), so an older
+client is never stuck on a reply from a newer server.
 
 ## Errors
 
