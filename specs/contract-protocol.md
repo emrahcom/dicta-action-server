@@ -180,7 +180,8 @@ later request can fix it.
 Any capability may load a page, a new one or the same one again, and so may the
 user (`contract-capability.md`, Page changes). When the page is left in the
 middle of a request, the request goes on in the new page only if the page load
-started during a step; otherwise it ends:
+started during a step and that step returned before the page was left; otherwise
+it ends:
 
 - When a page load starts during a step (the browser's `navigate` event for
   another document), the client runs nothing after that step, or in a `forEach`
@@ -204,10 +205,10 @@ started during a step; otherwise it ends:
   the browser's leave prompt, the client keeps waiting and text is still
   ignored. Cancel adds the request to history as cancelled, with the report and
   any added text.
-- A page load at any other time ends the request: while a step runs, while the
-  client waits for the server's response, or a question or a confirmation is
-  open. On `pagehide`, the client adds it to history as cancelled, with
-  everything done so far, also a report it had not sent yet
+- A page left at any other time ends the request: before a running step returns,
+  while the client waits for the server's response, or while a question or a
+  confirmation is open. On `pagehide`, the client adds it to history as
+  cancelled, with everything done so far, also a report it had not sent yet
   (`contract-capability.md`, Built-in capabilities).
 
 On `pagehide` the request is over in this page, whether it was saved or added to
