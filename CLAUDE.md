@@ -7,6 +7,8 @@ LLM keys and never acts on the site itself. One server serves any number of
 sites: everything site-specific comes from the client in each round. Keep it
 that way. The details are in `specs/`.
 
+Accessibility, high test coverage, security and stability are first-class goals.
+
 ## Specs and tasks
 
 - `specs/` is authoritative; code follows it. Specs are living documents: write
