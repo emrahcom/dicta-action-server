@@ -105,25 +105,28 @@ developers can change it. Without it, it is 10.
   user (`contract-plan.md`, Confirmation). The wording of a confirmation comes
   only from here, never from a plan, so a plan cannot make a risky step look
   harmless, and the user sees exactly what will happen.
+- `pageLoad`: optional, `true` when the capability may load a page (Page
+  changes).
 
 ## Page changes
-
-Any capability may load a page, a new one or the same one again; the client
-cannot know it in advance. The request goes on in the new page
-(`contract-protocol.md`, Page changes). A capability that loads a page, always
-or only in some cases, says so in its `desc`, so the planner knows that the
-steps after it may not run.
 
 A page load means the browser leaves the document, for example after setting
 `location.href` or calling `location.reload()`. A change of the hash only, or
 through the history API, is not one.
 
-Starting a page load is the last thing a capability does: its `run` returns
-right after it. The client sees that a page load started and runs nothing after
-that step. A `run` that goes on working after it, for example with an `await`,
-may lose the page before it returns, and the request then ends.
+A capability that may load a page, always or only in some cases, has
+`pageLoad: true` and says so in its `desc`, so the planner knows that the steps
+after it may not run. After such a step, the client checks whether a page load
+started; if so, it runs nothing more, and the request goes on in the new page
+(`contract-protocol.md`, Page changes). A capability without `pageLoad` that
+loads a page ends the request.
+
+Starting the page load is the last thing such a capability does: its `run`
+returns right after it. A `run` that goes on working, for example with an
+`await`, may lose the page before it returns, and the request then ends.
 
 ```js
+pageLoad: true,
 run: async ({ id }) => {
   location.href = `/tasks/${id}`;
 },
@@ -131,6 +134,10 @@ run: async ({ id }) => {
 
 For this, every page of the site loads `dicta-action-js` and the module, and a
 capability that loads a page stays on the site's own origin.
+
+A download is not a page load, but the browser reports both the same way. So a
+capability with `pageLoad` does not start downloads; any other capability may,
+and the steps after it run.
 
 ## Errors
 

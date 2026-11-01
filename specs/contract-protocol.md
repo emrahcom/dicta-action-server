@@ -184,14 +184,15 @@ middle of a request, the request goes on in the new page only if the page load
 started during a step and that step returned before the page was left; otherwise
 it ends:
 
-- When a page load starts during a step (the browser's `navigate` event for
-  another document), the client runs nothing after that step, or in a `forEach`
-  after that call, once it returns. It makes the report: the halt code
-  `navigated` at the first step that did not run, in a `forEach` with its item
-  and call, or no halt when none is left. This comes before added text: text
-  that came during the step before the page load started is held with the
-  report. Text that comes after it, until the page is left, is ignored. The
-  client does not send the report and waits for the page to be left.
+- When a page load starts during a step of a capability with `pageLoad` (the
+  browser's `navigate` event for another document), the client runs nothing
+  after that step, or in a `forEach` after that call, once it returns. It makes
+  the report: the halt code `navigated` at the first step that did not run, in a
+  `forEach` with its item and call, or no halt when none is left. This comes
+  before added text: text that came during the step before the page load started
+  is held with the report. Text that comes after it, until the page is left, is
+  ignored. The client does not send the report and waits for the page to be
+  left.
 - When the page is left (the browser's `pagehide` event) while the client waits
   for it, it saves the request in the tab's session storage: the exchange, the
   report and any added text.
