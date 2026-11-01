@@ -210,7 +210,9 @@ it ends:
   while the client waits for the server's response, or while a question or a
   confirmation is open. On `pagehide`, the client adds it to history as
   cancelled, with everything done so far, also a report it had not sent yet
-  (`contract-capability.md`, Built-in capabilities).
+  (`contract-capability.md`, Built-in capabilities). When a step was running,
+  that report has the halt code `cancelled` at that step, in a `forEach` with
+  its item and call: it may or may not have finished.
 
 On `pagehide` the request is over in this page, whether it was saved or added to
 history: the client drops it, runs nothing more of it and ignores a step or a
