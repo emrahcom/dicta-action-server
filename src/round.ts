@@ -1,7 +1,12 @@
 // A round of a user request: the request body, the reply and the rules that
 // pick the reply (contract-protocol.md, architecture.md).
 
-import { checkContext, ContextError, type SiteContext } from "./context.ts";
+import {
+  checkContext,
+  ContextError,
+  isObject,
+  type SiteContext,
+} from "./context.ts";
 import { BadPlan, checkPlan } from "./plan.ts";
 
 export type Report = {
@@ -42,10 +47,6 @@ export type Reply =
 export type Planner = (round: Round) => Promise<Reply>;
 
 export class BadRound extends Error {}
-
-function isObject(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
-}
 
 // The limits of the parts of a round (contract-protocol.md, Limits).
 const MAX_TEXT_CHARS = 10000;

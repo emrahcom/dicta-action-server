@@ -1,17 +1,13 @@
 // The plan check: a plan is sent only when it fits the site context
 // (contract-plan.md, Steps, References, Failures, Limits).
 
-import type { Schema, SiteContext } from "./context.ts";
+import { isObject, type Schema, type SiteContext } from "./context.ts";
 
 const MAX_STEPS = 50;
 const MAX_BYTES = 16 * 1024;
 const MAX_LABEL_CHARS = 200;
 
 export class BadPlan extends Error {}
-
-function isObject(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
-}
 
 function onlyKeys(
   value: Record<string, unknown>,
@@ -171,14 +167,8 @@ function checkCall(
     throw new BadPlan(`${path}.args must be an object`);
   }
   checkReferences(step.args, scope, `${path}.args`);
-  if (capability.args === undefined) {
-    // A capability without args takes no arguments (contract-plan.md, Failures).
-    if (Object.keys(step.args).length > 0) {
-      throw new BadPlan(`${path}.args must be {} for ${capability.name}`);
-    }
-    return;
-  }
-  matches(step.args, capability.args, `${path}.args`);
+  // A capability without args takes no arguments (contract-plan.md, Failures).
+  matches(step.args, capability.args ?? {}, `${path}.args`);
 }
 
 // Checks a plan from the planner. Throws BadPlan with the reason.
