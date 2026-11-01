@@ -119,3 +119,6 @@ Environment variables:
 - `PLANNER`: the planner. Required. Values: `stub`.
 - `MAX_PLANS`: the most plans per user request (Requests), a whole number from
   `1` to `20`. Default `10`.
+
+The server does not start when a required variable is missing or a value is not
+valid; it logs why.
