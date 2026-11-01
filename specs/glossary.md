@@ -79,8 +79,8 @@ detail.
   report (`includeOutput`). Outputs that are not included stay in the browser.
 - **Confirmation**: the client asks the user to press Continue or Cancel before
   a risky step (`contract-plan.md`, Confirmation).
-- **Confirm over**: the most changes of one `write` capability that run without
-  a confirmation (`confirmOver`).
+- **Confirm over**: the most items of a `forEach`, or top-level steps of one
+  `write` capability, that make changes without a confirmation (`confirmOver`).
 
 ## After a plan
 
