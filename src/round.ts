@@ -44,7 +44,9 @@ export type Reply =
   | { type: "stop"; text: string }
   | { type: "info"; text: string };
 
-export type Planner = (round: Round) => Promise<Reply>;
+// The signal is aborted when the round's time is over (architecture.md,
+// Planner); a planner that calls a provider cancels the call then.
+export type Planner = (round: Round, signal: AbortSignal) => Promise<Reply>;
 
 export class BadRound extends Error {}
 
@@ -305,19 +307,23 @@ export async function pickReply(
   }
   let reply: Reply;
   let timer: ReturnType<typeof setTimeout> | undefined;
+  const controller = new AbortController();
   try {
-    // A planner that takes too long is a planner failure; its late reply is
-    // dropped.
+    // A planner that takes too long is a planner failure; its call is
+    // cancelled and a late reply is dropped.
     reply = await Promise.race([
-      planner(round),
+      planner(round, controller.signal),
       new Promise<never>((_, reject) => {
-        timer = setTimeout(
-          () => reject(new Error("the planner took too long")),
-          PLANNER_MS,
-        );
+        timer = setTimeout(() => {
+          controller.abort();
+          reject(new Error("the planner took too long"));
+        }, PLANNER_MS);
       }),
     ]);
-  } catch {
+  } catch (err) {
+    console.warn(
+      `planner failed: ${err instanceof Error ? err.message : String(err)}`,
+    );
     return { type: "stop", text: "Something went wrong." };
   } finally {
     clearTimeout(timer);

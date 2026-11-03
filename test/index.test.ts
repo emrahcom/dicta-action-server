@@ -20,6 +20,9 @@ function startIndex(env: Record<string, string>) {
     ALLOW_UNAUTHENTICATED,
     PLANNER,
     MAX_PLANS,
+    ANTHROPIC_API_KEY,
+    CLAUDE_MODEL,
+    CLAUDE_EFFORT,
     ...rest
   } = process.env;
   return spawn("node", ["src/index.ts"], {
@@ -111,6 +114,16 @@ test("starts with MAX_PLANS=20", async (t) => {
   t.after(server.stop);
 });
 
+test("starts with PLANNER=claude and a key, without calling the API", async (t) => {
+  const server = await startListening({
+    ...VALID_ENV,
+    PLANNER: "claude",
+    ANTHROPIC_API_KEY: "test-key",
+    CLAUDE_EFFORT: "low",
+  });
+  t.after(server.stop);
+});
+
 const REFUSED: [string, Record<string, string | undefined>, RegExp][] = [
   ["without JWT_SECRET", { JWT_SECRET: undefined }, /JWT_SECRET is required/],
   [
@@ -118,7 +131,21 @@ const REFUSED: [string, Record<string, string | undefined>, RegExp][] = [
     { JWT_SECRET: "s".repeat(31) },
     /JWT_SECRET must be at least 32 bytes/,
   ],
-  ["without PLANNER", { PLANNER: undefined }, /PLANNER must be one of: stub/],
+  [
+    "without PLANNER",
+    { PLANNER: undefined },
+    /PLANNER must be one of: stub, claude/,
+  ],
+  [
+    "with PLANNER=claude and no ANTHROPIC_API_KEY",
+    { PLANNER: "claude" },
+    /ANTHROPIC_API_KEY is required with PLANNER=claude/,
+  ],
+  [
+    "with an unknown CLAUDE_EFFORT",
+    { PLANNER: "claude", ANTHROPIC_API_KEY: "test-key", CLAUDE_EFFORT: "huge" },
+    /CLAUDE_EFFORT must be one of: low, medium, high, xhigh, max/,
+  ],
   ["with an unknown PLANNER", { PLANNER: "gpt" }, /PLANNER must be one of/],
   ["with MAX_PLANS=0", { MAX_PLANS: "0" }, /MAX_PLANS must be a whole/],
   ["with MAX_PLANS=21", { MAX_PLANS: "21" }, /MAX_PLANS must be a whole/],
