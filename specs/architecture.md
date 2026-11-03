@@ -84,8 +84,9 @@ As in dicta-server:
 ## Planner
 
 - Turns a round into a reply: a plan, a question, done, a stop or an info.
-- Chosen per server. The first one is `stub`: no LLM and no key, for tests. LLM
-  planners come later; the design of the first is in `architecture-planner.md`.
+- Chosen per server. `stub` has no LLM and no key, for tests. `claude` plans
+  with Claude through the Anthropic API (`architecture-planner.md`,
+  `architecture-planner-claude.md`).
 - `stub` takes its replies from the request text: a JSON array of replies
   (`contract-protocol.md`, Response body), for example
   `[{"type": "plan", "plan": {...}}, {"type": "done"}]`. In each round it gives
@@ -116,7 +117,11 @@ Environment variables:
   unless `ALLOW_UNAUTHENTICATED` is `true`.
 - `ALLOW_UNAUTHENTICATED`: when `true`, tokens are not checked. For development
   only. Default `false`. The server logs a warning at startup when it is on.
-- `PLANNER`: the planner. Required. Values: `stub`.
+- `PLANNER`: the planner. Required. Values: `stub`, `claude`.
+- `ANTHROPIC_API_KEY`: the Anthropic API key. Required with `claude`.
+- `CLAUDE_MODEL`: the model of `claude`. Default `claude-opus-5-5`.
+- `CLAUDE_EFFORT`: how much `claude` thinks: `low`, `medium`, `high`, `xhigh` or
+  `max`. Default `medium`.
 - `MAX_PLANS`: the most plans per user request (Requests), a whole number from
   `1` to `20`. Default `10`.
 

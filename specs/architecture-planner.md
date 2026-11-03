@@ -1,7 +1,21 @@
 # Architecture: planner
 
-The design to start from for the first LLM planner (`architecture.md`, Planner).
-It is not built yet; this file changes when it is.
+The design shared by the LLM planners (`architecture.md`, Planner). What is
+specific to one provider is in its own file: `architecture-planner-claude.md`
+for `claude`.
+
+## Reply format
+
+The LLM writes the reply as one JSON object and nothing else: the `reply` of the
+response body (`contract-protocol.md`, Response body). The instructions describe
+it. No schema is forced on the answer: the arguments of a plan step depend on
+each site's capabilities and may hold references (`contract-plan.md`), which a
+fixed schema cannot describe.
+
+The planner parses the answer and the server checks it like any reply
+(`architecture.md`, Planner). An answer that is not one JSON object, and an
+answer the provider cut off or refused, are planner failures, so the server
+sends a stop.
 
 ## Prompt
 
@@ -83,3 +97,6 @@ context.
 - A value that cannot be read again, such as the id of a task an earlier plan
   created, comes from the report: the earlier plan includes that output
   (`includeOutput`), and the later plan writes the value in directly.
+- When the report gives only the size of a `dicta.getHistory` output, because it
+  was too large (`contract-capability.md`, History), the LLM tells the user it
+  cannot read that request; it does not guess what it did.
