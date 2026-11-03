@@ -119,11 +119,16 @@ Environment variables:
   only. Default `false`. The server logs a warning at startup when it is on.
 - `PLANNER`: the planner. Required. Values: `stub`, `claude`.
 - `ANTHROPIC_API_KEY`: the Anthropic API key. Required with `claude`.
-- `CLAUDE_MODEL`: the model of `claude`. Default `claude-opus-5-5`.
-- `CLAUDE_EFFORT`: how much `claude` thinks: `low`, `medium`, `high`, `xhigh` or
-  `max`. Default `medium`.
+- `PLANNER_CLAUDE_MODEL`: the model of `claude`. Default `claude-opus-5-5`.
+- `PLANNER_CLAUDE_EFFORT`: how much `claude` thinks: `low`, `medium`, `high`,
+  `xhigh` or `max`. Default `medium`.
 - `MAX_PLANS`: the most plans per user request (Requests), a whole number from
   `1` to `20`. Default `10`.
 
+A planner's own variables start with `PLANNER_` and its name, so that they do
+not clash with other tools in the same shell, such as Claude Code's
+`CLAUDE_EFFORT`.
+
 The server does not start when a required variable is missing or a value is not
-valid; it logs why.
+valid; it logs why. At startup it logs the planner and, for an LLM planner, its
+model and its settings.

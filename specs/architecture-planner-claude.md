@@ -7,9 +7,9 @@ API. The design it shares with every LLM planner is in
 ## Model call
 
 - One call to the Messages API for each round, through the official SDK,
-  `@anthropic-ai/sdk`, with the model `CLAUDE_MODEL` and the effort
-  `CLAUDE_EFFORT` (`architecture.md`, Configuration). The model thinks before it
-  replies; the effort sets how much.
+  `@anthropic-ai/sdk`, with the model `PLANNER_CLAUDE_MODEL` and the effort
+  `PLANNER_CLAUDE_EFFORT` (`architecture.md`, Configuration). The model thinks
+  before it replies; the effort sets how much.
 - The key is `ANTHROPIC_API_KEY`. The server checks at startup that it is set
   and gives it to the SDK itself, so the SDK never falls back to another
   credential it finds, such as a login profile on disk.
