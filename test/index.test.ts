@@ -21,8 +21,8 @@ function startIndex(env: Record<string, string>) {
     PLANNER,
     MAX_PLANS,
     ANTHROPIC_API_KEY,
-    CLAUDE_MODEL,
-    CLAUDE_EFFORT,
+    PLANNER_CLAUDE_MODEL,
+    PLANNER_CLAUDE_EFFORT,
     ...rest
   } = process.env;
   return spawn("node", ["src/index.ts"], {
@@ -79,7 +79,10 @@ test("starts, logs one line and replies to rounds", async (t) => {
   });
   t.after(server.stop);
 
-  assert.match(server.line, /^dicta-action-server listening on port \d+\n$/);
+  assert.match(
+    server.line,
+    /^dicta-action-server listening on port \d+, planner stub\n$/,
+  );
   const response = await fetch(
     `http://localhost:${server.port}/dicta-action/v1/round`,
     {
@@ -119,9 +122,32 @@ test("starts with PLANNER=claude and a key, without calling the API", async (t) 
     ...VALID_ENV,
     PLANNER: "claude",
     ANTHROPIC_API_KEY: "test-key",
-    CLAUDE_EFFORT: "low",
+    PLANNER_CLAUDE_MODEL: "claude-sonnet-5-5",
+    PLANNER_CLAUDE_EFFORT: "low",
   });
   t.after(server.stop);
+
+  assert.match(
+    server.line,
+    /, planner claude, model claude-sonnet-5-5, effort low\n$/,
+  );
+});
+
+test("the old CLAUDE_ variables change nothing", async (t) => {
+  // Claude Code sets CLAUDE_EFFORT in its shells.
+  const server = await startListening({
+    ...VALID_ENV,
+    PLANNER: "claude",
+    ANTHROPIC_API_KEY: "test-key",
+    CLAUDE_MODEL: "claude-haiku-5-5",
+    CLAUDE_EFFORT: "max",
+  });
+  t.after(server.stop);
+
+  assert.match(
+    server.line,
+    /, planner claude, model claude-opus-5-5, effort medium\n$/,
+  );
 });
 
 const REFUSED: [string, Record<string, string | undefined>, RegExp][] = [
@@ -142,9 +168,13 @@ const REFUSED: [string, Record<string, string | undefined>, RegExp][] = [
     /ANTHROPIC_API_KEY is required with PLANNER=claude/,
   ],
   [
-    "with an unknown CLAUDE_EFFORT",
-    { PLANNER: "claude", ANTHROPIC_API_KEY: "test-key", CLAUDE_EFFORT: "huge" },
-    /CLAUDE_EFFORT must be one of: low, medium, high, xhigh, max/,
+    "with an unknown PLANNER_CLAUDE_EFFORT",
+    {
+      PLANNER: "claude",
+      ANTHROPIC_API_KEY: "test-key",
+      PLANNER_CLAUDE_EFFORT: "huge",
+    },
+    /PLANNER_CLAUDE_EFFORT must be one of: low, medium, high, xhigh, max/,
   ],
   ["with an unknown PLANNER", { PLANNER: "gpt" }, /PLANNER must be one of/],
   ["with MAX_PLANS=0", { MAX_PLANS: "0" }, /MAX_PLANS must be a whole/],

@@ -36,22 +36,27 @@ if (!Number.isInteger(maxPlans) || maxPlans < 1 || maxPlans > MAX_PLANS_LIMIT) {
   fail(`MAX_PLANS must be a whole number from 1 to ${MAX_PLANS_LIMIT}`);
 }
 
+// A planner's own variables start with PLANNER_ and its name, so they do not
+// clash with other tools in the same shell (architecture.md, Configuration).
 let planner = stubPlanner;
+let plannerLog = "planner stub";
 if (process.env.PLANNER === "claude") {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
     fail("ANTHROPIC_API_KEY is required with PLANNER=claude");
   }
-  const effort = process.env.CLAUDE_EFFORT || "medium";
+  const model = process.env.PLANNER_CLAUDE_MODEL || "claude-opus-5-5";
+  const effort = process.env.PLANNER_CLAUDE_EFFORT || "medium";
   if (!(EFFORTS as readonly string[]).includes(effort)) {
-    fail(`CLAUDE_EFFORT must be one of: ${EFFORTS.join(", ")}`);
+    fail(`PLANNER_CLAUDE_EFFORT must be one of: ${EFFORTS.join(", ")}`);
   }
   planner = claudePlanner({
     apiKey,
-    model: process.env.CLAUDE_MODEL || "claude-opus-5-5",
+    model,
     effort: effort as Effort,
     maxPlans,
   });
+  plannerLog = `planner claude, model ${model}, effort ${effort}`;
 }
 
 const server = createServer({
@@ -62,5 +67,5 @@ const server = createServer({
 
 server.listen(port, () => {
   const { port: actual } = server.address() as AddressInfo;
-  console.log(`dicta-action-server listening on port ${actual}`);
+  console.log(`dicta-action-server listening on port ${actual}, ${plannerLog}`);
 });
