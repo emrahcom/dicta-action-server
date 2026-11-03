@@ -77,6 +77,9 @@ context.
   at the limit (`architecture.md`, Requests) stays as a guard.
 - Every text for the user, the label, a question with its options, done, a stop
   and an info, is in the language of the user's request.
+- Every text for the user names things as the user knows them, by their titles
+  and names, never by ids or other internal values from the site context,
+  outputs or state.
 - An info only answers a question about the site itself. A question about the
   user's data gets a plan that reads it, then done.
 - A plan is final only when nothing is left to tell the user. A plan that reads
