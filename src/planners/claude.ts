@@ -136,8 +136,65 @@ export function request(round: Round, options: ClaudeOptions) {
   } satisfies Anthropic.MessageCreateParamsNonStreaming;
 }
 
-// The reply in the answer: one JSON object and nothing else. Anything else is a
-// planner failure (architecture-planner-claude.md, Failures).
+function isObject(value: unknown) {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+// The index of the brace that closes the one at `start`, counting braces outside
+// JSON strings, or -1.
+function closing(text: string, start: number) {
+  let depth = 0;
+  let inString = false;
+  let escaped = false;
+  for (let i = start; i < text.length; i += 1) {
+    const c = text[i];
+    if (inString) {
+      if (escaped) {
+        escaped = false;
+      } else if (c === "\\") {
+        escaped = true;
+      } else if (c === '"') {
+        inString = false;
+      }
+    } else if (c === '"') {
+      inString = true;
+    } else if (c === "{") {
+      depth += 1;
+    } else if (c === "}") {
+      depth -= 1;
+      if (depth === 0) {
+        return i;
+      }
+    }
+  }
+  return -1;
+}
+
+// The last well-formed JSON object in a text, not counting objects inside it.
+function lastObject(text: string) {
+  let found: unknown;
+  let start = text.indexOf("{");
+  while (start !== -1) {
+    const end = closing(text, start);
+    let value: unknown;
+    try {
+      value = end === -1 ? undefined : JSON.parse(text.slice(start, end + 1));
+    } catch {
+      value = undefined;
+    }
+    if (isObject(value)) {
+      found = value;
+      start = text.indexOf("{", end + 1);
+    } else {
+      start = text.indexOf("{", start + 1);
+    }
+  }
+  return found;
+}
+
+// The reply in the answer: the whole answer as one JSON object or, when it is
+// not valid JSON, the last JSON object in its text. Anything else is a planner
+// failure (architecture-planner.md, Reply format).
 export function readReply(message: Anthropic.Message): Reply {
   if (message.stop_reason !== "end_turn") {
     throw new Error(`the answer ended with ${message.stop_reason}`);
@@ -151,9 +208,13 @@ export function readReply(message: Anthropic.Message): Reply {
   try {
     reply = JSON.parse(text);
   } catch {
-    throw new Error("the answer is not one JSON object");
+    reply = lastObject(text);
+    if (reply === undefined) {
+      throw new Error("the answer holds no JSON object");
+    }
+    console.log("claude: the reply was read from text around it");
   }
-  if (typeof reply !== "object" || reply === null || Array.isArray(reply)) {
+  if (!isObject(reply)) {
     throw new Error("the answer is not one JSON object");
   }
   // The server checks the reply like any other (architecture.md, Planner).

@@ -160,11 +160,79 @@ for (const reply of [
   });
 }
 
+const DONE = { type: "done", text: "You have {3} tasks." };
+const OTHER = { type: "done", text: "Wait: 4 tasks." };
+
+for (const [name, text, reply] of [
+  [
+    "text before the object",
+    `I need the tasks first.\n\n${JSON.stringify(DONE)}`,
+    DONE,
+  ],
+  [
+    "text and tags around the object",
+    `<invoke name="x"></invoke>\n${JSON.stringify(DONE)}\nDone.`,
+    DONE,
+  ],
+  [
+    "two objects",
+    `${JSON.stringify(DONE)}\n\nCorrection:\n\n${JSON.stringify(OTHER)}`,
+    OTHER,
+  ],
+  [
+    "a broken object, then a good one",
+    `{"type": "done", "text": oops}\n${JSON.stringify(DONE)}`,
+    DONE,
+  ],
+  [
+    "an object, then a broken one",
+    `${JSON.stringify(DONE)}\n{"type": "done", "text": oops}`,
+    DONE,
+  ],
+] as const) {
+  test(`with ${name}, the last object in the answer is the reply`, async (t) => {
+    const { plan } = planner(t, () => json(answer(text)));
+    const log = console.log as unknown as {
+      mock: { calls: { arguments: unknown[] }[] };
+    };
+    assert.deepEqual(await pickReply(round([]), plan, 10), reply);
+    assert.ok(
+      log.mock.calls.some(
+        (call) =>
+          call.arguments[0] ===
+          "claude: the reply was read from text around it",
+      ),
+    );
+  });
+}
+
+test("a reply that is the whole answer is not logged as read from text", async (t) => {
+  const { plan } = planner(t, () => json(answer(JSON.stringify(DONE))));
+  const log = console.log as unknown as {
+    mock: { calls: { arguments: unknown[] }[] };
+  };
+  assert.deepEqual(await pickReply(round([]), plan, 10), DONE);
+  assert.equal(
+    log.mock.calls.some((call) =>
+      String(call.arguments[0]).includes("read from text"),
+    ),
+    false,
+  );
+});
+
 const FAILED = { type: "stop", text: "Something went wrong." };
 
 for (const [name, response] of [
   ["an answer that is not JSON", () => json(answer("Sure! Here it is."))],
+  [
+    "an answer with only a broken object",
+    () => json(answer('Here: {"type": "done", "text": oops}')),
+  ],
   ["an answer that is a JSON array", () => json(answer("[1, 2]"))],
+  [
+    "an answer that is a JSON array of objects",
+    () => json(answer(`[${JSON.stringify(DONE)}]`)),
+  ],
   [
     "an answer cut off at max_tokens",
     () => json(answer('{"type": "done"', "max_tokens")),
