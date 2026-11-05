@@ -32,8 +32,8 @@ way:
 
 ## Failures
 
-Besides an answer that is not one JSON object (`architecture-planner.md`, Reply
-format), these are planner failures:
+Besides an answer with no reply in it (`architecture-planner.md`, Reply format),
+these are planner failures:
 
 - an answer cut off at `max_tokens` (`stop_reason: max_tokens`);
 - a refusal by the model's safety checks (`stop_reason: refusal`);

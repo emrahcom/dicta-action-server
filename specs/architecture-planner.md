@@ -12,10 +12,13 @@ it. No schema is forced on the answer: the arguments of a plan step depend on
 each site's capabilities and may hold references (`contract-plan.md`), which a
 fixed schema cannot describe.
 
-The planner parses the answer and the server checks it like any reply
-(`architecture.md`, Planner). An answer that is not one JSON object, and an
-answer the provider cut off or refused, are planner failures, so the server
-sends a stop.
+The planner parses the whole answer as JSON. When that fails, the reply is the
+last well-formed JSON object in the answer's text, and the planner logs that it
+read the reply this way: some models write text around the object, such as their
+reasoning or a corrected second object. The server checks the reply like any
+other (`architecture.md`, Planner). An answer that is valid JSON but not an
+object, an answer with no well-formed JSON object, and an answer the provider
+cut off or refused are planner failures, so the server sends a stop.
 
 ## Prompt
 
