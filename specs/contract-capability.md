@@ -81,7 +81,9 @@ developers can change it. Without it, it is 10.
 - `desc`: one or two sentences for the planner: what it does and when to use it.
 - `args`: a JSON Schema for the argument object, left out when the capability
   takes no arguments. Only `type`, `properties`, `required`, `items`, `enum` and
-  `description` are used.
+  `description` are used. `type` is one JSON Schema type or a list of them, such
+  as `["string", "null"]` for a value that can be cleared; a value matches a
+  list when it matches any type in it.
 - `output`: optional, a JSON Schema for what `run` returns, with the same
   keywords as `args`. The planner reads it to write references into the output
   (`contract-plan.md`, References). It can be left out when the output is never
