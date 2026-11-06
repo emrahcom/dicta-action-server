@@ -33,6 +33,16 @@ Environment variables:
 
 The server does not start when a value is missing or not valid. It logs why.
 
+## Updating
+
+1. Get the new code.
+2. Run `npm install`.
+3. Restart the server.
+
+The server keeps no data, so there is nothing to move. To update a whole site,
+with `dicta-action-js` and its module, see the upgrading guide of
+`dicta-action-harness` (Documents).
+
 ## Tokens
 
 The site's backend gives signed-in users a short-lived token. The server checks
@@ -58,7 +68,7 @@ network as the site.
 ## Documents
 
 - Upgrading a site to a new version:
-  https://github.com/emrahcom/dicta-action-server/blob/main/docs/upgrading.md
+  https://github.com/emrahcom/dicta-action-harness/blob/main/docs/upgrading.md
 - The browser part: https://github.com/emrahcom/dicta-action-js
 - Building the module for your site:
   https://github.com/emrahcom/dicta-action-harness
