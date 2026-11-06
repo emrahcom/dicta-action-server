@@ -12,8 +12,31 @@ Content-Type: application/json
 ```
 
 The `Authorization` header is left out when the server runs without
-authentication. `v1` is the protocol version; a change that breaks clients gets
-a new one.
+authentication. `v1` is the protocol version (Versions).
+
+## Versions
+
+Until the server's release `1.0.0`, any change may break clients without a new
+protocol version; the release notes say what sites must change, and the server,
+the module and `dicta-action-js` are updated together.
+
+From `1.0.0` on, sites update the server and their module at different times, so
+within one protocol version a newer server stays compatible with older clients:
+
+- It accepts every request an older server of the same version accepted: its
+  body, its site context and its capability module's formats
+  (`contract-context.md`, `contract-capability.md`). A new field or a new
+  allowed value is fine; a removed one or a stricter check is not.
+- Its replies hold only what an older client of the same version can read and
+  run (`contract-plan.md`). A new kind of reply or step is sent only to a client
+  that shows it can read it, such as by a new field in its request.
+
+A change that cannot keep this gets a new protocol version, such as `v2`. The
+server then serves the old and the new version side by side, until the old one
+is announced as removed in a release.
+
+So the safe order for a site is: update the server first, then the module and
+`dicta-action-js`.
 
 ## Request body
 
