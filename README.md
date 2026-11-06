@@ -25,7 +25,8 @@ Environment variables:
 - `PLANNER_CLAUDE_MODEL`: the Claude model. Default `claude-opus-5-5`.
 - `PLANNER_CLAUDE_EFFORT`: how much Claude thinks: `low`, `medium`, `high`,
   `xhigh` or `max`. Default `medium`.
-- `JWT_SECRET`: the secret for the tokens, at least 32 bytes. Required.
+- `JWT_SECRET`: the secret for the tokens, at least 32 bytes. Required, unless
+  `ALLOW_UNAUTHENTICATED` is `true`.
 - `ALLOW_UNAUTHENTICATED`: `true` turns the token check off. Only for
   development.
 - `MAX_PLANS`: the most plans for one user request, `1` to `20`. Default `10`.
@@ -62,8 +63,8 @@ site, behind a proxy.
 
 Users' browsers must reach the server. Chromium blocks or asks before a public
 site calls a server on a private address, such as `localhost` or `192.168.x.x`.
-So in production, the server must have a public address, or be in the same
-network as the site.
+So in production, give the server a public address, or reach it through the
+site's own domain, behind a proxy.
 
 ## Documents
 
