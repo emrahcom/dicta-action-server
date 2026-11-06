@@ -84,6 +84,9 @@ As in dicta-server:
 - The check is `checkContext` in `src/context.ts`. `dicta-action-harness`
   imports it by this path, as a git dependency, to check a module the same way.
   So the file keeps its name and its export.
+- The harness's guides also point to the contracts in `specs/` of the same git
+  dependency, the version the harness pins. So the package keeps `specs/`: no
+  `files` field in `package.json` leaves them out.
 
 ## Planner
 
