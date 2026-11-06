@@ -15,8 +15,8 @@ Accessibility, high test coverage, security and stability are first-class goals.
   only what the next task needs and update them whenever needed.
 - The action contracts are in `specs/` here: the protocol with
   `dicta-action-js`, the plan format, the capability format and the site context
-  format. They are the source of truth for all action repos. The harness
-  (`dicta-action-harness`) gets a copy of them.
+  format. They are the source of truth for all action repos. They are not copied
+  elsewhere; the harness's guides teach what a module needs from them.
 - `specs/glossary.md` lists the terms; update it with every term change, one
   short meaning each.
 - Tasks are files in `tasks/open/` and `tasks/done/`, named
