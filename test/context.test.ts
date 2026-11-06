@@ -92,6 +92,24 @@ test("accepts each of the seven JSON Schema types", () => {
   assert.deepEqual(c.capabilities[0].output?.required, types);
 });
 
+test("accepts a list of types in args and in output", () => {
+  const c = checkContext(
+    context((c) => {
+      c.capabilities[1].args.properties.due = { type: ["string", "null"] };
+      c.capabilities[0].output = {
+        type: "array",
+        items: { type: ["object", "null"] },
+      };
+    }),
+  );
+  assert.deepEqual(c.capabilities[1]!.args?.properties?.due, {
+    type: ["string", "null"],
+  });
+  assert.deepEqual(c.capabilities[0]!.output?.items, {
+    type: ["object", "null"],
+  });
+});
+
 const INVALID: [string, (c: any) => void, RegExp][] = [
   ["no site", (c) => delete c.site, /^context\.site must be an object$/],
   [
@@ -175,6 +193,32 @@ const INVALID: [string, (c: any) => void, RegExp][] = [
         items: { type: "int" },
       }),
     /^context\.capabilities\[0\]\.output\.items\.type must be one of/,
+  ],
+  [
+    "an empty list of types",
+    (c) => (c.capabilities[1].args.properties.title.type = []),
+    /^context\.capabilities\[1\]\.args\.properties\.title\.type must be a non-empty list of types without repeats$/,
+  ],
+  [
+    "a list of types with a repeat",
+    (c) =>
+      (c.capabilities[1].args.properties.title.type = ["string", "string"]),
+    /title\.type must be a non-empty list of types without repeats$/,
+  ],
+  [
+    "an unknown type in a list",
+    (c) => (c.capabilities[1].args.properties.title.type = ["string", "date"]),
+    /^context\.capabilities\[1\]\.args\.properties\.title\.type\[1\] must be one of string, number/,
+  ],
+  [
+    "a list of types that is not names",
+    (c) => (c.capabilities[1].args.properties.title.type = ["string", 1]),
+    /title\.type\[1\] must be a string$/,
+  ],
+  [
+    "args whose type is a list",
+    (c) => (c.capabilities[1].args.type = ["object", "null"]),
+    /^context\.capabilities\[1\]\.args\.type must be object$/,
   ],
   [
     "a required name that is not in the properties",

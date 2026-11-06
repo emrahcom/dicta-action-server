@@ -27,7 +27,8 @@ const SCHEMA_TYPES = [
 ];
 
 export type Schema = {
-  type?: string;
+  // One type, or a list of types any of which a value may have.
+  type?: string | string[];
   properties?: Record<string, Schema>;
   required?: string[];
   items?: Schema;
@@ -76,6 +77,13 @@ function string(value: unknown, path: string) {
   return value;
 }
 
+function schemaType(value: unknown, path: string) {
+  const type = string(value, path);
+  if (!SCHEMA_TYPES.includes(type)) {
+    throw new ContextError(`${path} must be one of ${SCHEMA_TYPES.join(", ")}`);
+  }
+}
+
 function schema(value: unknown, path: string): Schema {
   const s = object(value, path);
   for (const key of Object.keys(s)) {
@@ -83,13 +91,17 @@ function schema(value: unknown, path: string): Schema {
       throw new ContextError(`${path} uses ${key}, which is not allowed`);
     }
   }
-  if (s.type !== undefined) {
-    const type = string(s.type, `${path}.type`);
-    if (!SCHEMA_TYPES.includes(type)) {
+  if (Array.isArray(s.type)) {
+    // A list of types: a value matches it when it matches any of them
+    // (contract-capability.md, Capabilities).
+    if (s.type.length === 0 || new Set(s.type).size !== s.type.length) {
       throw new ContextError(
-        `${path}.type must be one of ${SCHEMA_TYPES.join(", ")}`,
+        `${path}.type must be a non-empty list of types without repeats`,
       );
     }
+    s.type.forEach((type, i) => schemaType(type, `${path}.type[${i}]`));
+  } else if (s.type !== undefined) {
+    schemaType(s.type, `${path}.type`);
   }
   if (s.description !== undefined) {
     string(s.description, `${path}.description`);

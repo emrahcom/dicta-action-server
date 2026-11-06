@@ -93,8 +93,12 @@ function matches(value: unknown, schema: Schema, path: string) {
   if (isReference(value)) {
     return;
   }
-  if (schema.type !== undefined && !hasType(value, schema.type)) {
-    throw new BadPlan(`${path} must be of type ${schema.type}`);
+  if (schema.type !== undefined) {
+    // A value matches a list of types when it has any of them.
+    const types = typeof schema.type === "string" ? [schema.type] : schema.type;
+    if (!types.some((type) => hasType(value, type))) {
+      throw new BadPlan(`${path} must be of type ${types.join(" or ")}`);
+    }
   }
   // A string written with $$ is compared as the capability gets it, with a
   // single $ (contract-plan.md, References).
