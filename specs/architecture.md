@@ -80,6 +80,9 @@ As in dicta-server:
   confirmations come from the module.
 - The built-in capabilities of `dicta-action-js` are in it like any other
   capability (`contract-capability.md`, Built-in capabilities).
+- The check is `checkContext` in `src/context.ts`. `dicta-action-harness`
+  imports it by this path, as a git dependency, to check a module the same way.
+  So the file keeps its name and its export.
 
 ## Planner
 
