@@ -31,9 +31,10 @@ runs, at most 200 characters (Limits).
 
 After a plan, the client always sends a new round with its report, whether the
 plan finished or halted, except when the request ends during it: a cancel or a
-page change (`contract-protocol.md`, Added text and cancel and Page changes).
-The server always decides what comes next: a new plan, a question to the user,
-done, a stop or an info. The client never decides to go on or to stop.
+page change that ends it (`contract-protocol.md`, Added text and cancel and Page
+changes). After a page change that does not end it, the report is sent from the
+new page. The server always decides what comes next: a new plan, a question to
+the user, done, a stop or an info. The client never decides to go on or to stop.
 
 `final` is for the server only. The planner sets it to `true` when the plan does
 the rest of the job, so nothing is left once it succeeds. When a plan with
@@ -148,12 +149,13 @@ items when there are more than three; it calls `confirm` only for these. One
 `forEach` never asks twice.
 
 Top-level steps that call the same `write` capability ask together when there
-are more of them than `confirmOver`. Before the first of them runs, when the
-steps before it have run, the client fills in its arguments, calls `confirm`
-with them and asks once, with that text and the number of these steps. Continue
-runs all of them without asking again; Cancel stops at the first, which does not
-run. With `confirmOver` or fewer, they do not ask. The calls in a `forEach` are
-not counted here; the `forEach` has its own rule.
+are more of them than `confirmOver`, counted anywhere in the plan, not only next
+to each other. Before the first of them runs, when the steps before it have run,
+the client fills in its arguments, calls `confirm` with them and asks once, with
+that text and the number of these steps. Continue runs all of them without
+asking again; Cancel stops at the first, which does not run. With `confirmOver`
+or fewer, they do not ask. The calls in a `forEach` are not counted here; the
+`forEach` has its own rule.
 
 While a confirmation is open, the user sees only the module's words: the client
 shows the text as plain text and hides the plan's label. The user answers with

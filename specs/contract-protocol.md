@@ -212,11 +212,12 @@ it ends:
   browser's `navigate` event for another document), the client runs nothing
   after that step, or in a `forEach` after that call, once it returns. It makes
   the report: the halt code `navigated` at the first step that did not run, in a
-  `forEach` with its item and call, or no halt when none is left. This comes
-  before added text: text that came during the step before the page load started
-  is held with the report. Text that comes after it, until the page is left, is
-  ignored. The client does not send the report and waits for the page to be
-  left.
+  `forEach` with its item and call, or no halt when none is left. After the last
+  call of an item, that is the next item with `do` 0, and `halt.outputs` ends
+  with an empty entry for it. This comes before added text: text that came
+  during the step before the page load started is held with the report. Text
+  that comes after it, until the page is left, is ignored. The client does not
+  send the report and waits for the page to be left.
 - When the page is left (the browser's `pagehide` event) while the client waits
   for it, it saves the request in the tab's session storage: the exchange, the
   report and any added text.
@@ -293,7 +294,8 @@ stop instead. A plan is checked as well (`contract-plan.md`, Failures).
 Clients ignore fields they do not know, except in a plan (`contract-plan.md`,
 Failures). When the server sends a reply type the client does not know, the
 client ends the request as an error, as for an HTTP error (Errors), so an older
-client is never stuck on a reply from a newer server.
+client is never stuck on a reply from a newer server. It does the same for a
+response it cannot read: one without `requestId` or without a `reply` object.
 
 ## Errors
 

@@ -35,6 +35,7 @@ way:
 Besides an answer with no reply in it (`architecture-planner.md`, Reply format),
 these are planner failures:
 
-- an answer cut off at `max_tokens` (`stop_reason: max_tokens`);
-- a refusal by the model's safety checks (`stop_reason: refusal`);
+- an answer that ends for any reason other than `stop_reason: end_turn`, such as
+  one cut off at `max_tokens` or a refusal by the model's safety checks
+  (`refusal`);
 - an error from the API, after the SDK's own retries within the 45 seconds.

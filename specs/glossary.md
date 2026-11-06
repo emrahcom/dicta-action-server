@@ -51,9 +51,13 @@ detail.
   cancelled or an error, with the server's text, if any.
 - **Added text**: text the user gives while a request runs (`added`). It goes to
   the planner.
-- **Cancel**: the user ends the request. Nothing after the current step runs.
+- **Cancel**: the user ends the request. Nothing after the current step runs; in
+  a `forEach`, the current item finishes first.
 - **Page change**: a page load in the middle of a request
-  (`contract-protocol.md`, Page changes).
+  (`contract-protocol.md`, Page changes). It ends the request, unless it started
+  during a step of a capability with `pageLoad`.
+- **Page load capability**: a capability with `pageLoad`, which may load a page;
+  the request goes on in the new page.
 - **Saved request**: a request the client keeps in the tab while a page loads,
   so it goes on in the new page.
 - **History**: finished user requests of the browser tab, kept by the client and
@@ -90,3 +94,10 @@ detail.
   `forEach`, an array with one entry for each item.
 - **Halt**: where and why a plan stopped before its end (`halt`;
   `contract-protocol.md`, Report).
+- **Halt code**: why a plan halted (`halt.code`): a capability's own code, or
+  one of the client's, such as `limit`, `interrupted` or `navigated`.
+- **Too large**: outputs of a halted `forEach` that do not fit in the report;
+  only their size is sent (`tooLarge`).
+- **Planner failure**: the planner gave no usable reply, such as an LLM error or
+  an answer with no reply in it; the server sends a stop
+  (`architecture-planner.md`).

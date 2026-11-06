@@ -63,8 +63,8 @@ A card is a task.`,
 
 `confirmOver` is the most items a `forEach` may change without asking the user
 first, and the most top-level steps that may call one `write` capability without
-asking (`contract-plan.md`, Confirmation). The harness sets it; the site's
-developers can change it. Without it, it is 10.
+asking (`contract-plan.md`, Confirmation). It is a whole number from 0; the
+module may set it, and without it, it is 10.
 
 ## Capabilities
 
@@ -160,17 +160,17 @@ mean.
 
 `dicta-action-js` brings some capabilities of its own, the same on every site,
 and exports them as `dictaCapabilities`. The module adds them to its
-`capabilities` like any other (Module); the harness's template does it, so they
-go into the site context like any other capability. Their names are in the
-`dicta` group, which only they use.
+`capabilities` like any other (Module), so they go into the site context like
+any other capability. Their names are in the `dicta` group, which only they use.
 
 ### History
 
 The history is the earlier requests of this browser tab. The client stores each
 request once, when it ends: on done, a stop, an info, cancel, an error or a page
-change that ends it (`contract-protocol.md`, Page changes). A request that ended
-before it got a `requestId` ran nothing and is not stored. When the browser's
-storage is full, the client drops the oldest requests.
+change that ends it (`contract-protocol.md`, Page changes). It keeps at most the
+20 latest requests. A request that ended before it got a `requestId` ran nothing
+and is not stored. When the browser's storage is full, the client drops the
+oldest requests.
 
 Two capabilities read it. They can be in one plan: `dicta.listHistory` with
 `limit` 1, then `dicta.getHistory` with the reference `$1.0.requestId` for the
@@ -202,9 +202,10 @@ Output: an array with a short entry for each request:
 - `time`: when the request ended (`contract-protocol.md`, Request body).
 - `text`: the user's request, cut to 200 characters.
 - `outcome.type`: how the request ended: `done`, `stop`, `info`, `cancelled`
-  (the user cancelled it, or a page change ended it) or `error` (an HTTP error,
-  a network failure, a round without a response after 60 seconds or a reply type
-  the client does not know ended it; `contract-protocol.md`, Errors and Response
+  (the user cancelled it, or a page change ended it) or `error` (a round failed:
+  an HTTP error, a network failure, no response after 60 seconds or a response
+  the client cannot read; or the client's own setup failed: `getToken` or the
+  module's `state` function threw; `contract-protocol.md`, Errors and Response
   body).
 - `outcome.text`: the text of the server's done, stop or info, cut to 200
   characters. Left out when there was none.
