@@ -6,19 +6,23 @@ for `claude`.
 
 ## Reply format
 
-The LLM writes the reply as one JSON object and nothing else: the `reply` of the
-response body (`contract-protocol.md`, Response body). The instructions describe
-it. No schema is forced on the answer: the arguments of a plan step depend on
-each site's capabilities and may hold references (`contract-plan.md`), which a
-fixed schema cannot describe.
+The LLM writes the reply as one JSON object: the `reply` of the response body
+(`contract-protocol.md`, Response body). The instructions describe it, and the
+planner forces it with the provider's structured outputs: one fixed JSON Schema,
+the same for every site, for the reply types, their fields and the plan's steps.
+Without it, some models write text around the object or no object at all, and
+weaker models break the format (`docs/llm-check-results.md` in
+`dicta-action-kit`, 2026-11-07).
 
-The planner parses the whole answer as JSON. When that fails, the reply is the
-last well-formed JSON object in the answer's text, and the planner logs that it
-read the reply this way: some models write text around the object, such as their
-reasoning or a corrected second object. The server checks the reply like any
-other (`architecture.md`, Planner). An answer that is valid JSON but not an
-object, an answer with no well-formed JSON object, and an answer the provider
-cut off or refused are planner failures, so the server sends a stop.
+The arguments of a plan step depend on each site's capabilities and may hold
+references (`contract-plan.md`), which a fixed schema cannot describe. So the
+LLM writes `args` as a string that holds the JSON object, and the planner parses
+it back into the object before the reply leaves the planner.
+
+The schema cannot express every rule, such as the length of a text, so the
+server checks the reply like any other (`architecture.md`, Planner). A step
+whose `args` is not a JSON object, and an answer the provider cut off or
+refused, are planner failures, so the server sends a stop.
 
 ## Prompt
 

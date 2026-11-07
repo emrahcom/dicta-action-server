@@ -13,6 +13,8 @@ API. The design it shares with every LLM planner is in
 - The key is `ANTHROPIC_API_KEY`. The server checks at startup that it is set
   and gives it to the SDK itself, so the SDK never falls back to another
   credential it finds, such as a login profile on disk.
+- The reply schema (`architecture-planner.md`, Reply format) goes into
+  `output_config.format`, as `json_schema`.
 - `max_tokens` is 16000: room for the thinking and the largest reply.
 - The planner cancels the call when the 45 seconds of a round are over
   (`architecture.md`, Planner).
