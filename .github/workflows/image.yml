@@ -1,0 +1,35 @@
+# Builds the Docker image and pushes it to the GitHub registry; see
+# specs/architecture.md (Image workflow).
+
+name: image
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  image:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      IMAGE: ghcr.io/emrahcom/dicta-action-server
+    steps:
+      # On a release event, it checks out the release's tag.
+      - uses: actions/checkout@v7
+
+      - name: Build
+        env:
+          TAG: ${{ github.event.release.tag_name }}
+        run: |
+          docker build \
+            --label org.opencontainers.image.source="https://github.com/$GITHUB_REPOSITORY" \
+            -t "$IMAGE:${TAG#v}" -t "$IMAGE:latest" .
+
+      - name: Push
+        run: |
+          echo "$GH_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+          docker push --all-tags "$IMAGE"

@@ -36,11 +36,22 @@ Environment variables:
 
 The server does not start when a value is missing or not valid. It logs why.
 
+## Docker
+
+The image is in the GitHub registry. Run it with your settings as environment
+variables:
+
+```sh
+docker run -p 8741:8741 -e PLANNER=claude -e ANTHROPIC_API_KEY=... \
+  -e JWT_SECRET=... ghcr.io/emrahcom/dicta-action-server:latest
+```
+
+Each release has an image tagged with its version, such as `0.1.0`.
+
 ## Updating
 
-1. Get the new code.
-2. Run `npm install`.
-3. Restart the server.
+1. Get the new code and run `npm install`, or pull the new image.
+2. Restart the server.
 
 The server keeps no data, so there is nothing to move. To update a whole site,
 with `dicta-action-js` and its module, see the upgrading guide of
