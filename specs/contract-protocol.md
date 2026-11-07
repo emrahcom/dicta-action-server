@@ -97,11 +97,11 @@ planner could take the wrong day for "today".
 Which steps succeeded follows from `halt`: every step before the one where the
 plan halted, or every step when there is no halt.
 
-Included outputs, in `outputs` and `halt.outputs`, are at most 16 KB together,
-counted as the UTF-8 bytes of their JSON. The client adds them in step order,
-`halt.outputs` last, and leaves out each one that would go over: a succeeded
-step goes into `tooLarge`, the halted step into `halt.tooLarge`. Leaving an
-output out does not make its step fail.
+Included outputs, in `outputs` and `halt.outputs`, are at most 16 KB together:
+each output counted as the UTF-8 bytes of its JSON, and the sizes added up. The
+client adds them in step order, `halt.outputs` last, and leaves out each one
+that would go over: a succeeded step goes into `tooLarge`, the halted step into
+`halt.tooLarge`. Leaving an output out does not make its step fail.
 
 - `outputs`: the output of each succeeded top-level step with `includeOutput`
   (`contract-plan.md`, Include output), by its number, from 1 as in references.

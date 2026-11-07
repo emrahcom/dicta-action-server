@@ -107,7 +107,8 @@ As in dicta-server:
   (`contract-plan.md`, Reporting), and checks every reply before it leaves
   (`contract-protocol.md`, Response body; `contract-plan.md`, Failures).
 - The server's own stops, at the plan limit, after a failed check or a planner
-  failure and from `stub`, carry a short fixed text in English.
+  failure and from `stub`, carry a short fixed text in English. After a failed
+  check or a planner failure, the server logs the reason.
 
 ## Configuration
 
