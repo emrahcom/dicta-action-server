@@ -10,9 +10,6 @@ The LLM writes the reply as one JSON object: the `reply` of the response body
 (`contract-protocol.md`, Response body). The instructions describe it, and the
 planner forces it with the provider's structured outputs: one fixed JSON Schema,
 the same for every site, for the reply types, their fields and the plan's steps.
-Without it, some models write text around the object or no object at all, and
-weaker models break the format (`docs/llm-check-results.md` in
-`dicta-action-kit`, 2026-11-07).
 
 The arguments of a plan step depend on each site's capabilities and may hold
 references (`contract-plan.md`), which a fixed schema cannot describe. So the
