@@ -29,7 +29,7 @@ export const INSTRUCTIONS = `You plan actions on one website for its signed-in u
 
 # Your reply
 
-Reply with exactly one JSON object and nothing else: no code fence, no text before or after it. It is one of:
+Your reply is one JSON object, one of:
 
 - {"type": "plan", "plan": PLAN}: the browser runs the plan and reports back to you.
 - {"type": "question", "text": "...", "options": ["...", "..."]}: ask the user, only when you cannot go on without the answer. "options" is optional: up to 5 short answers, each at most 50 characters; the user can also answer in their own words.
@@ -44,7 +44,7 @@ Every other "text" is one short sentence, at most 200 characters.
 A plan is {"steps": [...], "text": "...", "final": true}:
 
 - "steps": at most 50 top-level steps; the whole plan at most 16 KB of JSON.
-  - A call: {"call": "<capability name>", "args": {...}}. "args" is always there, {} when the capability takes none, and matches the capability's schema with no other properties.
+  - A call: {"call": "<capability name>", "args": "{...}"}. "args" is always there: a string that holds the arguments as one JSON object, "{}" when the capability takes none. The object matches the capability's schema with no other properties.
   - A loop: {"forEach": "<reference to an array>", "do": [<calls>]}. It runs the calls once for each item, at most 100 items. The array must be an earlier step's output, or an array inside it; a list written in the plan is not allowed. "do" holds only calls.
   - A top-level step may have "includeOutput": true (see Reports).
 - "text": optional, one short sentence the user sees while the plan runs, at most 200 characters.
@@ -79,6 +79,49 @@ After each plan the browser sends a report:
 - A later plan reads the data it needs again with a capability. It cannot refer to an earlier plan's outputs, and the data may have changed since.
 - A value that cannot be read again, such as the id of a task an earlier plan created, comes from the report: the earlier plan includes that output, and the later plan writes the value in directly.
 - When the report gives only the size of a "dicta.getHistory" output, because it was too large, tell the user you cannot read that request; do not guess what it did.`;
+
+// The reply schema, the same for every site; args is a string that holds the
+// JSON object (architecture-planner.md, Reply format).
+const CALL_SCHEMA = {
+  type: "object",
+  properties: { call: { type: "string" }, args: { type: "string" } },
+  required: ["call", "args"],
+  additionalProperties: false,
+};
+const STEP_SCHEMA = {
+  type: "object",
+  properties: {
+    call: { type: "string" },
+    args: { type: "string" },
+    forEach: { type: "string" },
+    do: { type: "array", items: CALL_SCHEMA },
+    includeOutput: { type: "boolean" },
+  },
+  additionalProperties: false,
+};
+export const REPLY_SCHEMA = {
+  type: "object",
+  properties: {
+    type: {
+      type: "string",
+      enum: ["plan", "question", "done", "stop", "info"],
+    },
+    text: { type: "string" },
+    options: { type: "array", items: { type: "string" } },
+    plan: {
+      type: "object",
+      properties: {
+        steps: { type: "array", items: STEP_SCHEMA },
+        text: { type: "string" },
+        final: { type: "boolean" },
+      },
+      required: ["steps"],
+      additionalProperties: false,
+    },
+  },
+  required: ["type"],
+  additionalProperties: false,
+};
 
 // One exchange item as its own block of the prompt, written the same way in
 // every round, so the cache keeps it.
@@ -118,7 +161,10 @@ export function request(round: Round, options: ClaudeOptions) {
     model: options.model,
     max_tokens: MAX_TOKENS,
     thinking: { type: "adaptive" },
-    output_config: { effort: options.effort },
+    output_config: {
+      effort: options.effort,
+      format: { type: "json_schema", schema: REPLY_SCHEMA },
+    },
     system: [
       { type: "text", text: INSTRUCTIONS },
       {
@@ -140,61 +186,37 @@ function isObject(value: unknown) {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-// The index of the brace that closes the one at `start`, counting braces outside
-// JSON strings, or -1.
-function closing(text: string, start: number) {
-  let depth = 0;
-  let inString = false;
-  let escaped = false;
-  for (let i = start; i < text.length; i += 1) {
-    const c = text[i];
-    if (inString) {
-      if (escaped) {
-        escaped = false;
-      } else if (c === "\\") {
-        escaped = true;
-      } else if (c === '"') {
-        inString = false;
-      }
-    } else if (c === '"') {
-      inString = true;
-    } else if (c === "{") {
-      depth += 1;
-    } else if (c === "}") {
-      depth -= 1;
-      if (depth === 0) {
-        return i;
-      }
-    }
-  }
-  return -1;
-}
+type Call = { args?: unknown };
+type Step = Call & { do?: Call[] };
 
-// The last well-formed JSON object in a text, not counting objects inside it.
-function lastObject(text: string) {
-  let found: unknown;
-  let start = text.indexOf("{");
-  while (start !== -1) {
-    const end = closing(text, start);
-    let value: unknown;
+// Turns the args string of every call, top-level or in a "do", back into its
+// object (architecture-planner.md, Reply format).
+function parseArgs(reply: Record<string, unknown>) {
+  const plan = reply.plan as { steps?: Step[] } | undefined;
+  const calls = (plan?.steps ?? []).flatMap((step) => [
+    step,
+    ...(step.do ?? []),
+  ]);
+  for (const call of calls) {
+    if (call.args === undefined) {
+      continue;
+    }
+    let args: unknown;
     try {
-      value = end === -1 ? undefined : JSON.parse(text.slice(start, end + 1));
+      args = typeof call.args === "string" ? JSON.parse(call.args) : undefined;
     } catch {
-      value = undefined;
+      args = undefined;
     }
-    if (isObject(value)) {
-      found = value;
-      start = text.indexOf("{", end + 1);
-    } else {
-      start = text.indexOf("{", start + 1);
+    if (!isObject(args)) {
+      throw new Error("args is not a JSON object");
     }
+    call.args = args;
   }
-  return found;
 }
 
-// The reply in the answer: the whole answer as one JSON object or, when it is
-// not valid JSON, the last JSON object in its text. Anything else is a planner
-// failure (architecture-planner.md, Reply format).
+// The reply in the answer, one JSON object by the reply schema, with its args
+// parsed. Anything else is a planner failure (architecture-planner.md, Reply
+// format).
 export function readReply(message: Anthropic.Message): Reply {
   if (message.stop_reason !== "end_turn") {
     throw new Error(`the answer ended with ${message.stop_reason}`);
@@ -202,21 +224,17 @@ export function readReply(message: Anthropic.Message): Reply {
   const text = message.content
     .filter((block) => block.type === "text")
     .map((block) => block.text)
-    .join("")
-    .trim();
+    .join("");
   let reply: unknown;
   try {
     reply = JSON.parse(text);
   } catch {
-    reply = lastObject(text);
-    if (reply === undefined) {
-      throw new Error("the answer holds no JSON object");
-    }
-    console.log("claude: the reply was read from text around it");
+    throw new Error("the answer is not JSON");
   }
   if (!isObject(reply)) {
     throw new Error("the answer is not one JSON object");
   }
+  parseArgs(reply as Record<string, unknown>);
   // The server checks the reply like any other (architecture.md, Planner).
   return reply as Reply;
 }

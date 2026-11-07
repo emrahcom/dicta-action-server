@@ -5,6 +5,7 @@ import {
   claudePlanner,
   type ClaudeOptions,
   INSTRUCTIONS,
+  REPLY_SCHEMA,
   request,
 } from "../src/planners/claude.ts";
 import { checkRound, pickReply, type Round } from "../src/round.ts";
@@ -132,21 +133,38 @@ test("the cached part of the prompt is written the same way in every round", () 
 test("the call uses the model, the effort, adaptive thinking and 16000 tokens", () => {
   const params = request(round([]), { ...OPTIONS, effort: "low" });
   assert.equal(params.model, "claude-opus-5-5");
-  assert.deepEqual(params.output_config, { effort: "low" });
+  assert.equal(params.output_config.effort, "low");
   assert.deepEqual(params.thinking, { type: "adaptive" });
   assert.equal(params.max_tokens, 16000);
 });
 
+test("the call forces the reply schema", () => {
+  const params = request(round([]), OPTIONS);
+  assert.deepEqual(params.output_config.format, {
+    type: "json_schema",
+    schema: REPLY_SCHEMA,
+  });
+});
+
 // The answer (architecture-planner.md, Reply format).
 
-for (const reply of [
-  { type: "plan", plan: PLAN },
-  { type: "question", text: "Which one?", options: ["A", "B"] },
-  { type: "done", text: "You have 3 tasks." },
-]) {
+for (const [answered, reply] of [
+  [
+    { type: "plan", plan: { steps: [{ call: "tasks.list", args: "{}" }] } },
+    { type: "plan", plan: PLAN },
+  ],
+  [
+    { type: "question", text: "Which one?", options: ["A", "B"] },
+    { type: "question", text: "Which one?", options: ["A", "B"] },
+  ],
+  [
+    { type: "done", text: "You have 3 tasks." },
+    { type: "done", text: "You have 3 tasks." },
+  ],
+] as const) {
   test(`a ${reply.type} in the answer is the reply`, async (t) => {
     const { plan, calls } = planner(t, () =>
-      json(answer(JSON.stringify(reply))),
+      json(answer(JSON.stringify(answered))),
     );
     const result = await pickReply(round([]), plan, 10);
     assert.deepEqual(result, reply);
@@ -160,79 +178,55 @@ for (const reply of [
   });
 }
 
-const DONE = { type: "done", text: "You have {3} tasks." };
-const OTHER = { type: "done", text: "Wait: 4 tasks." };
-
-for (const [name, text, reply] of [
-  [
-    "text before the object",
-    `I need the tasks first.\n\n${JSON.stringify(DONE)}`,
-    DONE,
-  ],
-  [
-    "text and tags around the object",
-    `<invoke name="x"></invoke>\n${JSON.stringify(DONE)}\nDone.`,
-    DONE,
-  ],
-  [
-    "two objects",
-    `${JSON.stringify(DONE)}\n\nCorrection:\n\n${JSON.stringify(OTHER)}`,
-    OTHER,
-  ],
-  [
-    "a broken object, then a good one",
-    `{"type": "done", "text": oops}\n${JSON.stringify(DONE)}`,
-    DONE,
-  ],
-  [
-    "an object, then a broken one",
-    `${JSON.stringify(DONE)}\n{"type": "done", "text": oops}`,
-    DONE,
-  ],
-] as const) {
-  test(`with ${name}, the last object in the answer is the reply`, async (t) => {
-    const { plan } = planner(t, () => json(answer(text)));
-    const log = console.log as unknown as {
-      mock: { calls: { arguments: unknown[] }[] };
-    };
-    assert.deepEqual(await pickReply(round([]), plan, 10), reply);
-    assert.ok(
-      log.mock.calls.some(
-        (call) =>
-          call.arguments[0] ===
-          "claude: the reply was read from text around it",
-      ),
-    );
-  });
-}
-
-test("a reply that is the whole answer is not logged as read from text", async (t) => {
-  const { plan } = planner(t, () => json(answer(JSON.stringify(DONE))));
-  const log = console.log as unknown as {
-    mock: { calls: { arguments: unknown[] }[] };
+test("the args of every call, also in a forEach, come out as objects", async (t) => {
+  const answered = {
+    type: "plan",
+    plan: {
+      steps: [
+        { call: "tasks.list", args: '{"q": "rent"}', includeOutput: true },
+        {
+          forEach: "$1",
+          do: [
+            { call: "tasks.done", args: '{"id": "$item.id", "done": true}' },
+          ],
+        },
+      ],
+    },
   };
-  assert.deepEqual(await pickReply(round([]), plan, 10), DONE);
-  assert.equal(
-    log.mock.calls.some((call) =>
-      String(call.arguments[0]).includes("read from text"),
-    ),
-    false,
-  );
+  const { plan } = planner(t, () => json(answer(JSON.stringify(answered))));
+  const reply = await plan(round([]), new AbortController().signal);
+  assert.deepEqual(reply, {
+    type: "plan",
+    plan: {
+      steps: [
+        { call: "tasks.list", args: { q: "rent" }, includeOutput: true },
+        {
+          forEach: "$1",
+          do: [{ call: "tasks.done", args: { id: "$item.id", done: true } }],
+        },
+      ],
+    },
+  });
 });
+
+function planWithArgs(args: string) {
+  return json(
+    answer(
+      JSON.stringify({
+        type: "plan",
+        plan: { steps: [{ call: "tasks.list", args }] },
+      }),
+    ),
+  );
+}
 
 const FAILED = { type: "stop", text: "Something went wrong." };
 
 for (const [name, response] of [
   ["an answer that is not JSON", () => json(answer("Sure! Here it is."))],
-  [
-    "an answer with only a broken object",
-    () => json(answer('Here: {"type": "done", "text": oops}')),
-  ],
   ["an answer that is a JSON array", () => json(answer("[1, 2]"))],
-  [
-    "an answer that is a JSON array of objects",
-    () => json(answer(`[${JSON.stringify(DONE)}]`)),
-  ],
+  ["args that is not JSON", () => planWithArgs("{oops}")],
+  ["args that is a JSON array", () => planWithArgs("[1, 2]")],
   [
     "an answer cut off at max_tokens",
     () => json(answer('{"type": "done"', "max_tokens")),
