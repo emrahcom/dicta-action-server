@@ -17,9 +17,10 @@ LLM writes `args` as a string that holds the JSON object, and the planner parses
 it back into the object before the reply leaves the planner.
 
 The schema cannot express every rule, such as the length of a text, so the
-server checks the reply like any other (`architecture.md`, Planner). A step
-whose `args` is not a JSON object, and an answer the provider cut off or
-refused, are planner failures, so the server sends a stop.
+server checks the reply like any other (`architecture.md`, Planner). An answer
+that is not one JSON object, a step whose `args` is not a JSON object, and an
+answer the provider cut off or refused are planner failures, so the server sends
+a stop.
 
 ## Prompt
 
