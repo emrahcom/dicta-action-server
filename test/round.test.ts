@@ -893,6 +893,27 @@ test("takes parts at their limits", async (t) => {
   assert.equal(status, 200);
 });
 
+// Each string output is its length plus its two quotes in JSON.
+for (const [extra, expected] of [
+  [0, 200],
+  [1, 400],
+] as const) {
+  test(`included outputs that add up to 16 KB ${extra ? "plus one byte get 400" : "pass, though their object is larger"}`, async (t) => {
+    const base = await start(t);
+    const payload = body([PLAN]);
+    payload.exchange.push(
+      halted(
+        { step: 2, code: "x", message: "x", outputs: "x".repeat(8190 + extra) },
+        { "1": "x".repeat(8190) },
+      ),
+    );
+
+    const { status } = await post(base, payload);
+
+    assert.equal(status, expected);
+  });
+}
+
 test("413 for a body over 1 MB", async (t) => {
   const base = await start(t);
   const big = {

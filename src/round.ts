@@ -124,8 +124,14 @@ function checkReport(value: unknown, path: string): Report {
       );
     }
   }
+  // Each output on its own, the sizes added up, as the client counts them
+  // (contract-protocol.md, Report).
+  const outputs = [
+    ...Object.values(isObject(value.outputs) ? value.outputs : {}),
+    isObject(f) ? f.outputs : undefined,
+  ];
   if (
-    bytes(value.outputs) + bytes(isObject(f) ? f.outputs : undefined) >
+    outputs.reduce((sum: number, output) => sum + bytes(output), 0) >
     MAX_OUTPUTS_BYTES
   ) {
     throw new BadRound(`${path} has included outputs larger than 16 KB`);
