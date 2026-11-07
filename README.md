@@ -68,12 +68,13 @@ site's own domain, behind a proxy.
 
 ## Documents
 
-- Upgrading a site to a new version:
+- Upgrading a site to a new version:\
   https://github.com/emrahcom/dicta-action-harness/blob/main/docs/upgrading.md
-- The browser part: https://github.com/emrahcom/dicta-action-js
-- Building the module for your site:
+- The browser part:\
+  https://github.com/emrahcom/dicta-action-js
+- Building the module for your site:\
   https://github.com/emrahcom/dicta-action-harness
-- How the server works, and the formats it uses:
+- How the server works, and the formats it uses:\
   https://github.com/emrahcom/dicta-action-server/tree/main/specs
 
 ## License
