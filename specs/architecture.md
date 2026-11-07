@@ -59,9 +59,12 @@ As in dicta-server:
 - The application's backend holds the secret and issues the tokens. It chooses
   their lifetime; `dicta-js` recommends 5 minutes.
 - `exp` is required. `sub` is optional and identifies the user.
+- `aud` is checked only when `JWT_AUDIENCE` is set: the token's `aud` must be
+  that value, or a list that holds it, or the token is not valid (`401`).
 - The token is checked on every round.
 - With the same `JWT_SECRET` as dicta-server, one token and one backend function
-  serve both.
+  serve both. A different `JWT_AUDIENCE` on each server keeps a token for one
+  from working on the other; the backend then signs one token for each.
 
 ## Site context
 
@@ -123,6 +126,8 @@ Environment variables:
   web apps often use and next to `dicta-server`'s `8740`.
 - `JWT_SECRET`: the shared secret for tokens, at least 32 bytes. Required,
   unless `ALLOW_UNAUTHENTICATED` is `true`.
+- `JWT_AUDIENCE`: the `aud` a token must have (Authentication). No default: when
+  it is not set, `aud` is not checked.
 - `ALLOW_UNAUTHENTICATED`: when `true`, tokens are not checked. For development
   only. Default `false`. The server logs a warning at startup when it is on.
 - `PLANNER`: the planner. Required. Values: `stub`, `claude`.
