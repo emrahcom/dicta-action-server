@@ -135,3 +135,24 @@ A planner's own variables start with `PLANNER_` and its name.
 The server does not start when a required variable is missing or a value is not
 valid; it logs why. At startup it logs the planner and, for an LLM planner, its
 model and its settings.
+
+## Releases
+
+The version is in `package.json`. The release steps and the version rules are in
+`docs/releasing.md`.
+
+### Docker image
+
+`Dockerfile` in the repo root builds an image that runs the server.
+
+- One stage on `node:24-slim`, with the server's `src/` and its production
+  dependencies. No tests, specs, docs or dev dependencies.
+- It runs as the `node` user with `node src/index.ts` and exposes `8741`. All
+  settings come from environment variables (Configuration).
+
+### Image workflow
+
+`.github/workflows/image.yml` builds the image and pushes it to the GitHub
+registry as `ghcr.io/emrahcom/dicta-action-server`, tagged with the version,
+such as `0.1.0`, and `latest`. It runs only when a release is published, and
+builds that release's tag, so an image tag always holds the same server.
