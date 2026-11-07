@@ -202,8 +202,8 @@ later request can fix it.
 Any capability may load a page, a new one or the same one again, and so may the
 user (`contract-capability.md`, Page changes). When the page is left in the
 middle of a request, the request goes on in the new page only if the page load
-started during a step and that step returned before the page was left; otherwise
-it ends:
+started during a step of a capability with `pageLoad` and that step returned
+before the page was left; otherwise it ends:
 
 - When a page load starts during a step of a capability with `pageLoad` (the
   browser's `navigate` event for another document), the client runs nothing
