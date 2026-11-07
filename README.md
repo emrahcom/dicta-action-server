@@ -27,6 +27,8 @@ Environment variables:
   `xhigh` or `max`. Default `medium`.
 - `JWT_SECRET`: the secret for the tokens, at least 32 bytes. Required, unless
   `ALLOW_UNAUTHENTICATED` is `true`.
+- `JWT_AUDIENCE`: optional. When set, a token must have this value in its `aud`
+  claim (Tokens). No default.
 - `ALLOW_UNAUTHENTICATED`: `true` turns the token check off. Only for
   development.
 - `MAX_PLANS`: the most plans for one user request, `1` to `20`. Default `10`.
@@ -52,6 +54,13 @@ it on every call.
 - A JWT signed with HS256 and `JWT_SECRET`.
 - `exp` is required. 5 minutes is a good lifetime.
 - `sub` is optional, the user's id.
+- `aud` is checked only when `JWT_AUDIENCE` is set. Then the token must have
+  that value.
+
+`dicta-server` uses tokens of the same kind. With the same `JWT_SECRET` on both
+servers, one token works on both. To keep them apart, give each server its own
+`JWT_AUDIENCE`, and let the backend sign one token for each. `JWT_AUDIENCE` also
+lets you use tokens from a backend that already sets `aud`.
 
 Each request costs money at the AI provider. Limit how many tokens one user can
 get, in the backend that gives them.

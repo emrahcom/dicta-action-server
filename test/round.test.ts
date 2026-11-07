@@ -598,6 +598,50 @@ test("401 with a token without exp", async (t) => {
   assert.equal(status, 401);
 });
 
+// A token with the given aud, or none.
+function tokenWithAudience(aud?: string | string[]) {
+  const jwt = new SignJWT({ sub: "user-1" })
+    .setProtectedHeader({ alg: "HS256" })
+    .setExpirationTime("5m");
+  if (aud !== undefined) {
+    jwt.setAudience(aud);
+  }
+  return jwt.sign(new TextEncoder().encode(SECRET));
+}
+
+const AUDIENCE_CASES: [string, string | string[] | undefined, number][] = [
+  ["that aud", "dicta-action", 200],
+  ["a list that holds it", ["other", "dicta-action"], 200],
+  ["another aud", "dicta", 401],
+  ["no aud", undefined, 401],
+];
+
+for (const [name, aud, expected] of AUDIENCE_CASES) {
+  test(`${expected} with JWT_AUDIENCE set and a token with ${name}`, async (t) => {
+    const base = await start(t, {
+      auth: { jwtSecret: SECRET, jwtAudience: "dicta-action" },
+    });
+    const value = await tokenWithAudience(aud);
+
+    const { status } = await post(base, body([PLAN]), {
+      authorization: `Bearer ${value}`,
+    });
+
+    assert.equal(status, expected);
+  });
+}
+
+test("200 without JWT_AUDIENCE for a token with any aud", async (t) => {
+  const base = await start(t);
+  const value = await tokenWithAudience("anything");
+
+  const { status } = await post(base, body([PLAN]), {
+    authorization: `Bearer ${value}`,
+  });
+
+  assert.equal(status, 200);
+});
+
 test("takes rounds without a token when unauthenticated is allowed", async (t) => {
   const base = await start(t, { auth: { allowUnauthenticated: true } });
 

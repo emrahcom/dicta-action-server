@@ -24,7 +24,10 @@ if (process.env.ALLOW_UNAUTHENTICATED === "true") {
 } else if (Buffer.byteLength(process.env.JWT_SECRET) < MIN_SECRET_BYTES) {
   fail(`JWT_SECRET must be at least ${MIN_SECRET_BYTES} bytes`);
 } else {
-  auth = { jwtSecret: process.env.JWT_SECRET };
+  auth = {
+    jwtSecret: process.env.JWT_SECRET,
+    jwtAudience: process.env.JWT_AUDIENCE || undefined,
+  };
 }
 
 if (!PLANNERS.includes(process.env.PLANNER ?? "")) {

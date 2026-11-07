@@ -13,8 +13,10 @@ import { BadRound, checkRound, pickReply, type Planner } from "./round.ts";
 const ROUND_PATH = "/dicta-action/v1/round";
 const MAX_BODY_BYTES = 1024 * 1024;
 
+// jwtAudience: the aud a token must have; without it, aud is not checked
+// (architecture.md, Authentication).
 export type AuthOptions =
-  { allowUnauthenticated: true } | { jwtSecret: string };
+  { allowUnauthenticated: true } | { jwtSecret: string; jwtAudience?: string };
 
 export type ServerOptions = {
   auth: AuthOptions;
@@ -49,9 +51,12 @@ async function checkToken(request: IncomingMessage, auth: AuthOptions) {
     throw new HttpError(401, "token missing");
   }
   try {
+    // jose checks aud only when audience is given; a list that holds it
+    // passes.
     await jwtVerify(match[1], new TextEncoder().encode(auth.jwtSecret), {
       algorithms: ["HS256"],
       requiredClaims: ["exp"],
+      audience: auth.jwtAudience,
     });
   } catch {
     throw new HttpError(401, "token not valid");
