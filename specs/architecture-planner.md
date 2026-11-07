@@ -14,13 +14,13 @@ the same for every site, for the reply types, their fields and the plan's steps.
 The arguments of a plan step depend on each site's capabilities and may hold
 references (`contract-plan.md`), which a fixed schema cannot describe. So the
 LLM writes `args` as a string that holds the JSON object, and the planner parses
-it back into the object before the reply leaves the planner.
+it back into the object.
 
 The schema cannot express every rule, such as the length of a text, so the
 server checks the reply like any other (`architecture.md`, Planner). An answer
-that is not one JSON object, a step whose `args` is not a JSON object, and an
-answer the provider cut off or refused are planner failures, so the server sends
-a stop.
+that is not one JSON object, a call whose `args` string does not hold a JSON
+object, and an answer the provider cut off or refused are planner failures, so
+the server sends a stop.
 
 ## Prompt
 
@@ -28,16 +28,12 @@ The planner builds one LLM call for each round, from the request body
 (`contract-protocol.md`). Its parts, in this order:
 
 1. Instructions: the planner's own text, the same for every site: the reply
-   types, the plan format with its limits (`contract-plan.md`) and the rules
-   below.
+   types, the plan format (`contract-plan.md`) and the rules below.
 2. Site context: `context`, as the client sent it.
 3. Request text: `text`.
 4. Exchange: `exchange`.
 5. Time, state and plans left: `time`, `state` and `MAX_PLANS` minus the plans
    in the exchange.
-
-The order of the request body does not matter; the planner picks the order of
-the prompt.
 
 Each part is labeled by its source. The state, outputs and history are given as
 JSON values, never as free text.
@@ -60,8 +56,6 @@ The instructions and the site context are the same in every round and for every
 user of a site, so they come first, with the first cache point after the site
 context.
 
-- The server still sends the whole prompt on every call. The cache saves price
-  and time at the provider, not sending.
 - The planner writes the site context into the prompt the same way in every
   round: the same serialization, no reordered keys and nothing before it that
   changes, such as the date or the plans left.

@@ -24,8 +24,8 @@ calling one of the site's capabilities. It is JSON data, never code.
 
 ## Label
 
-`text`, when present, is one short sentence the client shows while the plan
-runs, at most 200 characters (Limits).
+`text`, when present, is one short sentence the client shows while the plan runs
+(Limits).
 
 ## Reporting
 

@@ -63,13 +63,12 @@ So the safe order for a site is: update the server first, then the module and
 
 - `requestId`: left out in the first round. In later rounds, the id the server
   gave in its first reply.
-- `text`: the user's request, the same in every round. At most 10000 characters
-  (Limits).
+- `text`: the user's request, the same in every round (Limits).
 - `time`: the user's current time, sent new in every round, so the planner can
   read words like "today" or "tomorrow".
-- `state`: what the page shows now, as a JSON object. Sent new in every round.
-  At most 16 KB (Limits). The client does not choose it: it comes from the
-  site's own state function, which the site context describes.
+- `state`: what the page shows now, as a JSON object. Sent new in every round
+  (Limits). The client does not choose it: it comes from the site's own state
+  function, which the site context describes.
 - `context`: the site context (`contract-context.md`), built from the capability
   module. Sent in every round.
 - `exchange`: what happened so far, oldest first. Empty in the first round. The
@@ -79,9 +78,6 @@ So the safe order for a site is: update the server first, then the module and
   - a question the server asked, with the user's `answer`;
   - `added`: text the user gave while the request was running (Added text and
     cancel).
-
-  An answer and an added text have the same limit as `text`: at most 10000
-  characters (Limits).
 
 Every time in the contracts is the user's local time with its offset, in ISO
 8601, for example `2026-10-28T15:20:00+01:00`. The offset is always written as
@@ -121,14 +117,15 @@ output out does not make its step fail.
     - `capability`: the capability threw.
     - `reference`: a reference had no value, or a value that does not fit where
       it is used.
-    - `limit`: a `forEach` over more than 100 items.
+    - `limit`: a `forEach` over more items than allowed (`contract-plan.md`,
+      Limits).
     - `invalid`: the plan failed the client's check before any step ran.
     - `cancelled`: the user cancelled the request. Only in the history, never
       sent.
     - `interrupted`: the user added text (Added text and cancel).
     - `navigated`: a page load started before it could run (Page changes).
-  - `message`: what happened, at most 200 characters (Limits). For `capability`,
-    the capability's own message is used when it gives one.
+  - `message`: what happened (Limits). For `capability`, the capability's own
+    message is used when it gives one.
   - `item` and `do`: only when the plan halted in a `forEach` after its first
     item started: the number of the item and of the call in its `do` where it
     halted, both from 0. The items before it are done, and in that item, the
@@ -271,9 +268,8 @@ The server creates it in the first round and repeats it in every reply.
   over. The client shows the text until the user closes it. A question about the
   site's data is not one: it gets a plan that reads the data, then done.
 
-Every `text` is one short sentence, at most 200 characters, and each option a
-few words, at most 50 (Limits). Only an `info` text is longer, at most 2000
-characters: plain text, with an empty line between paragraphs.
+Every `text` is one short sentence, and each option a few words (Limits). Only
+an `info` text is longer: plain text, with an empty line between paragraphs.
 
 ```json
 {
@@ -317,9 +313,7 @@ a planner failure. A planner failure is not an HTTP error; the server sends a
 
 ## Limits
 
-Each part of a round has a limit. Together they keep a round under 1 MB in all
-but extreme cases, such as a request with the most plans, each with full
-outputs, and many long added texts. The `413` is the hard limit for the whole
+Each part of a round has a limit. The `413` is the hard limit for the whole
 body; like any other error, it ends the request (Errors).
 
 - `text`, each answer and each added text: at most 10000 characters (Unicode

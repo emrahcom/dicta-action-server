@@ -23,8 +23,6 @@ Message formats are in `contract-protocol.md`.
 ## Requests
 
 - Plain HTTP: one `POST` per round, JSON in and out. A round needs no streaming.
-  A WebSocket would also close at each page load, and keeping the exchange on
-  the server would need sticky load balancing.
 - Stateless. Each round carries everything the server needs: the request text,
   the page state, the site context and the exchange so far of this user request,
   with its plans and reports, questions and answers and added text. The server
@@ -57,7 +55,7 @@ As in dicta-server:
 - JWT, verified locally with a shared secret (`JWT_SECRET`), HS256, with the
   `jose` package. No database and no call to another service.
 - The application's backend holds the secret and issues the tokens. It chooses
-  their lifetime; `dicta-js` recommends 5 minutes.
+  their lifetime, such as 5 minutes.
 - `exp` is required. `sub` is optional and identifies the user.
 - `aud` is checked only when `JWT_AUDIENCE` is set: the token's `aud` must be
   that value, or a list that holds it, or the token is not valid (`401`).
@@ -72,10 +70,9 @@ As in dicta-server:
   site. The client sends it in every round. So the module and the context are
   always the same version, and one server can serve any number of sites.
 - It lists the site's capabilities with their arguments, outputs and levels, and
-  what the planner needs to know about the site. Its format is in
-  `contract-context.md`. The server checks it in every round; a round with a
-  context that is not valid gets a `400`.
-- It is sent and read in every round, so it is kept small, at most 64 KB
+  what the planner needs to know about the site. Its format and its check are in
+  `contract-context.md`.
+- It is sent and read in every round, so it is kept small
   (`contract-protocol.md`, Limits). The planner puts it near the start of its
   prompt, so the LLM provider's prompt caching makes repeated rounds cheap
   (`architecture-planner.md`, Caching).
@@ -106,15 +103,9 @@ As in dicta-server:
 - A planner gets at most 45 seconds for a round, so the reply comes well within
   the client's 60 seconds. One that takes longer is a planner failure, and the
   server sends a stop (`contract-protocol.md`, Errors).
-- A report on a plan marked final whose steps all succeeded, with no added text
-  after it, gets done from the server, without the planner (`contract-plan.md`,
-  Reporting).
-- The server checks every reply before it leaves (`contract-protocol.md`,
-  Response body). For a plan, it checks, among other things, that each step
-  calls a capability of the site context, with arguments that match its schema,
-  and that each reference points to an earlier step (`contract-plan.md`,
-  Failures). A reply that fails the check is never sent; the server sends a stop
-  instead.
+- The server answers a final plan that succeeded with done, without the planner
+  (`contract-plan.md`, Reporting), and checks every reply before it leaves
+  (`contract-protocol.md`, Response body; `contract-plan.md`, Failures).
 - The server's own stops, at the plan limit, after a failed check or a planner
   failure and from `stub`, carry a short fixed text in English.
 
@@ -138,9 +129,7 @@ Environment variables:
 - `MAX_PLANS`: the most plans per user request (Requests), a whole number from
   `1` to `20`. Default `10`.
 
-A planner's own variables start with `PLANNER_` and its name, so that they do
-not clash with other tools in the same shell, such as Claude Code's
-`CLAUDE_EFFORT`.
+A planner's own variables start with `PLANNER_` and its name.
 
 The server does not start when a required variable is missing or a value is not
 valid; it logs why. At startup it logs the planner and, for an LLM planner, its

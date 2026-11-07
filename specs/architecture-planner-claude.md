@@ -34,10 +34,7 @@ way:
 
 ## Failures
 
-Besides an answer with no reply in it (`architecture-planner.md`, Reply format),
-these are planner failures:
-
-- an answer that ends for any reason other than `stop_reason: end_turn`, such as
-  one cut off at `max_tokens` or a refusal by the model's safety checks
-  (`refusal`);
-- an error from the API, after the SDK's own retries within the 45 seconds.
+An answer is cut off or refused (`architecture-planner.md`, Reply format) when
+it ends with any `stop_reason` other than `end_turn`, such as `max_tokens` or
+`refusal`. An error from the API, after the SDK's own retries within the 45
+seconds, is a planner failure too.

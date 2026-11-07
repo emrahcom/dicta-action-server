@@ -91,11 +91,11 @@ module may set it, and without it, it is 10.
 - `run`: an async function. It takes the arguments, already checked against
   `args`, and returns a JSON value, matching `output` when it is set. It returns
   only what a planner needs, such as ids, names and dates, not whole records:
-  included outputs share 16 KB in a report (`contract-protocol.md`, Report). The
-  client does not check it against `output`. It turns it into JSON as soon as
-  `run` returns, `undefined` into `null`, and uses only that for references and
-  the report. A value that cannot be turned into JSON fails the step with
-  `capability`.
+  included outputs share one size limit in a report (`contract-protocol.md`,
+  Report). The client does not check it against `output`. It turns it into JSON
+  as soon as `run` returns, `undefined` into `null`, and uses only that for
+  references and the report. A value that cannot be turned into JSON fails the
+  step with `capability`.
 - `confirm`: required for `write`, `destructive` and `external` capabilities, an
   async function that takes the arguments and returns a short text naming the
   action and what it acts on, for example
@@ -146,13 +146,13 @@ and the steps after it run.
 A capability that fails throws. When the error has a string `code`, for example
 `not_found`, the client reports that code and the error's `message`; otherwise,
 or when the code is one of the client's own halt codes, such as `invalid`, it
-reports `capability` (`contract-protocol.md`, Report). Messages are short, at
-most 200 characters, and contain no secrets; the client cuts longer ones.
+reports `capability` (`contract-protocol.md`, Report). Messages are short
+(`contract-protocol.md`, Limits) and contain no secrets.
 
 ## State
 
-`state.run` returns what the page shows now, as a small JSON object, at most 16
-KB (`contract-protocol.md`, Limits). The client calls it before every round and
+`state.run` returns what the page shows now, as a small JSON object
+(`contract-protocol.md`, Limits). The client calls it before every round and
 sends what it returns as `state`. Its `desc` tells the planner what the fields
 mean.
 
