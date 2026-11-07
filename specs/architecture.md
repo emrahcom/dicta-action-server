@@ -119,7 +119,8 @@ As in dicta-server:
 
 Environment variables:
 
-- `PORT`: the port the server listens on. Default `8080`.
+- `PORT`: the port the server listens on. Default `8741`, away from the ports
+  web apps often use and next to `dicta-server`'s `8740`.
 - `JWT_SECRET`: the shared secret for tokens, at least 32 bytes. Required,
   unless `ALLOW_UNAUTHENTICATED` is `true`.
 - `ALLOW_UNAUTHENTICATED`: when `true`, tokens are not checked. For development
