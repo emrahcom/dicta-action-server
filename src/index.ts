@@ -13,7 +13,7 @@ function fail(message: string): never {
   process.exit(1);
 }
 
-const port = Number(process.env.PORT || 8080);
+const port = Number(process.env.PORT || 8741);
 
 let auth: AuthOptions;
 if (process.env.ALLOW_UNAUTHENTICATED === "true") {

@@ -30,7 +30,7 @@ Environment variables:
 - `ALLOW_UNAUTHENTICATED`: `true` turns the token check off. Only for
   development.
 - `MAX_PLANS`: the most plans for one user request, `1` to `20`. Default `10`.
-- `PORT`: default `8080`.
+- `PORT`: default `8741`.
 
 The server does not start when a value is missing or not valid. It logs why.
 
