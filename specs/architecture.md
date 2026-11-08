@@ -87,6 +87,9 @@ As in dicta-server:
 - The harness's guides also point to the contracts in `specs/` of the same git
   dependency, the version the harness pins. So the package keeps `specs/`: no
   `files` field in `package.json` leaves them out.
+- The harness also runs this server from the same git dependency, with
+  `src/index.ts`, to try a module on a running site. So that file keeps its name
+  too.
 
 ## Planner
 
