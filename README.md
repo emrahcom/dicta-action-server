@@ -2,7 +2,8 @@
 
 The planner of dicta actions. Users of a web site say what they want in their
 own words. This server turns the words into a plan, with an LLM. The browser
-runs the plan with `dicta-action-js`.
+runs the plan with
+[`dicta-action-js`](https://github.com/emrahcom/dicta-action-js).
 
 - It never acts on the site. Only the browser does, with the user's rights.
 - It keeps no data between requests. It has no database.
@@ -55,7 +56,8 @@ Each release has an image tagged with its version, such as `0.1.0`.
 
 The server keeps no data, so there is nothing to move. To update a whole site,
 with `dicta-action-js` and its module, see the upgrading guide of
-`dicta-action-harness` ([Documents](#documents)).
+[`dicta-action-harness`](https://github.com/emrahcom/dicta-action-harness)
+([Documents](#documents)).
 
 ## Tokens
 
@@ -68,10 +70,11 @@ it on every call.
 - `aud` is checked only when `JWT_AUDIENCE` is set. Then the token must have
   that value.
 
-`dicta-server` uses tokens of the same kind. With the same `JWT_SECRET` on both
-servers, one token works on both. To keep them apart, give each server its own
-`JWT_AUDIENCE`, and let the backend sign one token for each. `JWT_AUDIENCE` also
-lets you use tokens from a backend that already sets `aud`.
+[`dicta-server`](https://github.com/emrahcom/dicta-server) uses tokens of the
+same kind. With the same `JWT_SECRET` on both servers, one token works on both.
+To keep them apart, give each server its own `JWT_AUDIENCE`, and let the backend
+sign one token for each. `JWT_AUDIENCE` also lets you use tokens from a backend
+that already sets `aud`.
 
 Each request costs money at the AI provider. Limit how many tokens one user can
 get, in the backend that gives them.
