@@ -285,7 +285,10 @@ an `info` text is longer: plain text, with an empty line between paragraphs.
 The server checks every reply before it sends it: `type` is one of the five, a
 question, a stop and an info have a `text`, `options` is a list of strings, and
 the limits hold. A reply that fails the check is never sent; the server sends a
-stop instead. A plan is checked as well (`contract-plan.md`, Failures).
+stop instead. A text or an option over its limit does not fail the check: the
+server cuts it to the limit, ending it with `...`, and logs the cut, so the
+client never gets more (Limits). A plan is checked as well (`contract-plan.md`,
+Failures).
 
 Clients ignore fields they do not know, except in a plan (`contract-plan.md`,
 Failures). When the server sends a reply type the client does not know, the
@@ -326,7 +329,9 @@ body; like any other error, it ends the request (Errors).
 - A plan: `contract-plan.md`, Limits.
 - The included outputs of a report: at most 16 KB together (Report).
 - Plans in a request: at most `MAX_PLANS`, which is at most 20.
-- The `text` of a reply: at most 200 characters, of an `info` 2000. A question's
-  `options`: at most 5, each at most 50 characters.
+- The `text` of a reply: at most 2000 characters. A question's `options`: at
+  most 5, each at most 50 characters. The planner asks for at most 200
+  characters for every text but an `info` (`architecture-planner.md`, Rules for
+  the LLM); the larger limit keeps a longer text whole.
 
 Questions and added texts have no count limit: a person writes each of them.

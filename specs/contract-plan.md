@@ -124,7 +124,9 @@ step and reports the outputs asked for so far and the halt.
 
 - At most 50 top-level steps in a plan, and at most 16 KB, counted as the UTF-8
   bytes of its JSON. A longer or larger plan fails the check (Failures).
-- The label: at most 200 characters. A longer one fails the check (Failures).
+- The label: at most 200 characters. The server cuts a longer one before it
+  checks the plan, as it does a reply's text (`contract-protocol.md`, Response
+  body).
 - At most 100 items in a `forEach`. A larger array fails the step with the code
   `limit` before any item runs.
 
