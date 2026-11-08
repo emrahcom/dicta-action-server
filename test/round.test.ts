@@ -293,19 +293,9 @@ const BAD_REPLIES: [string, unknown, RegExp][] = [
   ["a reply that is not an object", "hello", /must be an object/],
   ["an unknown type", { type: "chat", text: "Hi." }, /type must be/],
   ["an info without text", { type: "info" }, /text must be a string/],
-  [
-    "an info over 2000 characters",
-    { type: "info", text: "x".repeat(2001) },
-    /text is longer than 2000 characters/,
-  ],
   ["a question without text", { type: "question" }, /text must be a string/],
   ["a stop without text", { type: "stop" }, /text must be a string/],
   ["a done text that is not text", { type: "done", text: 5 }, /text must be/],
-  [
-    "a text over 200 characters",
-    { type: "done", text: "x".repeat(201) },
-    /text is longer than 200 characters/,
-  ],
   [
     "options that are not strings",
     { type: "question", text: "Which?", options: [1, 2] },
@@ -319,11 +309,6 @@ const BAD_REPLIES: [string, unknown, RegExp][] = [
       options: ["a", "b", "c", "d", "e", "f"],
     },
     /at most 5 options/,
-  ],
-  [
-    "an option over 50 characters",
-    { type: "question", text: "Which?", options: ["x".repeat(51)] },
-    /an option is longer than 50 characters/,
   ],
 ];
 
@@ -368,13 +353,111 @@ test("sends replies at their limits", async (t) => {
   const base = await start(t);
   const question = {
     type: "question",
-    text: "\u{1F600}".repeat(200),
-    options: Array(5).fill("x".repeat(50)),
+    text: "\u{1F600}".repeat(2000),
+    options: Array(5).fill("\u{1F600}".repeat(50)),
+  };
+  const label = {
+    type: "plan",
+    plan: { ...PLAN.plan, text: "\u{1F600}".repeat(200) },
   };
 
-  const { body: response } = await post(base, body([question]));
+  const { body: first } = await post(base, body([question]));
+  const { body: second } = await post(base, body([label]));
 
-  assert.deepEqual(response.reply, question);
+  assert.deepEqual(first.reply, question);
+  assert.deepEqual(second.reply, label);
+});
+
+// The first characters and "...", the whole at the limit; a character outside
+// the BMP counts as one.
+const SMILE = "\u{1F600}";
+const CUT_REPLIES: [string, unknown, unknown, RegExp][] = [
+  [
+    "a done text",
+    { type: "done", text: SMILE.repeat(2001) },
+    { type: "done", text: SMILE.repeat(1997) + "..." },
+    /^text cut: 2001 characters, at most 2000$/,
+  ],
+  [
+    "a stop text",
+    { type: "stop", text: SMILE.repeat(2001) },
+    { type: "stop", text: SMILE.repeat(1997) + "..." },
+    /^text cut: 2001 characters, at most 2000$/,
+  ],
+  [
+    "an info text",
+    { type: "info", text: SMILE.repeat(2001) },
+    { type: "info", text: SMILE.repeat(1997) + "..." },
+    /^text cut: 2001 characters, at most 2000$/,
+  ],
+  [
+    "a question text and an option",
+    {
+      type: "question",
+      text: SMILE.repeat(2001),
+      options: ["A", SMILE.repeat(51)],
+    },
+    {
+      type: "question",
+      text: SMILE.repeat(1997) + "...",
+      options: ["A", SMILE.repeat(47) + "..."],
+    },
+    /^text cut: 2001 characters, at most 2000$/,
+  ],
+  [
+    "a plan label",
+    { type: "plan", plan: { ...PLAN.plan, text: SMILE.repeat(201) } },
+    { type: "plan", plan: { ...PLAN.plan, text: SMILE.repeat(197) + "..." } },
+    /^plan\.text cut: 201 characters, at most 200$/,
+  ],
+];
+
+for (const [name, reply, sent, logged] of CUT_REPLIES) {
+  test(`cuts ${name} over its limit`, async (t) => {
+    const base = await start(t);
+    const warn = t.mock.method(console, "warn", () => {});
+
+    const { body: response } = await post(base, body([reply]));
+
+    assert.deepEqual(response.reply, sent);
+    assert.match(String(warn.mock.calls[0]?.arguments[0]), logged);
+  });
+}
+
+test("logs each cut option", async (t) => {
+  const base = await start(t);
+  const warn = t.mock.method(console, "warn", () => {});
+  const question = {
+    type: "question",
+    text: "Which?",
+    options: ["x".repeat(51)],
+  };
+
+  await post(base, body([question]));
+
+  assert.deepEqual(
+    warn.mock.calls.map((call) => call.arguments[0]),
+    ["options[0] cut: 51 characters, at most 50"],
+  );
+});
+
+test("cuts a label before the plan size check", async (t) => {
+  // Over 16 KB only with the whole label; too large for the stub's text.
+  const plan = {
+    steps: [
+      { call: "tasks.create", args: { title: "a".repeat(16 * 1024 - 300) } },
+    ],
+    text: "x".repeat(1000),
+  };
+  const base = await start(t, {
+    planner: async () => ({ type: "plan", plan }),
+  });
+  t.mock.method(console, "warn", () => {});
+
+  const { body: response } = await post(base, body([]));
+
+  assert.equal(response.reply.type, "plan");
+  assert.equal(response.reply.plan.text, "x".repeat(197) + "...");
 });
 
 test("takes added text in the exchange", async (t) => {

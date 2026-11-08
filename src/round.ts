@@ -7,7 +7,7 @@ import {
   isObject,
   type SiteContext,
 } from "./context.ts";
-import { BadPlan, checkPlan } from "./plan.ts";
+import { BadPlan, checkPlan, MAX_LABEL_CHARS } from "./plan.ts";
 
 export type Report = {
   outputs?: Record<string, unknown>;
@@ -56,8 +56,7 @@ const MAX_STATE_BYTES = 16 * 1024;
 const MAX_CONTEXT_BYTES = 64 * 1024;
 const MAX_MESSAGE_CHARS = 200;
 const MAX_OUTPUTS_BYTES = 16 * 1024;
-const MAX_REPLY_CHARS = 200;
-const MAX_INFO_CHARS = 2000;
+const MAX_REPLY_CHARS = 2000;
 const MAX_OPTIONS = 5;
 const MAX_OPTION_CHARS = 50;
 
@@ -231,34 +230,47 @@ export function checkRound(body: unknown): Round {
 
 class BadReply extends Error {}
 
-function checkReplyText(
-  value: unknown,
-  required: boolean,
-  max = MAX_REPLY_CHARS,
-) {
-  if (value === undefined && !required) {
-    return;
+// Cuts a text over its limit, so the reply is still sent: its first
+// characters and "...", the whole within the limit (contract-protocol.md,
+// Response body). The log names the field, never the text.
+function cut(value: string, max: number, field: string) {
+  const list = Array.from(value);
+  if (list.length <= max) {
+    return value;
   }
+  console.warn(`${field} cut: ${list.length} characters, at most ${max}`);
+  return list.slice(0, max - 3).join("") + "...";
+}
+
+function checkReplyText(value: unknown) {
   if (typeof value !== "string") {
     throw new BadReply("text must be a string");
   }
-  if (chars(value) > max) {
-    throw new BadReply(`text is longer than ${max} characters`);
-  }
+  return cut(value, MAX_REPLY_CHARS, "text");
 }
 
-// Checks a reply of the planner before it is sent (contract-protocol.md,
-// Response body, Limits). Throws BadReply or BadPlan with the reason.
+// Checks a reply of the planner before it is sent and cuts its texts to their
+// limits (contract-protocol.md, Response body, Limits). Throws BadReply or
+// BadPlan with the reason.
 function checkReply(reply: unknown, context: SiteContext): Reply {
   if (!isObject(reply)) {
     throw new BadReply("the reply must be an object");
   }
+  const out = { ...reply };
   switch (reply.type) {
     case "plan":
-      checkPlan(reply.plan, context);
+      // The label is cut before the check, so its size check sees the cut
+      // plan (contract-plan.md, Limits).
+      if (isObject(reply.plan) && typeof reply.plan.text === "string") {
+        out.plan = {
+          ...reply.plan,
+          text: cut(reply.plan.text, MAX_LABEL_CHARS, "plan.text"),
+        };
+      }
+      checkPlan(out.plan, context);
       break;
     case "question":
-      checkReplyText(reply.text, true);
+      out.text = checkReplyText(reply.text);
       if (reply.options !== undefined) {
         const options = reply.options;
         if (
@@ -270,26 +282,24 @@ function checkReply(reply: unknown, context: SiteContext): Reply {
         if (options.length > MAX_OPTIONS) {
           throw new BadReply(`a question has at most ${MAX_OPTIONS} options`);
         }
-        if (options.some((option) => chars(option) > MAX_OPTION_CHARS)) {
-          throw new BadReply(
-            `an option is longer than ${MAX_OPTION_CHARS} characters`,
-          );
-        }
+        out.options = options.map((option, i) =>
+          cut(option, MAX_OPTION_CHARS, `options[${i}]`),
+        );
       }
       break;
     case "done":
-      checkReplyText(reply.text, false);
+      if (reply.text !== undefined) {
+        out.text = checkReplyText(reply.text);
+      }
       break;
     case "stop":
-      checkReplyText(reply.text, true);
-      break;
     case "info":
-      checkReplyText(reply.text, true, MAX_INFO_CHARS);
+      out.text = checkReplyText(reply.text);
       break;
     default:
       throw new BadReply("type must be plan, question, done, stop or info");
   }
-  return reply as Reply;
+  return out as Reply;
 }
 
 // The longest a planner may take for a round (architecture.md, Planner).

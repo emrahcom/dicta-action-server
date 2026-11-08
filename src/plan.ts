@@ -5,7 +5,7 @@ import { isObject, type Schema, type SiteContext } from "./context.ts";
 
 const MAX_STEPS = 50;
 const MAX_BYTES = 16 * 1024;
-const MAX_LABEL_CHARS = 200;
+export const MAX_LABEL_CHARS = 200;
 
 export class BadPlan extends Error {}
 
