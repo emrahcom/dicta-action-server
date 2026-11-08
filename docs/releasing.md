@@ -1,8 +1,7 @@
 # Releasing
 
-How to release a new version of
-[dicta-action-server](https://github.com/emrahcom/dicta-action-server). This is
-for the maintainers.
+How to release a new version of dicta-action-server. This is for the
+maintainers.
 
 ## Version numbers
 
