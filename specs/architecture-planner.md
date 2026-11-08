@@ -16,11 +16,11 @@ references (`contract-plan.md`), which a fixed schema cannot describe. So the
 LLM writes `args` as a string that holds the JSON object, and the planner parses
 it back into the object.
 
-The schema cannot express every rule, such as the length of a text, so the
-server checks the reply like any other (`architecture.md`, Planner). An answer
-that is not one JSON object, a call whose `args` string does not hold a JSON
-object, and an answer the provider cut off or refused are planner failures, so
-the server sends a stop.
+The schema cannot express every rule, such as a reference to an earlier step, so
+the server checks the reply like any other (`architecture.md`, Planner). An
+answer that is not one JSON object, a call whose `args` string does not hold a
+JSON object, and an answer the provider cut off or refused are planner failures,
+so the server sends a stop.
 
 ## Prompt
 
