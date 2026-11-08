@@ -28,7 +28,7 @@ Environment variables:
 - `JWT_SECRET`: the secret for the tokens, at least 32 bytes. Required, unless
   `ALLOW_UNAUTHENTICATED` is `true`.
 - `JWT_AUDIENCE`: optional. When set, a token must have this value in its `aud`
-  claim (Tokens). No default.
+  claim ([Tokens](#tokens)). No default.
 - `ALLOW_UNAUTHENTICATED`: `true` turns the token check off. Only for
   development.
 - `MAX_PLANS`: the most plans for one user request, `1` to `20`. Default `10`.
@@ -55,7 +55,7 @@ Each release has an image tagged with its version, such as `0.1.0`.
 
 The server keeps no data, so there is nothing to move. To update a whole site,
 with `dicta-action-js` and its module, see the upgrading guide of
-`dicta-action-harness` (Documents).
+`dicta-action-harness` ([Documents](#documents)).
 
 ## Tokens
 
