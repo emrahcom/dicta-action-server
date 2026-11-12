@@ -30,9 +30,11 @@ The planner builds one LLM call for each round, from the request body
 1. Instructions: the planner's own text, the same for every site: the reply
    types, the plan format (`contract-plan.md`) and the rules below.
 2. Site context: `context`, as the client sent it.
-3. Request text: `text`.
-4. Exchange: `exchange`.
-5. Time, state and plans left: `time`, `state` and `MAX_PLANS` minus the plans
+3. History: `history`, oldest first, so the session reads in order up to the
+   request.
+4. Request text: `text`.
+5. Exchange: `exchange`.
+6. Time, state and plans left: `time`, `state` and `MAX_PLANS` minus the plans
    in the exchange.
 
 Each part is labeled by its source. The state, outputs and history are given as
@@ -43,6 +45,7 @@ part                     changes               read from cache
 -----------------------  --------------------  ---------------------------------
 instructions             same for every site   yes
 site context             same for one site     yes, cache point after it
+history                  same for one request  from the second round
 request text             same for one request  from the second round
 exchange                 grows every round     earlier rounds, cache point after
 time, state, plans left  new every round       never
@@ -59,10 +62,10 @@ context.
 - The planner writes the site context into the prompt the same way in every
   round: the same serialization, no reordered keys and nothing before it that
   changes, such as the date or the plans left.
-- A second cache point goes after the exchange, in every round. The request text
-  stays the same and the exchange only grows, so the next round of the same
-  request reads both from the cache. Each exchange item is its own block of the
-  prompt, written the same way in every round.
+- A second cache point goes after the exchange, in every round. The history and
+  the request text stay the same and the exchange only grows, so the next round
+  of the same request reads them all from the cache. Each exchange item is its
+  own block of the prompt, written the same way in every round.
 - The planner logs the provider's cache counters with each call, so tests and
   logs show whether the cache hits.
 
@@ -100,6 +103,11 @@ context.
 - A value that cannot be read again, such as the id of a task an earlier plan
   created, comes from the report: the earlier plan includes that output
   (`includeOutput`), and the later plan writes the value in directly.
+- A request can refer to an earlier one in the history, such as "undo that" or
+  "the same as at the start". The history entry gives what was asked and how it
+  ended; when the planner needs what that request did, a plan calls
+  `dicta.getHistory` with the entry's `requestId`. A request that ended with a
+  stop, an error or cancel may have done none or only part of what it asked.
 - When the report gives only the size of a `dicta.getHistory` output, because it
-  was too large (`contract-capability.md`, History), the LLM tells the user it
-  cannot read that request; it does not guess what it did.
+  was too large (`contract-capability.md`, `dicta.getHistory`), the LLM tells
+  the user it cannot read that request; it does not guess what it did.

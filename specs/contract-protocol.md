@@ -47,6 +47,14 @@ So the safe order for a site is: update the server first, then the module and
   "time": "2026-10-28T15:20:00+01:00",
   "state": { "page": "tasks", "selected": ["t1", "t2"] },
   "context": { "site": { "name": "Teamboard" }, "capabilities": ["..."] },
+  "history": [
+    {
+      "requestId": "r2",
+      "time": "2026-10-28T15:10:00+01:00",
+      "outcome": { "type": "done", "text": "Moved 2 tasks to Friday" },
+      "text": "move the selected tasks to Friday"
+    }
+  ],
   "exchange": [
     {
       "plan": { "steps": ["..."] },
@@ -71,6 +79,10 @@ So the safe order for a site is: update the server first, then the module and
   function, which the site context describes.
 - `context`: the site context (`contract-context.md`), built from the capability
   module. Sent in every round.
+- `history`: the earlier requests of this browser tab, oldest first (History),
+  so the planner can follow a request that refers to an earlier one, such as
+  "undo that" or "the same as at the start". The same in every round of a
+  request. Empty when there is none; left out, it counts as empty.
 - `exchange`: what happened so far, oldest first. Empty in the first round. The
   client only adds to it, and sends all of it in every round. Each item is one
   of:
@@ -83,6 +95,31 @@ Every time in the contracts is the user's local time with its offset, in ISO
 8601, for example `2026-10-28T15:20:00+01:00`. The offset is always written as
 numbers, `+00:00` too, never `Z`: `Z` hides the user's own offset, and the
 planner could take the wrong day for "today".
+
+## History
+
+The client stores each request once, when it ends: on done, a stop, an info,
+cancel, an error or a page change that ends it (Page changes). It keeps at most
+the 20 latest requests, in the browser tab's session storage. A request that
+ended before it got a `requestId` ran nothing and is not stored. When the
+browser's storage is full, the client drops the oldest requests.
+
+It sends a short entry for each kept request in every round, as `history`
+(Request body). Each entry, with its short fields first:
+
+- `requestId`: the request's id.
+- `time`: when the request ended.
+- `outcome.type`: how the request ended: `done`, `stop`, `info`, `cancelled`
+  (the user cancelled it, or a page change ended it) or `error` (a round failed:
+  an HTTP error, a network failure, no response after 60 seconds or a response
+  the client cannot read; or the client's own setup failed: `getToken` or the
+  module's `state` function threw; Errors and Response body).
+- `outcome.text`: the text of the server's done, stop or info, cut to 200
+  characters. Left out when there was none.
+- `text`: the user's request, cut to 200 characters.
+
+The built-in capability `dicta.getHistory` reads one request in full
+(`contract-capability.md`, `dicta.getHistory`).
 
 ## Report
 
@@ -233,9 +270,9 @@ before the page was left; otherwise it ends:
   while the client waits for the server's response, or while a question or a
   confirmation is open. On `pagehide`, once it has a `requestId`, the client
   adds it to history as cancelled, with everything done so far, also a report it
-  had not sent yet (`contract-capability.md`, Built-in capabilities). When a
-  step was running, that report has the halt code `cancelled` at that step, in a
-  `forEach` with its item and call: it may or may not have finished.
+  had not sent yet (History). When a step was running, that report has the halt
+  code `cancelled` at that step, in a `forEach` with its item and call: it may
+  or may not have finished.
 
 On `pagehide` the request is over in this page, whether it was saved or added to
 history: the client drops it, runs nothing more of it and ignores a step or a
@@ -325,6 +362,8 @@ body; like any other error, it ends the request (Errors).
   small is the site's job (`contract-capability.md`, State).
 - `context`: at most 64 KB, counted as the UTF-8 bytes of its JSON. Keeping it
   small is the site's job (`contract-context.md`).
+- `history`: at most 20 entries, each `text` and `outcome.text` at most 200
+  characters.
 - A halt `message`: at most 200 characters. The client cuts longer ones.
 - A plan: `contract-plan.md`, Limits.
 - The included outputs of a report: at most 16 KB together (Report).

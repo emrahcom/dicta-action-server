@@ -28,9 +28,9 @@ way:
 
 - The system prompt: the instructions and the site context, with the first cache
   point after the site context.
-- One user message: the request text and the exchange items, each its own block,
-  with the second cache point after the last one; then the time, the state and
-  the plans left.
+- One user message: the history, the request text and the exchange items, each
+  its own block, with the second cache point after the last one; then the time,
+  the state and the plans left.
 
 ## Failures
 

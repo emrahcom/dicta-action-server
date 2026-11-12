@@ -163,61 +163,15 @@ and exports them as `dictaCapabilities`. The module adds them to its
 `capabilities` like any other (Module), so they go into the site context like
 any other capability. Their names are in the `dicta` group, which only they use.
 
-### History
+### `dicta.getHistory`
 
-The history is the earlier requests of this browser tab. The client stores each
-request once, when it ends: on done, a stop, an info, cancel, an error or a page
-change that ends it (`contract-protocol.md`, Page changes). It keeps at most the
-20 latest requests. A request that ended before it got a `requestId` ran nothing
-and is not stored. When the browser's storage is full, the client drops the
-oldest requests.
-
-Two capabilities read it. They can be in one plan: `dicta.listHistory` with
-`limit` 1, then `dicta.getHistory` with the reference `$1.0.requestId` for the
-latest request.
-
-#### `dicta.listHistory`
-
-A `read` capability: earlier requests of this browser tab, newest first, for
-requests that refer to the past, such as "undo that" or "the same for Friday".
-No history is sent unless the planner calls it.
-
-Argument: `limit`, optional, a whole number from 1: the most requests it
-returns; 10 when left out. A smaller number fails with the code `capability`.
-
-Output: an array with a short entry for each request:
-
-```json
-[
-  {
-    "requestId": "r2",
-    "time": "2026-10-29T10:15:00+01:00",
-    "text": "move the selected tasks to Friday",
-    "outcome": { "type": "done", "text": "Moved 2 tasks to Friday" }
-  }
-]
-```
-
-- `requestId`: the request's id.
-- `time`: when the request ended (`contract-protocol.md`, Request body).
-- `text`: the user's request, cut to 200 characters.
-- `outcome.type`: how the request ended: `done`, `stop`, `info`, `cancelled`
-  (the user cancelled it, or a page change ended it) or `error` (a round failed:
-  an HTTP error, a network failure, no response after 60 seconds or a response
-  the client cannot read; or the client's own setup failed: `getToken` or the
-  module's `state` function threw; `contract-protocol.md`, Errors and Response
-  body).
-- `outcome.text`: the text of the server's done, stop or info, cut to 200
-  characters. Left out when there was none.
-
-#### `dicta.getHistory`
-
-A `read` capability: one request in full.
+A `read` capability: one request of the history in full (`contract-protocol.md`,
+History).
 
 Argument: `requestId`, required: the request to return. An id that is not kept
 fails with the code `not_found`.
 
-Output: the fields of a `dicta.listHistory` entry, with `text` and
+Output: the fields of the request's `history` entry, with `text` and
 `outcome.text` not cut, and the request's `exchange` with its reports
 (`contract-protocol.md`).
 

@@ -24,9 +24,10 @@ Message formats are in `contract-protocol.md`.
 
 - Plain HTTP: one `POST` per round, JSON in and out. A round needs no streaming.
 - Stateless. Each round carries everything the server needs: the request text,
-  the page state, the site context and the exchange so far of this user request,
-  with its plans and reports, questions and answers and added text. The server
-  keeps nothing between rounds, so any instance can serve any round.
+  the page state, the site context, the earlier requests of the tab and the
+  exchange so far of this user request, with its plans and reports, questions
+  and answers and added text. The server keeps nothing between rounds, so any
+  instance can serve any round.
 - `dicta-action-js` keeps the running request in the page's memory. If a page
   load starts during a step of a capability with `pageLoad`, the client runs
   nothing more, saves the request in the tab's session storage when the page is
@@ -34,9 +35,10 @@ Message formats are in `contract-protocol.md`.
   a capability without `pageLoad` or while a question or a confirmation is open,
   ends the request (`contract-protocol.md`, Page changes).
 - When a request ends, the client adds it to the history, a list of finished
-  requests that it keeps in the tab's session storage. The planner reads it with
-  `dicta.listHistory` and `dicta.getHistory` (`contract-capability.md`, Built-in
-  capabilities).
+  requests that it keeps in the tab's session storage. Every round carries a
+  short entry for each (`contract-protocol.md`, Request body); the planner reads
+  one in full with `dicta.getHistory` (`contract-capability.md`,
+  `dicta.getHistory`).
 - A limit on plans per user request (`MAX_PLANS`) stops runaway loops and their
   cost. It is not a target: one plan can hold many steps. The server counts the
   earlier plans in the exchange. When the planner replies with a new plan and

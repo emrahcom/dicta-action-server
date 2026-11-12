@@ -18,7 +18,7 @@ detail.
 - **Capability module**: the site's one module that holds all its capabilities,
   its state function and the rest of the site context, bundled into the site.
 - **Built-in capability**: a capability `dicta-action-js` brings, in the `dicta`
-  group, for example `dicta.listHistory`. The module adds it like any other.
+  group, for example `dicta.getHistory`. The module adds it like any other.
 - **Level**: how risky a capability is (`level`): `read`, `write`, `destructive`
   or `external`.
 - **Site context**: what the planner knows about the site (`context`): its
@@ -60,8 +60,8 @@ detail.
   the request goes on in the new page.
 - **Saved request**: a request the client keeps in the tab while a page loads,
   so it goes on in the new page.
-- **History**: finished user requests of the browser tab, kept by the client and
-  read with `dicta.listHistory` and `dicta.getHistory`.
+- **History**: finished user requests of the browser tab, kept by the client,
+  sent as short entries in every round and read in full with `dicta.getHistory`.
 - **Plan limit**: the most plans one user request may have (`MAX_PLANS`).
 
 ## A plan
