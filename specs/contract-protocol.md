@@ -82,7 +82,7 @@ So the safe order for a site is: update the server first, then the module and
 - `history`: the earlier requests of this browser tab, oldest first (History),
   so the planner can follow a request that refers to an earlier one, such as
   "undo that" or "the same as at the start". The same in every round of a
-  request. Empty when there is none; left out, it counts as empty.
+  request. Empty when there is none.
 - `exchange`: what happened so far, oldest first. Empty in the first round. The
   client only adds to it, and sends all of it in every round. Each item is one
   of:
