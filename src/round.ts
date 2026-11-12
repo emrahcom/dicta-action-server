@@ -28,12 +28,22 @@ export type ExchangeItem =
   | { question: string; answer: string }
   | { added: string };
 
+// A short entry of an earlier request of the tab, its short fields first
+// (contract-protocol.md, History).
+export type HistoryEntry = {
+  requestId: string;
+  time: string;
+  outcome: { type: string; text?: string };
+  text: string;
+};
+
 export type Round = {
   requestId?: string;
   text: string;
   time: string;
   state: Record<string, unknown>;
   context: SiteContext;
+  history: HistoryEntry[];
   exchange: ExchangeItem[];
 };
 
@@ -59,6 +69,9 @@ const MAX_OUTPUTS_BYTES = 16 * 1024;
 const MAX_REPLY_CHARS = 2000;
 const MAX_OPTIONS = 5;
 const MAX_OPTION_CHARS = 50;
+const MAX_HISTORY = 20;
+const MAX_HISTORY_CHARS = 200;
+const OUTCOMES = ["done", "stop", "info", "cancelled", "error"];
 
 // Characters are Unicode code points; bytes are the UTF-8 bytes of the JSON.
 function chars(value: string) {
@@ -165,6 +178,63 @@ function checkItem(value: unknown, path: string): ExchangeItem {
   );
 }
 
+function checkHistoryText(value: unknown, path: string) {
+  if (typeof value !== "string") {
+    throw new BadRound(`${path} must be a string`);
+  }
+  if (chars(value) > MAX_HISTORY_CHARS) {
+    throw new BadRound(
+      `${path} is longer than ${MAX_HISTORY_CHARS} characters`,
+    );
+  }
+  return value;
+}
+
+// The history; left out, it is empty (contract-protocol.md, Request body,
+// History).
+function checkHistory(value: unknown): HistoryEntry[] {
+  if (value === undefined) {
+    return [];
+  }
+  if (!Array.isArray(value)) {
+    throw new BadRound("history must be an array");
+  }
+  if (value.length > MAX_HISTORY) {
+    throw new BadRound(`history has more than ${MAX_HISTORY} entries`);
+  }
+  return value.map((entry: unknown, i) => {
+    const path = `history[${i}]`;
+    if (!isObject(entry)) {
+      throw new BadRound(`${path} must be an object`);
+    }
+    if (typeof entry.requestId !== "string") {
+      throw new BadRound(`${path}.requestId must be a string`);
+    }
+    if (typeof entry.time !== "string" || !isLocalTime(entry.time)) {
+      throw new BadRound(`${path}.time must be a local time with its offset`);
+    }
+    const outcome = entry.outcome;
+    if (
+      !isObject(outcome) ||
+      typeof outcome.type !== "string" ||
+      !OUTCOMES.includes(outcome.type)
+    ) {
+      throw new BadRound(`${path}.outcome.type must be one of the outcomes`);
+    }
+    return {
+      requestId: entry.requestId,
+      time: entry.time,
+      outcome: {
+        type: outcome.type,
+        ...(outcome.text === undefined
+          ? {}
+          : { text: checkHistoryText(outcome.text, `${path}.outcome.text`) }),
+      },
+      text: checkHistoryText(entry.text, `${path}.text`),
+    };
+  });
+}
+
 // A time like 2026-10-28T15:20:00+01:00: ISO 8601 with an offset written as
 // numbers, never Z (contract-protocol.md, Request body).
 function isLocalTime(value: string) {
@@ -215,6 +285,7 @@ export function checkRound(body: unknown): Round {
     }
     throw err;
   }
+  const history = checkHistory(body.history);
   if (!Array.isArray(body.exchange)) {
     throw new BadRound("exchange must be an array");
   }
@@ -224,6 +295,7 @@ export function checkRound(body: unknown): Round {
     time: body.time,
     state: body.state,
     context,
+    history,
     exchange: body.exchange.map((item, i) => checkItem(item, `exchange[${i}]`)),
   };
 }

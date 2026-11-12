@@ -21,15 +21,31 @@ const OPTIONS: ClaudeOptions = {
 };
 const PLAN = { steps: [{ call: "tasks.list", args: {} }] };
 
-function round(exchange: unknown[]): Round {
+function round(exchange: unknown[], history?: unknown[]): Round {
   return checkRound({
     text: "show my tasks",
     time: "2026-11-03T17:00:00+01:00",
     state: { page: "list" },
     context: CONTEXT,
+    ...(history ? { history } : {}),
     exchange,
   });
 }
+
+const HISTORY = [
+  {
+    requestId: "r1",
+    time: "2026-11-03T16:50:00+01:00",
+    outcome: { type: "done", text: "Created the task" },
+    text: "add a task Budget",
+  },
+  {
+    requestId: "r2",
+    time: "2026-11-03T16:55:00+01:00",
+    outcome: { type: "cancelled" },
+    text: "delete it",
+  },
+];
 
 // A Messages API answer with a thinking block and the text.
 function answer(text: string, stopReason = "end_turn") {
@@ -115,6 +131,47 @@ test("the user message has the request and the exchange, the second cache point,
   assert.match(blocks[4]!.text, /Plans left: 9$/);
 });
 
+test("the history comes first in the user message, oldest first, as JSON", () => {
+  const exchange = [{ plan: PLAN, report: {} }];
+  const { messages } = request(round(exchange, HISTORY), OPTIONS);
+  const blocks = messages[0]!.content as {
+    text: string;
+    cache_control?: unknown;
+  }[];
+  assert.equal(
+    blocks[0]!.text,
+    `Earlier requests of this browser tab, oldest first:\n${JSON.stringify(HISTORY)}`,
+  );
+  assert.deepEqual(
+    blocks.map((block) => block.text.split("\n")[0]),
+    [
+      "Earlier requests of this browser tab, oldest first:",
+      "The user's request:",
+      "Your plan and its report:",
+      "The user's time: 2026-11-03T17:00:00+01:00",
+    ],
+  );
+  assert.deepEqual(
+    blocks.map((block) => block.cache_control),
+    [undefined, undefined, { type: "ephemeral" }, undefined],
+  );
+});
+
+test("an empty history has no block", () => {
+  const { messages } = request(round([], []), OPTIONS);
+  const blocks = messages[0]!.content as { text: string }[];
+  assert.match(blocks[0]!.text, /^The user's request:/);
+});
+
+test("with a history and no exchange the second cache point is on the request", () => {
+  const { messages } = request(round([], HISTORY), OPTIONS);
+  const blocks = messages[0]!.content as { cache_control?: unknown }[];
+  assert.deepEqual(
+    blocks.map((block) => block.cache_control),
+    [undefined, { type: "ephemeral" }, undefined],
+  );
+});
+
 test("without an exchange the second cache point is on the request", () => {
   const { messages } = request(round([]), OPTIONS);
   const blocks = messages[0]!.content as { cache_control?: unknown }[];
@@ -122,12 +179,14 @@ test("without an exchange the second cache point is on the request", () => {
 });
 
 test("the cached part of the prompt is written the same way in every round", () => {
-  const first = request(round([]), OPTIONS);
-  const later = request(round([{ plan: PLAN, report: {} }]), OPTIONS);
+  const first = request(round([], HISTORY), OPTIONS);
+  const later = request(round([{ plan: PLAN, report: {} }], HISTORY), OPTIONS);
   assert.deepEqual(later.system, first.system);
-  const text = (r: typeof first) =>
-    (r.messages[0]!.content as { text: string }[])[0]!.text;
-  assert.equal(text(later), text(first));
+  const texts = (r: typeof first) =>
+    (r.messages[0]!.content as { text: string }[])
+      .slice(0, 2)
+      .map((block) => block.text);
+  assert.deepEqual(texts(later), texts(first));
 });
 
 test("the call uses the model, the effort, adaptive thinking and 16000 tokens", () => {

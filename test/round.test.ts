@@ -997,6 +997,127 @@ for (const [extra, expected] of [
   });
 }
 
+const ENTRY = {
+  requestId: "r1",
+  time: TIME,
+  outcome: { type: "done", text: "Moved 2 tasks" },
+  text: "move the tasks",
+};
+
+const BAD_HISTORIES: [string, unknown, RegExp][] = [
+  ["a history that is not an array", {}, /^history must be an array$/],
+  [
+    "a history over 20 entries",
+    Array.from({ length: 21 }, () => ENTRY),
+    /^history has more than 20 entries$/,
+  ],
+  ["an entry that is not an object", [5], /^history\[0\] must be an object$/],
+  [
+    "an entry without a requestId",
+    [{ ...ENTRY, requestId: 1 }],
+    /^history\[0\]\.requestId must be a string$/,
+  ],
+  [
+    "an entry with a time in UTC",
+    [{ ...ENTRY, time: "2026-10-28T14:20:00Z" }],
+    /^history\[0\]\.time must be a local time with its offset$/,
+  ],
+  [
+    "an entry without an outcome",
+    [{ ...ENTRY, outcome: undefined }],
+    /^history\[0\]\.outcome\.type must be one of the outcomes$/,
+  ],
+  [
+    "an entry with an unknown outcome",
+    [{ ...ENTRY, outcome: { type: "finished" } }],
+    /^history\[0\]\.outcome\.type must be one of the outcomes$/,
+  ],
+  [
+    "an outcome text that is not a string",
+    [{ ...ENTRY, outcome: { type: "done", text: 5 } }],
+    /^history\[0\]\.outcome\.text must be a string$/,
+  ],
+  [
+    "an outcome text over 200 characters",
+    [{ ...ENTRY, outcome: { type: "stop", text: "x".repeat(201) } }],
+    /^history\[0\]\.outcome\.text is longer than 200 characters$/,
+  ],
+  [
+    "an entry without a text",
+    [{ ...ENTRY, text: undefined }],
+    /^history\[0\]\.text must be a string$/,
+  ],
+  [
+    "an entry text over 200 characters",
+    [ENTRY, { ...ENTRY, text: "x".repeat(201) }],
+    /^history\[1\]\.text is longer than 200 characters$/,
+  ],
+];
+
+for (const [name, history, message] of BAD_HISTORIES) {
+  test(`400 for ${name}, naming the part`, async (t) => {
+    const base = await start(t);
+
+    const { status, body: error } = await post(base, {
+      ...body([PLAN]),
+      history,
+    });
+
+    assert.equal(status, 400);
+    assert.match(error.error, message);
+  });
+}
+
+test("takes a history at its limits", async (t) => {
+  const base = await start(t);
+  const entry = {
+    ...ENTRY,
+    outcome: { type: "cancelled", text: "\u{1F600}".repeat(200) },
+    text: "\u{1F600}".repeat(200),
+  };
+
+  const { status } = await post(base, {
+    ...body([PLAN]),
+    history: Array.from({ length: 20 }, () => entry),
+  });
+
+  assert.equal(status, 200);
+});
+
+test("checkRound: the history is empty when left out", () => {
+  assert.deepEqual(checkRound(body([PLAN])).history, []);
+});
+
+test("checkRound: takes each outcome, with or without its text", () => {
+  const history = ["done", "stop", "info", "cancelled", "error"].map(
+    (type, i) => ({
+      ...ENTRY,
+      requestId: `r${i}`,
+      outcome: i % 2 ? { type } : { type, text: "x" },
+    }),
+  );
+  assert.deepEqual(checkRound({ ...body([PLAN]), history }).history, history);
+});
+
+test("checkRound: keeps only the fields of an entry, short ones first", () => {
+  const round = checkRound({
+    ...body([PLAN]),
+    history: [
+      {
+        text: "move the tasks",
+        extra: 1,
+        outcome: { text: "Moved", type: "done", extra: 2 },
+        time: TIME,
+        requestId: "r1",
+      },
+    ],
+  });
+  assert.equal(
+    JSON.stringify(round.history),
+    `[{"requestId":"r1","time":"${TIME}","outcome":{"type":"done","text":"Moved"},"text":"move the tasks"}]`,
+  );
+});
+
 test("413 for a body over 1 MB", async (t) => {
   const base = await start(t);
   const big = {

@@ -25,7 +25,7 @@ export const INSTRUCTIONS = `You plan actions on one website for its signed-in u
 # What you get
 
 - The site context, below: the site's name and description, what its state means, and its capabilities, each with a name, a level, a description, and JSON Schemas for its arguments and output.
-- In the user message: the user's request; the exchange so far, oldest first (your plans with their reports, your questions with the user's answers, and text the user added); the user's current time; the page's state now; and how many plans you may still send.
+- In the user message: the earlier requests of this browser tab, oldest first, each with how it ended (left out when there are none); the user's request; the exchange so far, oldest first (your plans with their reports, your questions with the user's answers, and text the user added); the user's current time; the page's state now; and how many plans you may still send.
 
 # Your reply
 
@@ -78,6 +78,7 @@ After each plan the browser sends a report:
 - Include an output ("includeOutput": true) only when you must read it to decide what comes next, for example a list the user asks about. An output that only feeds later steps of the same plan is not included.
 - A later plan reads the data it needs again with a capability. It cannot refer to an earlier plan's outputs, and the data may have changed since.
 - A value that cannot be read again, such as the id of a task an earlier plan created, comes from the report: the earlier plan includes that output, and the later plan writes the value in directly.
+- A request can refer to an earlier one, such as "undo that" or "the same as at the start". Its history entry gives what was asked and how it ended; when you need what that request did, a plan calls "dicta.getHistory" with the entry's "requestId". A request that ended with a stop, an error or cancel may have done none or only part of what it asked.
 - When the report gives only the size of a "dicta.getHistory" output, because it was too large, tell the user you cannot read that request; do not guess what it did.`;
 
 // The reply schema, the same for every site; args is a string that holds the
@@ -136,11 +137,19 @@ function exchangeText(item: ExchangeItem) {
 }
 
 // The call for one round: the system prompt with the first cache point after
-// the site context, then one user message with the second cache point after
-// the exchange (architecture-planner-claude.md, Prompt).
+// the site context, then one user message, the history first, with the second
+// cache point after the exchange (architecture-planner-claude.md, Prompt).
 export function request(round: Round, options: ClaudeOptions) {
   const ephemeral = { type: "ephemeral" } as const;
   const stable: Anthropic.TextBlockParam[] = [
+    ...(round.history.length === 0
+      ? []
+      : [
+          {
+            type: "text" as const,
+            text: `Earlier requests of this browser tab, oldest first:\n${JSON.stringify(round.history)}`,
+          },
+        ]),
     { type: "text", text: `The user's request:\n${round.text}` },
     ...round.exchange.map((item) => ({
       type: "text" as const,
