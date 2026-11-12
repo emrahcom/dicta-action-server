@@ -83,6 +83,8 @@ context.
 - Every text for the user names things as the user knows them, by their titles
   and names, never by ids or other internal values from the site context,
   outputs or state.
+- A plan changes only what the request names. When its scope is unclear, the LLM
+  asks.
 - An info only answers a question about the site itself. A question about the
   user's data gets a plan that reads it, then done.
 - A plan is final only when nothing is left to tell the user. A plan that reads
