@@ -92,6 +92,7 @@ test("starts, logs one line and replies to rounds", async (t) => {
         time: "2026-10-28T15:20:00+01:00",
         state: {},
         context: CONTEXT,
+        history: [],
         exchange: [],
       }),
     },

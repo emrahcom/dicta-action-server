@@ -27,7 +27,7 @@ function round(exchange: unknown[], history?: unknown[]): Round {
     time: "2026-11-03T17:00:00+01:00",
     state: { page: "list" },
     context: CONTEXT,
-    ...(history ? { history } : {}),
+    history: history ?? [],
     exchange,
   });
 }

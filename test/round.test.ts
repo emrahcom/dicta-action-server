@@ -59,6 +59,7 @@ function body(
     time: TIME,
     state: { page: "tasks" },
     context: CONTEXT,
+    history: [],
     exchange,
   };
 }
@@ -138,6 +139,7 @@ test("stub: a stop when the text is not a list of replies", async (t) => {
     time: TIME,
     state: {},
     context: CONTEXT,
+    history: [],
     exchange: [],
   });
 
@@ -844,7 +846,7 @@ for (const [name, payload] of BAD_BODIES) {
       base,
       typeof payload === "string" || Array.isArray(payload)
         ? payload
-        : { context: CONTEXT, ...(payload as object) },
+        : { context: CONTEXT, history: [], ...(payload as object) },
     );
 
     assert.equal(status, 400);
@@ -1005,6 +1007,7 @@ const ENTRY = {
 };
 
 const BAD_HISTORIES: [string, unknown, RegExp][] = [
+  ["no history", undefined, /^history must be an array$/],
   ["a history that is not an array", {}, /^history must be an array$/],
   [
     "a history over 20 entries",
@@ -1082,10 +1085,6 @@ test("takes a history at its limits", async (t) => {
   });
 
   assert.equal(status, 200);
-});
-
-test("checkRound: the history is empty when left out", () => {
-  assert.deepEqual(checkRound(body([PLAN])).history, []);
 });
 
 test("checkRound: takes each outcome, with or without its text", () => {

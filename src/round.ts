@@ -190,12 +190,8 @@ function checkHistoryText(value: unknown, path: string) {
   return value;
 }
 
-// The history; left out, it is empty (contract-protocol.md, Request body,
-// History).
+// The history (contract-protocol.md, Request body, History).
 function checkHistory(value: unknown): HistoryEntry[] {
-  if (value === undefined) {
-    return [];
-  }
   if (!Array.isArray(value)) {
     throw new BadRound("history must be an array");
   }
