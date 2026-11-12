@@ -87,6 +87,7 @@ context.
   asks.
 - A plan uses the capability made for the action, not other capabilities that
   imitate it.
+- The LLM never asks the user to do what a capability can do.
 - An info only answers a question about the site itself. A question about the
   user's data gets a plan that reads it, then done.
 - A plan is final only when nothing is left to tell the user. A plan that reads
