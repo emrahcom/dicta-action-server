@@ -101,6 +101,16 @@ test("the system prompt is the instructions, then the site context with the firs
   ]);
 });
 
+test("the instructions hold the scope rules", () => {
+  for (const rule of [
+    "- Change only what the request names. When its scope is unclear, ask.",
+    "- Use the capability made for the action, not other capabilities that imitate it.",
+    "- Never ask the user to do what a capability can do.",
+  ]) {
+    assert.ok(INSTRUCTIONS.includes(rule), rule);
+  }
+});
+
 test("the user message has the request and the exchange, the second cache point, then time, state and plans left", () => {
   const exchange = [
     { plan: PLAN, report: {} },
