@@ -27,7 +27,9 @@ Message formats are in `contract-protocol.md`.
   the page state, the site context, the earlier requests of the tab and the
   exchange so far of this user request, with its plans and reports, questions
   and answers and added text. The server keeps nothing between rounds, so any
-  instance can serve any round.
+  instance can serve any round. It stores no users' data either: its logs hold
+  counts and reasons, never a round's content, unless `LOG_ROUNDS` is on
+  (Configuration). The planner sends each round to its LLM provider.
 - `dicta-action-js` keeps the running request in the page's memory. If a page
   load starts during a step of a capability with `pageLoad`, the client runs
   nothing more, saves the request in the tab's session storage when the page is
