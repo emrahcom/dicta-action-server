@@ -136,8 +136,8 @@ Environment variables:
   `xhigh` or `max`. Default `medium`.
 - `MAX_PLANS`: the most plans per user request (Requests), a whole number from
   `1` to `20`. Default `10`.
-- `LOG_ROUNDS`: when `true`, the server logs each round it answers to the
-  console, as one JSON line, so a developer can look at a request later:
+- `LOG_ROUNDS`: when `true`, the server logs each round it answers with a reply
+  to the console, as one JSON line, so a developer can look at a request later:
   `{"user": ..., "tabId": ..., "round": ..., "response": ...}`. `user` and
   `tabId` say who sent the round, so the lines of one user or one tab can be
   found. `user` is the token's `sub`, or `null` when the token has no `sub` or
