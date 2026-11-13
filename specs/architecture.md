@@ -137,10 +137,12 @@ Environment variables:
 - `MAX_PLANS`: the most plans per user request (Requests), a whole number from
   `1` to `20`. Default `10`.
 - `LOG_ROUNDS`: when `true`, the server logs each round it answers to the
-  console, as one JSON line with the request body and the response body, so a
-  developer can look at a request later. For development only: the lines hold
-  users' requests and data. Default `false`. The server logs a warning at
-  startup when it is on.
+  console, as one JSON line, so a developer can look at a request later:
+  `{"user": ..., "round": ..., "response": ...}`. `user` is the token's `sub`,
+  so the lines of one user can be found; it is `null` when the token has no
+  `sub` or tokens are not checked. `round` is the request body and `response`
+  the response body. For development only: the lines hold users' requests and
+  data. Default `false`. The server logs a warning at startup when it is on.
 
 A planner's own variables start with `PLANNER_` and its name.
 
