@@ -37,8 +37,8 @@ export type HistoryEntry = {
   text: string;
 };
 
-// tabId only goes to the round log, never to the planner (contract-protocol.md,
-// Request body).
+// tabId only goes to the round log; the planner never sends it to its LLM
+// (contract-protocol.md, Request body).
 export type Round = {
   tabId: string;
   requestId?: string;

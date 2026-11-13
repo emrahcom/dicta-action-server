@@ -75,8 +75,8 @@ So the safe order for a site is: update the server first, then the module and
   tab's session storage, next to the history. The same in every round of every
   request of the tab. When the storage cannot be used, the client makes a new id
   for each page. The server uses it only in its round log (`architecture.md`,
-  Configuration), so a developer can tell the tabs apart; the planner does not
-  get it.
+  Configuration), so a developer can tell the tabs apart; the planner never
+  sends it to its LLM.
 - `requestId`: left out in the first round. In later rounds, the id the server
   gave in its first reply.
 - `text`: the user's request, the same in every round (Limits).
