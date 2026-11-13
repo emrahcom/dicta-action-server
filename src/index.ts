@@ -62,10 +62,19 @@ if (process.env.PLANNER === "claude") {
   plannerLog = `planner claude, model ${model}, effort ${effort}`;
 }
 
+const logRounds = process.env.LOG_ROUNDS === "true";
+if (logRounds) {
+  console.warn(
+    "WARNING: LOG_ROUNDS is on, each round's content is logged, " +
+      "for development only",
+  );
+}
+
 const server = createServer({
   auth,
   planner,
   maxPlans,
+  logRounds,
 });
 
 server.listen(port, () => {

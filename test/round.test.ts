@@ -27,12 +27,18 @@ const PLAN = {
 
 async function start(
   t: TestContext,
-  options: { auth?: AuthOptions; planner?: Planner; maxPlans?: number } = {},
+  options: {
+    auth?: AuthOptions;
+    planner?: Planner;
+    maxPlans?: number;
+    logRounds?: boolean;
+  } = {},
 ) {
   const server = createServer({
     auth: options.auth ?? { jwtSecret: SECRET },
     planner: options.planner ?? stubPlanner,
     maxPlans: options.maxPlans ?? 10,
+    logRounds: options.logRounds,
   });
   server.listen(0);
   t.after(() => server.close());
@@ -1115,6 +1121,34 @@ test("checkRound: keeps only the fields of an entry, short ones first", () => {
     JSON.stringify(round.history),
     `[{"requestId":"r1","time":"${TIME}","outcome":{"type":"done","text":"Moved"},"text":"move the tasks"}]`,
   );
+});
+
+for (const logRounds of [true, false]) {
+  test(`${logRounds ? "logs" : "does not log"} each answered round with LOG_ROUNDS ${logRounds ? "on" : "off"}`, async (t) => {
+    const log = t.mock.method(console, "log", () => {});
+    const base = await start(t, { logRounds });
+    const payload = body([{ type: "done", text: "Done." }]);
+
+    const { body: response } = await post(base, payload);
+
+    const lines = log.mock.calls.map((call) => String(call.arguments[0]));
+    if (logRounds) {
+      assert.equal(lines.length, 1);
+      assert.deepEqual(JSON.parse(lines[0]!), { round: payload, response });
+    } else {
+      assert.deepEqual(lines, []);
+    }
+  });
+}
+
+test("does not log a round answered with an error", async (t) => {
+  const log = t.mock.method(console, "log", () => {});
+  const base = await start(t, { logRounds: true });
+
+  const { status } = await post(base, { text: "a" });
+
+  assert.equal(status, 400);
+  assert.equal(log.mock.callCount(), 0);
 });
 
 test("413 for a body over 1 MB", async (t) => {

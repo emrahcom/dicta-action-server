@@ -33,6 +33,9 @@ Environment variables:
 - `ALLOW_UNAUTHENTICATED`: `true` turns the token check off. Only for
   development.
 - `MAX_PLANS`: the most plans for one user request, `1` to `20`. Default `10`.
+- `LOG_ROUNDS`: `true` writes each round to the log, with the user's request and
+  the reply, so you can look at it later. Only for development: the log then
+  holds your users' requests and data. Default off.
 - `PORT`: default `8741`.
 
 The server does not start when a value is missing or not valid. It logs why.

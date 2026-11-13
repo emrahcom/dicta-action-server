@@ -20,6 +20,7 @@ function startIndex(env: Record<string, string>) {
     ALLOW_UNAUTHENTICATED,
     PLANNER,
     MAX_PLANS,
+    LOG_ROUNDS,
     ANTHROPIC_API_KEY,
     PLANNER_CLAUDE_MODEL,
     PLANNER_CLAUDE_EFFORT,
@@ -111,6 +112,14 @@ test("warns when unauthenticated is allowed", async (t) => {
   // Stopped first, so stderr is complete: the pipes are not ordered.
   await server.stop();
   assert.match(server.stderr(), /ALLOW_UNAUTHENTICATED is on/);
+});
+
+test("warns when LOG_ROUNDS is on", async (t) => {
+  const server = await startListening({ ...VALID_ENV, LOG_ROUNDS: "true" });
+  t.after(server.stop);
+
+  await server.stop();
+  assert.match(server.stderr(), /LOG_ROUNDS is on/);
 });
 
 test("starts with MAX_PLANS=20", async (t) => {

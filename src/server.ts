@@ -18,10 +18,13 @@ const MAX_BODY_BYTES = 1024 * 1024;
 export type AuthOptions =
   { allowUnauthenticated: true } | { jwtSecret: string; jwtAudience?: string };
 
+// logRounds: log each answered round to the console, for development only
+// (architecture.md, Configuration).
 export type ServerOptions = {
   auth: AuthOptions;
   planner: Planner;
   maxPlans: number;
+  logRounds?: boolean;
 };
 
 class HttpError extends Error {
@@ -86,9 +89,10 @@ async function handleRound(
   options: ServerOptions,
 ) {
   await checkToken(request, options.auth);
+  const body = await readBody(request);
   let round;
   try {
-    round = checkRound(await readBody(request));
+    round = checkRound(body);
   } catch (err) {
     if (err instanceof BadRound) {
       throw new HttpError(400, err.message);
@@ -96,7 +100,11 @@ async function handleRound(
     throw err;
   }
   const reply = await pickReply(round, options.planner, options.maxPlans);
-  send(response, 200, { requestId: round.requestId ?? randomUUID(), reply });
+  const answer = { requestId: round.requestId ?? randomUUID(), reply };
+  if (options.logRounds) {
+    console.log(JSON.stringify({ round: body, response: answer }));
+  }
+  send(response, 200, answer);
 }
 
 async function handle(
