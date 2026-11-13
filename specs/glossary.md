@@ -33,7 +33,7 @@ detail.
 - **User request**: one thing the user asks for, in plain text (`text`), for
   example "move the selected tasks to Friday". It can take several rounds.
 - **Tab id**: the client's random id for one browser tab, the same in all rounds
-  of the tab (`tabId`). The server only logs it.
+  of the tab (`tabId`). The server uses it only in its round log.
 - **Request id**: the server's id for one user request, the same in all its
   rounds (`requestId`).
 - **Round**: one HTTP request from the client to the server and its response. A
