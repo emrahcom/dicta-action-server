@@ -138,11 +138,14 @@ Environment variables:
   `1` to `20`. Default `10`.
 - `LOG_ROUNDS`: when `true`, the server logs each round it answers to the
   console, as one JSON line, so a developer can look at a request later:
-  `{"user": ..., "round": ..., "response": ...}`. `user` is the token's `sub`,
-  so the lines of one user can be found; it is `null` when the token has no
-  `sub` or tokens are not checked. `round` is the request body and `response`
-  the response body. For development only: the lines hold users' requests and
-  data. Default `false`. The server logs a warning at startup when it is on.
+  `{"user": ..., "tabId": ..., "round": ..., "response": ...}`. `user` and
+  `tabId` say who sent the round, so the lines of one user or one tab can be
+  found. `user` is the token's `sub`, or `null` when the token has no `sub` or
+  tokens are not checked. `tabId` is the round's `tabId`
+  (`contract-protocol.md`, Request body). `round` is the request body as sent
+  and `response` the response body. For development only: the lines hold users'
+  requests and data. Default `false`. The server logs a warning at startup when
+  it is on.
 
 A planner's own variables start with `PLANNER_` and its name.
 

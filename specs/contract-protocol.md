@@ -42,6 +42,7 @@ So the safe order for a site is: update the server first, then the module and
 
 ```json
 {
+  "tabId": "...",
   "requestId": "...",
   "text": "move the selected tasks to Friday",
   "time": "2026-10-28T15:20:00+01:00",
@@ -69,6 +70,11 @@ So the safe order for a site is: update the server first, then the module and
 }
 ```
 
+- `tabId`: the id of the browser tab: a random id the client makes once per tab,
+  such as with `crypto.randomUUID()`, and keeps in the tab's session storage,
+  next to the history. The same in every round of every request of the tab. The
+  server uses it only in its round log (`architecture.md`, Configuration), so a
+  developer can tell the tabs apart; the planner does not get it.
 - `requestId`: left out in the first round. In later rounds, the id the server
   gave in its first reply.
 - `text`: the user's request, the same in every round (Limits).
