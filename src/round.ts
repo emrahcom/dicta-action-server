@@ -37,7 +37,10 @@ export type HistoryEntry = {
   text: string;
 };
 
+// tabId only goes to the round log, never to the planner (contract-protocol.md,
+// Request body).
 export type Round = {
+  tabId: string;
   requestId?: string;
   text: string;
   time: string;
@@ -256,6 +259,9 @@ export function checkRound(body: unknown): Round {
   if (!isObject(body)) {
     throw new BadRound("the body must be an object");
   }
+  if (typeof body.tabId !== "string") {
+    throw new BadRound("tabId must be a string");
+  }
   if (body.requestId !== undefined && typeof body.requestId !== "string") {
     throw new BadRound("requestId must be a string");
   }
@@ -286,6 +292,7 @@ export function checkRound(body: unknown): Round {
     throw new BadRound("exchange must be an array");
   }
   return {
+    tabId: body.tabId,
     ...(body.requestId === undefined ? {} : { requestId: body.requestId }),
     text,
     time: body.time,

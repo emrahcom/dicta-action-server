@@ -89,6 +89,7 @@ test("starts, logs one line and replies to rounds", async (t) => {
     {
       method: "POST",
       body: JSON.stringify({
+        tabId: "tab-1",
         text: "[]",
         time: "2026-10-28T15:20:00+01:00",
         state: {},

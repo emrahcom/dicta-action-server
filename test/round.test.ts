@@ -64,6 +64,7 @@ function body(
   requestId?: string,
 ) {
   return {
+    tabId: "tab-1",
     ...(requestId ? { requestId } : {}),
     text: JSON.stringify(replies),
     time: TIME,
@@ -145,6 +146,7 @@ test("stub: a stop when the text is not a list of replies", async (t) => {
   const base = await start(t);
 
   const { body: response } = await post(base, {
+    tabId: "tab-1",
     text: "add a task",
     time: TIME,
     state: {},
@@ -856,7 +858,12 @@ for (const [name, payload] of BAD_BODIES) {
       base,
       typeof payload === "string" || Array.isArray(payload)
         ? payload
-        : { context: CONTEXT, history: [], ...(payload as object) },
+        : {
+            tabId: "tab-1",
+            context: CONTEXT,
+            history: [],
+            ...(payload as object),
+          },
     );
 
     assert.equal(status, 400);
@@ -1009,6 +1016,23 @@ for (const [extra, expected] of [
   });
 }
 
+for (const [name, tabId] of [
+  ["no tabId", undefined],
+  ["a tabId that is not a string", 5],
+] as const) {
+  test(`400 for ${name}, naming the field`, async (t) => {
+    const base = await start(t);
+
+    const { status, body: error } = await post(base, {
+      ...body([PLAN]),
+      tabId,
+    });
+
+    assert.equal(status, 400);
+    assert.equal(error.error, "tabId must be a string");
+  });
+}
+
 const ENTRY = {
   requestId: "r1",
   time: TIME,
@@ -1140,6 +1164,7 @@ for (const logRounds of [true, false]) {
       assert.equal(lines.length, 1);
       assert.deepEqual(JSON.parse(lines[0]!), {
         user: "user-1",
+        tabId: "tab-1",
         round: payload,
         response,
       });

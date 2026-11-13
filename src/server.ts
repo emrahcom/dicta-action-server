@@ -108,7 +108,14 @@ async function handleRound(
   const reply = await pickReply(round, options.planner, options.maxPlans);
   const answer = { requestId: round.requestId ?? randomUUID(), reply };
   if (options.logRounds) {
-    console.log(JSON.stringify({ user, round: body, response: answer }));
+    console.log(
+      JSON.stringify({
+        user,
+        tabId: round.tabId,
+        round: body,
+        response: answer,
+      }),
+    );
   }
   send(response, 200, answer);
 }

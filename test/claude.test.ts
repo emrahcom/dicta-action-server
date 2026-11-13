@@ -23,6 +23,7 @@ const PLAN = { steps: [{ call: "tasks.list", args: {} }] };
 
 function round(exchange: unknown[], history?: unknown[]): Round {
   return checkRound({
+    tabId: "tab-1",
     text: "show my tasks",
     time: "2026-11-03T17:00:00+01:00",
     state: { page: "list" },
@@ -165,6 +166,11 @@ test("the history comes first in the user message, oldest first, as JSON", () =>
     blocks.map((block) => block.cache_control),
     [undefined, undefined, { type: "ephemeral" }, undefined],
   );
+});
+
+test("the prompt does not hold the tab id", () => {
+  const params = request(round([{ plan: PLAN, report: {} }], HISTORY), OPTIONS);
+  assert.doesNotMatch(JSON.stringify(params), /tab-1/);
 });
 
 test("an empty history has no block", () => {
