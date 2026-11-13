@@ -45,9 +45,10 @@ function send(response: ServerResponse, status: number, body?: unknown) {
   response.end(JSON.stringify(body));
 }
 
+// Returns the token's sub, or null when it has none or tokens are not checked.
 async function checkToken(request: IncomingMessage, auth: AuthOptions) {
   if ("allowUnauthenticated" in auth) {
-    return;
+    return null;
   }
   const match = /^Bearer (.+)$/.exec(request.headers.authorization ?? "");
   if (!match?.[1]) {
@@ -56,11 +57,16 @@ async function checkToken(request: IncomingMessage, auth: AuthOptions) {
   try {
     // jose checks aud only when audience is given; a list that holds it
     // passes.
-    await jwtVerify(match[1], new TextEncoder().encode(auth.jwtSecret), {
-      algorithms: ["HS256"],
-      requiredClaims: ["exp"],
-      audience: auth.jwtAudience,
-    });
+    const { payload } = await jwtVerify(
+      match[1],
+      new TextEncoder().encode(auth.jwtSecret),
+      {
+        algorithms: ["HS256"],
+        requiredClaims: ["exp"],
+        audience: auth.jwtAudience,
+      },
+    );
+    return payload.sub ?? null;
   } catch {
     throw new HttpError(401, "token not valid");
   }
@@ -88,7 +94,7 @@ async function handleRound(
   response: ServerResponse,
   options: ServerOptions,
 ) {
-  await checkToken(request, options.auth);
+  const user = await checkToken(request, options.auth);
   const body = await readBody(request);
   let round;
   try {
@@ -102,7 +108,7 @@ async function handleRound(
   const reply = await pickReply(round, options.planner, options.maxPlans);
   const answer = { requestId: round.requestId ?? randomUUID(), reply };
   if (options.logRounds) {
-    console.log(JSON.stringify({ round: body, response: answer }));
+    console.log(JSON.stringify({ user, round: body, response: answer }));
   }
   send(response, 200, answer);
 }

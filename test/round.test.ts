@@ -46,8 +46,12 @@ async function start(
   return `http://localhost:${(server.address() as AddressInfo).port}`;
 }
 
-function token(expires: string | number = "5m", secret = SECRET) {
-  return new SignJWT({ sub: "user-1" })
+function token(
+  expires: string | number = "5m",
+  secret = SECRET,
+  claims: Record<string, unknown> = { sub: "user-1" },
+) {
+  return new SignJWT(claims)
     .setProtectedHeader({ alg: "HS256" })
     .setExpirationTime(expires)
     .sign(new TextEncoder().encode(secret));
@@ -1134,12 +1138,41 @@ for (const logRounds of [true, false]) {
     const lines = log.mock.calls.map((call) => String(call.arguments[0]));
     if (logRounds) {
       assert.equal(lines.length, 1);
-      assert.deepEqual(JSON.parse(lines[0]!), { round: payload, response });
+      assert.deepEqual(JSON.parse(lines[0]!), {
+        user: "user-1",
+        round: payload,
+        response,
+      });
     } else {
       assert.deepEqual(lines, []);
     }
   });
 }
+
+test("logs user null for a token without sub", async (t) => {
+  const log = t.mock.method(console, "log", () => {});
+  const base = await start(t, { logRounds: true });
+
+  await post(base, body([{ type: "done" }]), {
+    authorization: `Bearer ${await token("5m", SECRET, {})}`,
+  });
+
+  const line = JSON.parse(String(log.mock.calls[0]!.arguments[0]));
+  assert.equal(line.user, null);
+});
+
+test("logs user null when tokens are not checked", async (t) => {
+  const log = t.mock.method(console, "log", () => {});
+  const base = await start(t, {
+    auth: { allowUnauthenticated: true },
+    logRounds: true,
+  });
+
+  await post(base, body([{ type: "done" }]));
+
+  const line = JSON.parse(String(log.mock.calls[0]!.arguments[0]));
+  assert.equal(line.user, null);
+});
 
 test("does not log a round answered with an error", async (t) => {
   const log = t.mock.method(console, "log", () => {});
