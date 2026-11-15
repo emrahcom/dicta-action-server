@@ -54,13 +54,12 @@ The rules from `1.0.0` on are written when that release is planned.
 }
 ```
 
-- `tabId`: the id of the browser tab: a random id the client makes once per tab,
-  such as 16 bytes from `crypto.getRandomValues()` in hex, and keeps in the
-  tab's session storage, next to the history. The same in every round of every
-  request of the tab. When the storage cannot be used, the client makes a new id
-  for each page. The server uses it only in its round log (`architecture.md`,
-  Configuration), so a developer can tell the tabs apart; the planner never
-  sends it to its LLM.
+- `tabId`: the id of the browser tab: a random id the client makes once per tab
+  and keeps in the tab's session storage, next to the history. The same in every
+  round of every request of the tab. When the storage cannot be used, the client
+  makes a new id for each page. The server uses it only in its round log
+  (`architecture.md`, Configuration), so a developer can tell the tabs apart;
+  the planner never sends it to its LLM.
 - `requestId`: left out in the first round. In later rounds, the id the server
   gave in its first reply.
 - `text`: the user's request, the same in every round (Limits).
@@ -361,8 +360,6 @@ body; like any other error, it ends the request (Errors).
 - The included outputs of a report: at most 16 KB together (Report).
 - Plans in a request: at most `MAX_PLANS`, which is at most 20.
 - The `text` of a reply: at most 2000 characters. A question's `options`: at
-  most 5, each at most 50 characters. The planner asks for at most 200
-  characters for every text but an `info` (`architecture-planner.md`, Rules for
-  the LLM); the larger limit keeps a longer text whole.
+  most 5, each at most 50 characters.
 
 Questions and added texts have no count limit: a person writes each of them.
