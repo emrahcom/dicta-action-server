@@ -19,8 +19,10 @@ While the major number is 0:
 dicta-action-server and
 [dicta-action-js](https://github.com/emrahcom/dicta-action-js) have their own
 version numbers. They work together through the protocol version, the `v1` in
-`/dicta-action/v1/round`. A change that breaks the protocol needs a new protocol
-version, not only a new version number.
+`/dicta-action/v1/round`. Before `1.0.0`, a change may break the protocol
+without a new protocol version. The release notes then say what sites must
+change. The rules are in
+[contract-protocol.md, Versions](../specs/contract-protocol.md#versions).
 
 ## Steps
 
