@@ -59,8 +59,6 @@ detail.
 - **Page change**: a page load in the middle of a request
   (`contract-protocol.md`, Page changes). It ends the request, unless it started
   during a step of a capability with `pageLoad`.
-- **Page load capability**: a capability with `pageLoad`, which may load a page;
-  the request goes on in the new page.
 - **Saved request**: a request the client keeps in the tab while a page loads,
   so it goes on in the new page.
 - **History**: finished user requests of the browser tab, kept by the client,
