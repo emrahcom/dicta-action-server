@@ -85,15 +85,20 @@ As in dicta-server:
   confirmations come from the module.
 - The built-in capabilities of `dicta-action-js` are in it like any other
   capability (`contract-capability.md`, Built-in capabilities).
-- The check is `checkContext` in `src/context.ts`. `dicta-action-harness`
-  imports it by this path, as a git dependency, to check a module the same way.
-  So the file keeps its name and its export.
-- The harness's guides also point to the contracts in `specs/` of the same git
-  dependency, the version the harness pins. So the package keeps `specs/`: no
-  `files` field in `package.json` leaves them out.
-- The harness also runs this server from the same git dependency, with
-  `src/index.ts`, to try a module on a running site. So that file keeps its name
-  too.
+- The check is `checkContext` in `src/context.ts`. `dicta-action-harness` uses
+  it too (Use by the harness).
+
+## Use by the harness
+
+`dicta-action-harness` has this repo as a git dependency, at the version it
+pins. So these keep their names:
+
+- `src/context.ts` and its export `checkContext`: the harness check imports
+  them, to check a module the same way.
+- `specs/`: the harness's guides point to the contracts there. No `files` field
+  in `package.json` leaves them out.
+- `src/index.ts`: the harness runs the server with it, to try a module on a
+  running site.
 
 ## Planner
 
