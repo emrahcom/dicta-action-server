@@ -74,10 +74,19 @@ module may set it, and without it, it is 10.
 - `level`: `read`, `write`, `destructive` or `external`.
   - `read` changes nothing.
   - `write` changes the user's data or the page.
-  - `destructive` deletes or overwrites what cannot easily be restored.
+  - `destructive` deletes or overwrites what cannot easily be restored, or
+    changes how the user signs in, such as the email, the password or an access
+    key.
   - `external` sends data out of the site or reaches other people: sharing,
-    inviting, sending messages, publishing, paying. A change to data that others
-    see in the site, such as a task on a team's board, is `write`.
+    inviting, sending messages, publishing, paying, or changing who can see or
+    do what, such as a role or a right. A change to data that others see in the
+    site, such as a task on a team's board, is `write`.
+
+  The level follows the harm a call can do when the user did not ask for it:
+  site data that other people wrote can steer the planner, and the user is asked
+  before every `destructive` and `external` call (`contract-plan.md`,
+  Confirmation). When unsure, the higher level.
+
 - `desc`: one or two sentences for the planner: what it does and when to use it.
 - `args`: a JSON Schema for the argument object, left out when the capability
   takes no arguments. Only `type`, `properties`, `required`, `items`, `enum` and
