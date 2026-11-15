@@ -43,7 +43,7 @@ call the site's capability functions. The browser runs the plan with
   to go on, and with a short info when the user asks how the site works. A
   request that is not about the site gets a short stop.
 
-## First version
+## Features
 
 - The browser sends the user's request, the page state and the site context. The
   server replies, usually with a plan.
