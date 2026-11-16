@@ -182,9 +182,9 @@ fails with the code `not_found`.
 
 Output: the fields of the request's `history` entry, with `text` and
 `outcome.text` not cut, and the request's `exchange` with its reports, as the
-client keeps it: with no output over 512 bytes (`contract-protocol.md`, Request
-body). Small values, such as the ids of created items, stay; larger data is read
-again from the site.
+client keeps it: each output over 512 bytes is in its report's `tooLarge`, with
+only its size (`contract-protocol.md`, Request body). Small values, such as the
+ids of created items, stay; larger data is read again from the site.
 
 Like any output, one over 16 KB does not fit into the report: it goes into the
 report's `tooLarge`, and the planner sees only its size (`contract-protocol.md`,

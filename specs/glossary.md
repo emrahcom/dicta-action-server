@@ -105,8 +105,9 @@ detail.
   `contract-protocol.md`, Report).
 - **Halt code**: why a plan halted (`halt.code`): a capability's own code, or
   one of the client's, such as `limit`, `interrupted` or `navigated`.
-- **Too large**: an included output that does not fit in the report; only its
-  size is sent (`tooLarge`, `halt.tooLarge`).
+- **Too large**: an included output that does not fit in the report, or an old
+  one left out later (`contract-protocol.md`, Request body); only its size is
+  sent (`tooLarge`, `halt.tooLarge`).
 - **Planner failure**: the planner gave no usable reply, such as an LLM error or
   an answer that is not a valid reply; the server sends a stop
   (`architecture-planner.md`).

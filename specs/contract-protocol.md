@@ -84,13 +84,14 @@ The rules from `1.0.0` on are written when that release is planned.
   Old outputs: so that a long request stays small, the client keeps the outputs
   of the last two plans as they are. In the reports of every earlier plan, it
   leaves out each included output larger than 512 bytes, counted as the UTF-8
-  bytes of its JSON, in `outputs` and in `halt.outputs`. Such an output is
-  simply gone; it is not listed in `tooLarge`. Everything else stays: the plans,
-  their halts, the smaller outputs, the questions with their answers and the
-  added texts. This applies to the exchange the client sends in each round and
-  to the copy it keeps for a page load (Page changes). When the request ends,
-  the copy it keeps for the history has no output over 512 bytes at all, in the
-  last two plans too (History).
+  bytes of its JSON, in `outputs` and in `halt.outputs`. Like an output that did
+  not fit, it goes into the report's `tooLarge`, or `halt.tooLarge`, with its
+  size (Report). Everything else stays: the plans, their halts, the smaller
+  outputs, the questions with their answers and the added texts. This applies to
+  the exchange the client sends in each round and to the copy it keeps for a
+  page load (Page changes). When the request ends, the copy it keeps for the
+  history has no output over 512 bytes at all, in the last two plans too
+  (History).
 
 Every time in the contracts is the user's local time with its offset, in ISO
 8601, for example `2026-10-28T15:20:00+01:00`. The offset is always written as
@@ -145,8 +146,9 @@ that would go over: a succeeded step goes into `tooLarge`, the halted step into
   (`contract-plan.md`, Include output), by its number, from 1 as in references.
   The output of a `forEach` step is an array with one entry for each item: the
   array of the outputs of its `do` steps. Left out when there is no entry.
-- `tooLarge`: the outputs of succeeded steps that did not fit, by step number,
-  each with its size in bytes. Left out when there is no entry.
+- `tooLarge`: the outputs of succeeded steps that did not fit, or that were left
+  out later as old outputs (Request body), by step number, each with its size in
+  bytes. Left out when there is no entry.
 - `halt`: only when the plan halted before its end:
   - `step`: the number of the top-level step where it halted, from 1 as in
     references. Left out for `invalid`, since no step ran.
