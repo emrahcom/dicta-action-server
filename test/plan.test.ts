@@ -90,6 +90,10 @@ const VALID: [string, unknown][] = [
     { steps: [list], text: "\u{1F600}".repeat(200) },
   ],
   [
+    "a checkpoint with a progress of 200 characters",
+    { steps: [list], checkpoint: true, progress: "\u{1F600}".repeat(200) },
+  ],
+  [
     "a call with all argument types",
     {
       steps: [create({ title: "a", priority: 2, tags: ["x"], color: "red" })],
@@ -208,6 +212,21 @@ const INVALID: [string, unknown, RegExp][] = [
     "a label of 201 characters",
     { steps: [], text: "x".repeat(201) },
     /text is longer than 200 characters/,
+  ],
+  [
+    "checkpoint that is not a boolean",
+    { steps: [], checkpoint: "yes" },
+    /checkpoint must be/,
+  ],
+  [
+    "a progress that is not text",
+    { steps: [], progress: 5 },
+    /progress must be a string/,
+  ],
+  [
+    "a progress of 201 characters",
+    { steps: [], progress: "x".repeat(201) },
+    /progress is longer than 200 characters/,
   ],
   ["51 steps", { steps: Array(51).fill(list) }, /at most 50 steps/],
   [

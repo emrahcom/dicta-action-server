@@ -6,7 +6,8 @@ import { type AuthOptions, createServer } from "./server.ts";
 // RFC 7518: an HS256 key must be at least as long as the hash output.
 const MIN_SECRET_BYTES = 32;
 const PLANNERS = ["stub", "claude"];
-const MAX_PLANS_LIMIT = 20;
+const MAX_PLANS_LIMIT = 100;
+const PLANS_PER_CHECKPOINT_LIMIT = 20;
 
 function fail(message: string): never {
   console.error(message);
@@ -34,9 +35,21 @@ if (!PLANNERS.includes(process.env.PLANNER ?? "")) {
   fail(`PLANNER must be one of: ${PLANNERS.join(", ")}`);
 }
 
-const maxPlans = Number(process.env.MAX_PLANS || 10);
+const maxPlans = Number(process.env.MAX_PLANS || 50);
 if (!Number.isInteger(maxPlans) || maxPlans < 1 || maxPlans > MAX_PLANS_LIMIT) {
   fail(`MAX_PLANS must be a whole number from 1 to ${MAX_PLANS_LIMIT}`);
+}
+
+const plansPerCheckpoint = Number(process.env.PLANS_PER_CHECKPOINT || 10);
+if (
+  !Number.isInteger(plansPerCheckpoint) ||
+  plansPerCheckpoint < 1 ||
+  plansPerCheckpoint > PLANS_PER_CHECKPOINT_LIMIT
+) {
+  fail(
+    "PLANS_PER_CHECKPOINT must be a whole number from 1 to " +
+      PLANS_PER_CHECKPOINT_LIMIT,
+  );
 }
 
 // A planner's own variables start with PLANNER_ and its name, so they do not
@@ -58,6 +71,7 @@ if (process.env.PLANNER === "claude") {
     model,
     effort: effort as Effort,
     maxPlans,
+    plansPerCheckpoint,
   });
   plannerLog = `planner claude, model ${model}, effort ${effort}`;
 }
@@ -74,6 +88,7 @@ const server = createServer({
   auth,
   planner,
   maxPlans,
+  plansPerCheckpoint,
   logRounds,
 });
 

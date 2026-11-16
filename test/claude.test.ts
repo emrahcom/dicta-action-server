@@ -18,7 +18,9 @@ const OPTIONS: ClaudeOptions = {
   model: "claude-opus-5-5",
   effort: "medium",
   maxPlans: 10,
+  plansPerCheckpoint: 10,
 };
+const LIMITS = { maxPlans: 10, plansPerCheckpoint: 10 };
 const PLAN = { steps: [{ call: "tasks.list", args: {} }] };
 
 function round(exchange: unknown[], history?: unknown[]): Round {
@@ -139,7 +141,33 @@ test("the user message has the request and the exchange, the second cache point,
     [undefined, undefined, undefined, { type: "ephemeral" }, undefined],
   );
   assert.match(blocks[4]!.text, /The page's state now:\n\{"page":"list"\}/);
-  assert.match(blocks[4]!.text, /Plans left: 9$/);
+  assert.match(blocks[4]!.text, /Plans left before the user is asked: 9\n/);
+  assert.match(blocks[4]!.text, /Plans left in the request: 9$/);
+});
+
+for (const [plans, before] of [
+  [0, 10],
+  [9, 1],
+  [10, 0],
+  [11, 9],
+  [20, 0],
+] as const) {
+  test(`after ${plans} plans, ${before} are left before the user is asked`, () => {
+    const item = { plan: PLAN, report: {} };
+    const exchange = Array.from({ length: plans }, () => item);
+    const options = { ...OPTIONS, maxPlans: 50 };
+    const { messages } = request(round(exchange), options);
+    const blocks = messages[0]!.content as { text: string }[];
+    const now = blocks.at(-1)!.text;
+    assert.match(now, new RegExp(`asked: ${before}\\n`));
+    assert.match(now, new RegExp(`request: ${50 - plans}$`));
+  });
+}
+
+test("the reply schema has progress but no checkpoint", () => {
+  const plan = REPLY_SCHEMA.properties.plan.properties;
+  assert.deepEqual(plan.progress, { type: "string" });
+  assert.equal("checkpoint" in plan, false);
 });
 
 test("the history comes first in the user message, oldest first, as JSON", () => {
@@ -241,7 +269,7 @@ for (const [answered, reply] of [
     const { plan, calls } = planner(t, () =>
       json(answer(JSON.stringify(answered))),
     );
-    const result = await pickReply(round([]), plan, 10);
+    const result = await pickReply(round([]), plan, LIMITS);
     assert.deepEqual(result, reply);
     // The key goes to the API, and no other credential, in whichever header
     // the SDK uses for it.
@@ -322,7 +350,7 @@ for (const [name, response] of [
   test(`${name} gives a stop`, async (t) => {
     const warn = t.mock.method(console, "warn", () => {});
     const { plan } = planner(t, response);
-    assert.deepEqual(await pickReply(round([]), plan, 10), FAILED);
+    assert.deepEqual(await pickReply(round([]), plan, LIMITS), FAILED);
     assert.match(String(warn.mock.calls[0]!.arguments[0]), /^planner failed/);
   });
 }
@@ -341,7 +369,7 @@ test("the call is cancelled when the 45 seconds are over", async (t) => {
     });
   };
   const plan = claudePlanner({ ...OPTIONS, fetch });
-  const reply = pickReply(round([]), plan, 10);
+  const reply = pickReply(round([]), plan, LIMITS);
   // Lets the SDK reach its fetch call before the time runs out.
   await new Promise((resolve) => setImmediate(resolve));
   assert.equal(signal?.aborted, false);

@@ -12,6 +12,7 @@ export type ClaudeOptions = {
   model: string;
   effort: Effort;
   maxPlans: number;
+  plansPerCheckpoint: number;
   // For tests: answers the SDK's HTTP calls instead of the API.
   fetch?: typeof fetch;
 };
@@ -25,7 +26,7 @@ export const INSTRUCTIONS = `You plan actions on one website for its signed-in u
 # What you get
 
 - The site context, below: the site's name and description, what its state means, and its capabilities, each with a name, a level, a description, and JSON Schemas for its arguments and output.
-- In the user message: the earlier requests of this browser tab, oldest first, each with how it ended (left out when there are none); the user's request; the exchange so far, oldest first (your plans with their reports, your questions with the user's answers, and text the user added); the user's current time; the page's state now; and how many plans you may still send.
+- In the user message: the earlier requests of this browser tab, oldest first, each with how it ended (left out when there are none); the user's request; the exchange so far, oldest first (your plans with their reports, your questions with the user's answers, and text the user added); the user's current time; the page's state now; and how many plans you may still send before the user is asked whether to go on, and in the whole request.
 
 # Your reply
 
@@ -41,13 +42,14 @@ Every other "text" is one short sentence, at most 200 characters.
 
 # Plans
 
-A plan is {"steps": [...], "text": "...", "final": true}:
+A plan is {"steps": [...], "text": "...", "progress": "...", "final": true}:
 
 - "steps": at most 50 top-level steps; the whole plan at most 16 KB of JSON.
   - A call: {"call": "<capability name>", "args": "{...}"}. "args" is always there: a string that holds the arguments as one JSON object, "{}" when the capability takes none. The object matches the capability's schema with no other properties.
   - A loop: {"forEach": "<reference to an array>", "do": [<calls>]}. It runs the calls once for each item, at most 100 items. The array must be an earlier step's output, or an array inside it; a list written in the plan is not allowed. "do" holds only calls.
   - A top-level step may have "includeOutput": true (see Reports).
 - "text": optional, one short sentence the user sees while the plan runs, at most 200 characters.
+- "progress": only in a plan the user is asked about before it runs (see Rules): what is done so far and what comes next, at most 200 characters. The user reads it to decide whether to go on.
 - "final": optional, true when this plan does the rest of the job and nothing is left to tell the user. When all its steps succeed, the request ends as done without asking you again.
 
 References: a string in "args" or "forEach" that starts with "$" is replaced by an output. "$1" is the output of the first top-level step, "$2" of the second, and so on; a step refers only to earlier steps. "$item" is the current item in a "do". Paths follow with dots: "$1.id", "$item.owner.name", "$1.items.0.id". A reference is always a whole string, never part of a longer text. A call in a "do" cannot refer to another call of the same "do". A string that should start with "$" itself is written with "$$". There are no expressions and no arithmetic: compute values yourself when you write the plan.
@@ -67,8 +69,9 @@ After each plan the browser sends a report:
 
 # Rules
 
-- When no plans are left, reply done (the job is finished) or stop (say what was done); never a plan, a question or an info.
-- Write every text for the user (the plan's label, a question and its options, done, stop and info) in the language of the user's request.
+- When no plans are left in the request, reply done (the job is finished) or stop (say what was done); never a plan, a question or an info.
+- When no plans are left before the user is asked, a new plan is shown to the user before it runs, and the user decides whether to go on. Give that plan a "progress".
+- Write every text for the user (the plan's label, its progress, a question and its options, done, stop and info) in the language of the user's request.
 - In every text for the user, name things as the user knows them, by their titles and names, never by ids or other internal values from the site context, outputs or state.
 - Change only what the request names. When its scope is unclear, ask.
 - Use the capability made for the action, not other capabilities that imitate it.
@@ -117,6 +120,7 @@ export const REPLY_SCHEMA = {
       properties: {
         steps: { type: "array", items: STEP_SCHEMA },
         text: { type: "string" },
+        progress: { type: "string" },
         final: { type: "boolean" },
       },
       required: ["steps"],
@@ -164,10 +168,14 @@ export function request(round: Round, options: ClaudeOptions) {
     cache_control: ephemeral,
   };
   const plans = round.exchange.filter((item) => "plan" in item).length;
+  const stretch = options.plansPerCheckpoint;
+  const beforeAsking =
+    plans > 0 && plans % stretch === 0 ? 0 : stretch - (plans % stretch);
   const now = [
     `The user's time: ${round.time}`,
     `The page's state now:\n${JSON.stringify(round.state)}`,
-    `Plans left: ${Math.max(0, options.maxPlans - plans)}`,
+    `Plans left before the user is asked: ${beforeAsking}`,
+    `Plans left in the request: ${Math.max(0, options.maxPlans - plans)}`,
   ].join("\n\n");
   return {
     model: options.model,

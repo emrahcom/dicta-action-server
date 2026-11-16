@@ -31,6 +31,7 @@ async function start(
     auth?: AuthOptions;
     planner?: Planner;
     maxPlans?: number;
+    plansPerCheckpoint?: number;
     logRounds?: boolean;
   } = {},
 ) {
@@ -38,6 +39,7 @@ async function start(
     auth: options.auth ?? { jwtSecret: SECRET },
     planner: options.planner ?? stubPlanner,
     maxPlans: options.maxPlans ?? 10,
+    plansPerCheckpoint: options.plansPerCheckpoint ?? 10,
     logRounds: options.logRounds,
   });
   server.listen(0);
@@ -260,6 +262,75 @@ test("stops a new plan when the exchange holds MAX_PLANS plans", async (t) => {
 
   assert.equal(below.body.reply.type, "plan");
   assert.equal(at.body.reply.type, "stop");
+});
+
+// Checkpoints (contract-plan.md, Checkpoint; architecture.md, Requests).
+
+test("marks the plan after each PLANS_PER_CHECKPOINT plans", async (t) => {
+  const base = await start(t, { maxPlans: 50, plansPerCheckpoint: 10 });
+  const item = { plan: PLAN.plan, report: {} };
+  const marked = [];
+  for (const count of [0, 9, 10, 11, 19, 20]) {
+    const exchange = Array.from({ length: count }, () => item);
+    const replies = Array.from({ length: count + 1 }, () => PLAN);
+    const { body: response } = await post(base, body(replies, exchange));
+    assert.equal(response.reply.type, "plan");
+    if (response.reply.plan.checkpoint === true) {
+      marked.push(count + 1);
+    }
+  }
+  assert.deepEqual(marked, [11, 21]);
+});
+
+test("drops a checkpoint the planner sets itself", async (t) => {
+  const base = await start(t);
+  const own = { type: "plan", plan: { ...PLAN.plan, checkpoint: true } };
+
+  const { body: response } = await post(base, body([own]));
+
+  assert.deepEqual(response.reply, PLAN);
+});
+
+test("cuts a progress longer than 200 characters", async (t) => {
+  const base = await start(t);
+  const warn = t.mock.method(console, "warn", () => {});
+  const long = {
+    type: "plan",
+    plan: { ...PLAN.plan, progress: "a".repeat(201) },
+  };
+
+  const { body: response } = await post(base, body([long]));
+
+  assert.equal(Array.from(response.reply.plan.progress).length, 200);
+  assert.ok(response.reply.plan.progress.endsWith("..."));
+  assert.match(String(warn.mock.calls[0]?.arguments[0]), /plan.progress cut/);
+});
+
+test("a plan with checkpoint and progress passes in the exchange", async (t) => {
+  const base = await start(t);
+  const item = {
+    plan: { ...PLAN.plan, checkpoint: true, progress: "Half done." },
+    report: {},
+  };
+
+  const { status, body: response } = await post(
+    base,
+    body([PLAN, PLAN], [item]),
+  );
+
+  assert.equal(status, 200);
+  assert.equal(response.reply.type, "plan");
+});
+
+test("the plan limit stops a plan that would be a checkpoint", async (t) => {
+  const base = await start(t, { maxPlans: 10, plansPerCheckpoint: 10 });
+  const item = { plan: PLAN.plan, report: {} };
+  const exchange = Array.from({ length: 10 }, () => item);
+  const replies = Array.from({ length: 11 }, () => PLAN);
+
+  const { body: response } = await post(base, body(replies, exchange));
+
+  assert.equal(response.reply.type, "stop");
 });
 
 test("lets other replies through when MAX_PLANS is reached", async (t) => {
@@ -627,7 +698,10 @@ test("a planner that answers within 45 seconds is used", async (t) => {
     new Promise((resolve) =>
       setTimeout(() => resolve({ type: "done", text: "Done." }), 44_000),
     );
-  const reply = pickReply(checkRound(body([])), planner, 10);
+  const reply = pickReply(checkRound(body([])), planner, {
+    maxPlans: 10,
+    plansPerCheckpoint: 10,
+  });
   t.mock.timers.tick(44_000);
   assert.deepEqual(await reply, { type: "done", text: "Done." });
 });
@@ -638,7 +712,10 @@ test("a planner that takes longer than 45 seconds gives a stop", async (t) => {
     new Promise((resolve) =>
       setTimeout(() => resolve({ type: "done", text: "Done." }), 46_000),
     );
-  const reply = pickReply(checkRound(body([])), planner, 10);
+  const reply = pickReply(checkRound(body([])), planner, {
+    maxPlans: 10,
+    plansPerCheckpoint: 10,
+  });
   t.mock.timers.tick(45_000);
   assert.deepEqual(await reply, {
     type: "stop",

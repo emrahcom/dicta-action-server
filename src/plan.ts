@@ -6,6 +6,7 @@ import { isObject, type Schema, type SiteContext } from "./context.ts";
 const MAX_STEPS = 50;
 const MAX_BYTES = 16 * 1024;
 export const MAX_LABEL_CHARS = 200;
+export const MAX_PROGRESS_CHARS = 200;
 
 export class BadPlan extends Error {}
 
@@ -183,7 +184,7 @@ export function checkPlan(plan: unknown, context: SiteContext) {
   if (Buffer.byteLength(JSON.stringify(plan)) > MAX_BYTES) {
     throw new BadPlan("a plan is at most 16 KB");
   }
-  onlyKeys(plan, ["steps", "text", "final"], "plan");
+  onlyKeys(plan, ["steps", "text", "final", "checkpoint", "progress"], "plan");
   if (plan.text !== undefined && typeof plan.text !== "string") {
     throw new BadPlan("text must be a string");
   }
@@ -197,6 +198,20 @@ export function checkPlan(plan: unknown, context: SiteContext) {
   }
   if (plan.final !== undefined && typeof plan.final !== "boolean") {
     throw new BadPlan("final must be true or false");
+  }
+  if (plan.checkpoint !== undefined && typeof plan.checkpoint !== "boolean") {
+    throw new BadPlan("checkpoint must be true or false");
+  }
+  if (plan.progress !== undefined && typeof plan.progress !== "string") {
+    throw new BadPlan("progress must be a string");
+  }
+  if (
+    typeof plan.progress === "string" &&
+    Array.from(plan.progress).length > MAX_PROGRESS_CHARS
+  ) {
+    throw new BadPlan(
+      `progress is longer than ${MAX_PROGRESS_CHARS} characters`,
+    );
   }
   if (!Array.isArray(plan.steps)) {
     throw new BadPlan("steps must be an array");

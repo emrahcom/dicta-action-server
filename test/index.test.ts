@@ -123,8 +123,12 @@ test("warns when LOG_ROUNDS is on", async (t) => {
   assert.match(server.stderr(), /LOG_ROUNDS is on/);
 });
 
-test("starts with MAX_PLANS=20", async (t) => {
-  const server = await startListening({ ...VALID_ENV, MAX_PLANS: "20" });
+test("starts with MAX_PLANS=100 and PLANS_PER_CHECKPOINT=20", async (t) => {
+  const server = await startListening({
+    ...VALID_ENV,
+    MAX_PLANS: "100",
+    PLANS_PER_CHECKPOINT: "20",
+  });
   t.after(server.stop);
 });
 
@@ -189,9 +193,24 @@ const REFUSED: [string, Record<string, string | undefined>, RegExp][] = [
   ],
   ["with an unknown PLANNER", { PLANNER: "gpt" }, /PLANNER must be one of/],
   ["with MAX_PLANS=0", { MAX_PLANS: "0" }, /MAX_PLANS must be a whole/],
-  ["with MAX_PLANS=21", { MAX_PLANS: "21" }, /MAX_PLANS must be a whole/],
+  ["with MAX_PLANS=101", { MAX_PLANS: "101" }, /MAX_PLANS must be a whole/],
   ["with MAX_PLANS=2.5", { MAX_PLANS: "2.5" }, /MAX_PLANS must be a whole/],
   ["with MAX_PLANS=abc", { MAX_PLANS: "abc" }, /MAX_PLANS must be a whole/],
+  [
+    "with PLANS_PER_CHECKPOINT=0",
+    { PLANS_PER_CHECKPOINT: "0" },
+    /PLANS_PER_CHECKPOINT must be a whole/,
+  ],
+  [
+    "with PLANS_PER_CHECKPOINT=21",
+    { PLANS_PER_CHECKPOINT: "21" },
+    /PLANS_PER_CHECKPOINT must be a whole/,
+  ],
+  [
+    "with PLANS_PER_CHECKPOINT=2.5",
+    { PLANS_PER_CHECKPOINT: "2.5" },
+    /PLANS_PER_CHECKPOINT must be a whole/,
+  ],
 ];
 
 for (const [name, changes, message] of REFUSED) {

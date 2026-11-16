@@ -32,7 +32,10 @@ Environment variables:
   claim ([Tokens](#tokens)). No default.
 - `ALLOW_UNAUTHENTICATED`: `true` turns the token check off. Only for
   development.
-- `MAX_PLANS`: the most plans for one user request, `1` to `20`. Default `10`.
+- `PLANS_PER_CHECKPOINT`: after this many plans, the user is asked whether to go
+  on, and again after each as many more. `1` to `20`. Default `10`.
+- `MAX_PLANS`: the most plans for one user request. No answer of the user goes
+  past it, so it limits the cost. `1` to `100`. Default `50`.
 - `LOG_ROUNDS`: `true` writes each round to the log, with the user's request and
   the reply, so you can look at it later. Only for development: the log then
   holds your users' requests and data. Default off.

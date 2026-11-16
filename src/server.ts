@@ -24,6 +24,7 @@ export type ServerOptions = {
   auth: AuthOptions;
   planner: Planner;
   maxPlans: number;
+  plansPerCheckpoint: number;
   logRounds?: boolean;
 };
 
@@ -105,7 +106,10 @@ async function handleRound(
     }
     throw err;
   }
-  const reply = await pickReply(round, options.planner, options.maxPlans);
+  const reply = await pickReply(round, options.planner, {
+    maxPlans: options.maxPlans,
+    plansPerCheckpoint: options.plansPerCheckpoint,
+  });
   const answer = { requestId: round.requestId ?? randomUUID(), reply };
   if (options.logRounds) {
     console.log(

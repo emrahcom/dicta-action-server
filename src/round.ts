@@ -7,7 +7,12 @@ import {
   isObject,
   type SiteContext,
 } from "./context.ts";
-import { BadPlan, checkPlan, MAX_LABEL_CHARS } from "./plan.ts";
+import {
+  BadPlan,
+  checkPlan,
+  MAX_LABEL_CHARS,
+  MAX_PROGRESS_CHARS,
+} from "./plan.ts";
 
 export type Report = {
   outputs?: Record<string, unknown>;
@@ -334,13 +339,23 @@ function checkReply(reply: unknown, context: SiteContext): Reply {
   const out = { ...reply };
   switch (reply.type) {
     case "plan":
-      // The label is cut before the check, so its size check sees the cut
-      // plan (contract-plan.md, Limits).
-      if (isObject(reply.plan) && typeof reply.plan.text === "string") {
-        out.plan = {
-          ...reply.plan,
-          text: cut(reply.plan.text, MAX_LABEL_CHARS, "plan.text"),
-        };
+      // The label and the progress are cut before the check, so its size
+      // check sees the cut plan (contract-plan.md, Limits). Only the server
+      // sets checkpoint (contract-plan.md, Checkpoint).
+      if (isObject(reply.plan)) {
+        const plan = { ...reply.plan };
+        delete plan.checkpoint;
+        if (typeof plan.text === "string") {
+          plan.text = cut(plan.text, MAX_LABEL_CHARS, "plan.text");
+        }
+        if (typeof plan.progress === "string") {
+          plan.progress = cut(
+            plan.progress,
+            MAX_PROGRESS_CHARS,
+            "plan.progress",
+          );
+        }
+        out.plan = plan;
       }
       checkPlan(out.plan, context);
       break;
@@ -380,12 +395,16 @@ function checkReply(reply: unknown, context: SiteContext): Reply {
 // The longest a planner may take for a round (architecture.md, Planner).
 const PLANNER_MS = 45_000;
 
-// The rules before the planner, then the planner, its reply check and the plan
-// limit (architecture.md, Requests, Planner).
+// The plan limit and the plans between two checkpoints (architecture.md,
+// Requests, Configuration).
+export type PlanLimits = { maxPlans: number; plansPerCheckpoint: number };
+
+// The rules before the planner, then the planner, its reply check, the plan
+// limit and the checkpoint (architecture.md, Requests, Planner).
 export async function pickReply(
   round: Round,
   planner: Planner,
-  maxPlans: number,
+  limits: PlanLimits,
 ): Promise<Reply> {
   const last = round.exchange.at(-1);
   if (
@@ -429,9 +448,12 @@ export async function pickReply(
     return { type: "stop", text: "Something went wrong." };
   }
   if (reply.type === "plan") {
-    const plans = round.exchange.filter((item) => "plan" in item);
-    if (plans.length >= maxPlans) {
+    const plans = round.exchange.filter((item) => "plan" in item).length;
+    if (plans >= limits.maxPlans) {
       return { type: "stop", text: "This took too many steps." };
+    }
+    if (plans > 0 && plans % limits.plansPerCheckpoint === 0) {
+      return { ...reply, plan: { ...reply.plan, checkpoint: true } };
     }
   }
   return reply;
