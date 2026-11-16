@@ -38,9 +38,9 @@ announce them.
 
 A long request is asked about in stretches, so it runs only while the user wants
 it to. The server marks a plan with `checkpoint: true` when the request already
-has a multiple of `PLANS_PER_CHECKPOINT` plans (`architecture.md`, Requests):
-the 11th, the 21st and so on, with the default of 10. Only the server sets it;
-the planner never does.
+has a multiple of `PLANS_PER_CHECKPOINT` plans, more than zero
+(`architecture.md`, Requests): the 11th, the 21st and so on, with the default
+of 10. Only the server sets it: it drops a `checkpoint` the planner sends.
 
 `progress`, when present, is the planner's whole text for a checkpoint: what is
 done so far, what comes next and the question whether to go on, which Continue
