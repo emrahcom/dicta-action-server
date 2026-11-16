@@ -164,6 +164,13 @@ for (const [plans, before] of [
   });
 }
 
+test("the instructions ask for the question in the progress", () => {
+  assert.match(
+    INSTRUCTIONS,
+    /- "progress": [^\n]*a question whether to go on that Continue answers with yes/,
+  );
+});
+
 test("the reply schema has progress but no checkpoint", () => {
   const plan = REPLY_SCHEMA.properties.plan.properties;
   assert.deepEqual(plan.progress, { type: "string" });
