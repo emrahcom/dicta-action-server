@@ -76,8 +76,8 @@ context.
 
 - The instructions give the limits of a plan (`contract-plan.md`, Limits) and of
   the included outputs (`contract-protocol.md`, Limits). They ask for at most
-  200 characters for every text, 2000 for an info, and 50 for an option. The
-  last part of the prompt gives the plans left.
+  200 characters for every text, 2000 for an info, 100 for a step's text and 50
+  for an option. The last part of the prompt gives the plans left.
 - When no plans are left in the request, the LLM replies done (the job is
   finished) or a stop (with what was done), never a plan, a question or an info.
   The server's stop at the limit (`architecture.md`, Requests) stays as a guard.
