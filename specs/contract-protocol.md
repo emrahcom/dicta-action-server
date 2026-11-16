@@ -87,9 +87,10 @@ The rules from `1.0.0` on are written when that release is planned.
   bytes of its JSON, in `outputs` and in `halt.outputs`. Such an output is
   simply gone; it is not listed in `tooLarge`. Everything else stays: the plans,
   their halts, the smaller outputs, the questions with their answers and the
-  added texts. This applies to the exchange the client sends in each round, and
-  to the copy it keeps for the history (History) and for a page load (Page
-  changes).
+  added texts. This applies to the exchange the client sends in each round and
+  to the copy it keeps for a page load (Page changes). When the request ends,
+  the copy it keeps for the history has no output over 512 bytes at all, in the
+  last two plans too (History).
 
 Every time in the contracts is the user's local time with its offset, in ISO
 8601, for example `2026-10-28T15:20:00+01:00`. The offset is always written as

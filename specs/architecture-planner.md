@@ -120,7 +120,8 @@ context.
   output that only feeds later steps of the same plan is not included.
 - A later plan reads the data it needs again with a capability. It cannot refer
   to an earlier plan's outputs, and the data may have changed since.
-- In plans before the last two, included outputs over 512 bytes are left out
+- In plans before the last two, and in every plan of a request that
+  `dicta.getHistory` returns, included outputs over 512 bytes are left out
   (`contract-protocol.md`, Request body). The instructions say so, so the LLM
   does not take a missing output for an empty one, and reads such data again
   from the site with a capability when it needs it.
