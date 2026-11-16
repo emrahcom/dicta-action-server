@@ -187,14 +187,14 @@ asking again; Cancel stops at the first, which does not run. With `confirmOver`
 or fewer, they do not ask. The calls in a `forEach` are not counted here; the
 `forEach` has its own rule.
 
-While a confirmation is open, the user sees only the module's words: the client
-shows the text as plain text and hides the plan's label. The user answers with
-Continue, which runs the step, or Cancel, which cancels the request
+While a step's confirmation is open, the user sees only the module's words: the
+client shows the text as plain text and hides the plan's label. The user answers
+with Continue, which runs the step, or Cancel, which cancels the request
 (`contract-protocol.md`, Added text and cancel).
 
-A checkpoint asks like a confirmation, with the same answers: before its first
-step, the client shows the plan's `progress` as plain text, or its own question
-whether to go on when there is none. Continue runs the plan; Cancel stops at its
-first step, which does not run. This is the only confirmation with the planner's
-words, since it does not approve a risky step: each risky step in the plan still
-asks with the module's words.
+A checkpoint is not a confirmation, but it asks the same way, in the same view
+and with the same answers: before its first step, the client shows the plan's
+`progress` as plain text, or its own question whether to go on when there is
+none. Continue runs the plan; Cancel stops at its first step, which does not
+run. It shows the planner's words, since it does not approve a risky step: each
+risky step in the plan still asks with the module's words.

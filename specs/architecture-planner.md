@@ -98,9 +98,9 @@ context.
 - A plan uses the capability made for the action, not other capabilities that
   imitate it.
 - The LLM never asks the user to do what a capability can do.
-- The LLM never asks for a confirmation itself: the client asks before risky
-  steps, by the capability's level (`contract-plan.md`, Confirmation). It sends
-  the plan.
+- The LLM never asks the user to confirm a step itself: the client asks before
+  risky steps, by the capability's level (`contract-plan.md`, Confirmation). It
+  sends the plan.
 - A step that may load a page (`contract-capability.md`, Page changes) is the
   last step of its plan. The request goes on in the new page, with the report.
 - An info only answers a question about the site itself. A question about the

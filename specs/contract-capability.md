@@ -113,9 +113,9 @@ module may set it, and without it, it is 10.
   anything. When it throws, the step fails as if `run` had thrown (Errors), and
   nothing runs. When it is missing and the step asks, the step fails with
   `capability`, and nothing runs. The client shows the text when it asks the
-  user (`contract-plan.md`, Confirmation). The wording of a confirmation comes
-  only from here, never from a plan, so a plan cannot make a risky step look
-  harmless, and the user sees exactly what will happen.
+  user (`contract-plan.md`, Confirmation). The wording of a step's confirmation
+  comes only from here, never from a plan, so a plan cannot make a risky step
+  look harmless, and the user sees exactly what will happen.
 - `pageLoad`: optional, `true` when the capability may load a page (Page
   changes).
 

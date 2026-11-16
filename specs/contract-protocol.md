@@ -221,15 +221,15 @@ complete.
     and is dropped with it.
 - Text that comes after a page load started is ignored (Page changes).
 - When a question is open, the text is its answer.
-- While a confirmation is open, text is ignored: only its buttons answer it,
-  pressed by pointer, keyboard or the system's voice control.
+- While a confirmation or a checkpoint is open, text is ignored: only its
+  buttons answer it, pressed by pointer, keyboard or the system's voice control.
 - Cancel: the request ends without another round, at any point. Once it has a
   `requestId`, the client adds it to history as cancelled. When a plan was
   running, it adds a last report that has the halt code `cancelled` at the step
-  or item where it stopped. Cancel while a confirmation is open stops at that
-  step, which does not run. Cancel while the client waits for a page load keeps
-  the report it holds (Page changes). A response that arrives after a cancel is
-  ignored.
+  or item where it stopped. Cancel while a confirmation or a checkpoint is open
+  stops at that step, which does not run. Cancel while the client waits for a
+  page load keeps the report it holds (Page changes). A response that arrives
+  after a cancel is ignored.
 
 Nothing that was done is undone. The report tells exactly what was done, so a
 later request can fix it.
