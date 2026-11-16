@@ -152,7 +152,8 @@ step and reports the outputs asked for so far and the halt.
 - The label: at most 200 characters. The server cuts a longer one before it
   checks the plan, as it does a reply's text (`contract-protocol.md`, Response
   body).
-- `progress`: at most 200 characters, cut by the server like the label.
+- `progress`: at most 300 characters, cut by the server like the label, so it
+  has room for what is done, what comes next and the question.
 - A step's `text`: at most 100 characters, cut by the server like the label.
 - At most 100 items in a `forEach`. A larger array fails the step with the code
   `limit` before any item runs.
