@@ -63,9 +63,12 @@ context.
   round: the same serialization, no reordered keys and nothing before it that
   changes, such as the date or the plans left.
 - A second cache point goes after the exchange, in every round. The history and
-  the request text stay the same and the exchange only grows, so the next round
-  of the same request reads them all from the cache. Each exchange item is its
-  own block of the prompt, written the same way in every round.
+  the request text stay the same and the exchange grows, so the next round of
+  the same request reads them from the cache. Each exchange item is its own
+  block of the prompt, written the same way in every round. Only the report of
+  the plan that falls out of the last two can change, when it loses its large
+  outputs (`contract-protocol.md`, Request body), so the cache is read up to
+  that block.
 - The planner logs the provider's cache counters with each call, so tests and
   logs show whether the cache hits.
 
