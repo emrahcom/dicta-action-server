@@ -79,8 +79,9 @@ context.
   finished) or a stop (with what was done), never a plan, a question or an info.
   The server's stop at the limit (`architecture.md`, Requests) stays as a guard.
 - When no plans are left before the next checkpoint, a new plan is a checkpoint:
-  the LLM gives it a `progress` text, what is done and what comes next
-  (`contract-plan.md`, Checkpoint).
+  the LLM gives it a `progress` text, what is done, what comes next and a
+  question whether to go on that Continue answers with yes, such as "Shall I go
+  on?" (`contract-plan.md`, Checkpoint).
 - Every text for the user, the label, the progress, a question with its options,
   done, a stop and an info, is in the language of the user's request.
 - Every text for the user names things as the user knows them, by their titles

@@ -35,8 +35,9 @@ has a multiple of `PLANS_PER_CHECKPOINT` plans (`architecture.md`, Requests):
 the 11th, the 21st and so on, with the default of 10. Only the server sets it;
 the planner never does.
 
-`progress`, when present, is a short text from the planner for a checkpoint:
-what is done so far and what comes next (Limits).
+`progress`, when present, is the planner's whole text for a checkpoint: what is
+done so far, what comes next and the question whether to go on, which Continue
+answers with yes (Limits).
 
 Before the first step of a checkpoint, the client asks the user whether to go on
 (Confirmation).
@@ -181,8 +182,8 @@ Continue, which runs the step, or Cancel, which cancels the request
 (`contract-protocol.md`, Added text and cancel).
 
 A checkpoint asks like a confirmation, with the same answers: before its first
-step, the client shows the plan's `progress` as plain text, when there is one,
-and its own question whether to go on. Continue runs the plan; Cancel stops at
-its first step, which does not run. This is the only confirmation with the
-planner's words, since it does not approve a risky step: each risky step in the
-plan still asks with the module's words.
+step, the client shows the plan's `progress` as plain text, or its own question
+whether to go on when there is none. Continue runs the plan; Cancel stops at its
+first step, which does not run. This is the only confirmation with the planner's
+words, since it does not approve a risky step: each risky step in the plan still
+asks with the module's words.

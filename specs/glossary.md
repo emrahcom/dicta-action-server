@@ -81,7 +81,8 @@ detail.
 - **Reference**: a string starting with `$` that stands for an earlier output,
   for example `$1.id` or `$item.id`.
 - **Label**: the plan's `text`, shown while the plan runs.
-- **Progress**: the plan's `progress`, the planner's text for a checkpoint.
+- **Progress**: the plan's `progress`, the planner's text for a checkpoint, with
+  its question whether to go on.
 - **Final**: a plan the planner marks as the rest of the job (`final`). When it
   succeeds, the server replies with done without asking the planner again.
 - **Include output**: a mark on a top-level step that puts its output in the
