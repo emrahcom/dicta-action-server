@@ -44,7 +44,8 @@ of 10. Only the server sets it: it drops a `checkpoint` the planner sends.
 
 `progress`, when present, is the planner's whole text for a checkpoint: what is
 done so far, what comes next and the question whether to go on, which Continue
-answers with yes (Limits).
+answers with yes (Limits). A `progress` on a plan that is not a checkpoint is
+not shown.
 
 Before the first step of a checkpoint, the client asks the user whether to go on
 (Confirmation).
