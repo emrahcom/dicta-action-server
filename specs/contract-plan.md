@@ -31,8 +31,8 @@ A top-level step can have its own `text`: one short sentence for a step that
 takes a while, such as a long `forEach` (Limits). While that step runs, the
 client shows it in place of the label; a step without one shows the label. A
 `forEach` also shows how many of its items are done, such as `40/80`, with or
-without a `text`. Step texts and counts are shown only; the client does not
-announce them.
+without a `text`. The client announces a step's text once, when the step starts,
+as it does the label; the count is shown only.
 
 ## Checkpoint
 
