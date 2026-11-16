@@ -9,6 +9,17 @@ of the page and the site context, and replies, usually with a plan: steps that
 call the site's capability functions. The browser runs the plan with
 `dicta-action-js`.
 
+## Goal
+
+An agent for web sites. It knows one site well, from the capability module that
+the site's developers write. It takes any request about the site in the user's
+own words and carries it out to the end, also long jobs of many steps, while the
+page is open. It runs every step through the site's own functions, with the
+user's rights. It keeps the user informed and in control: it shows its progress,
+asks when unsure, confirms risky steps and can be stopped at any time.
+
+Each feature moves toward this goal. The sections below say what is there today.
+
 ## The parts
 
 - `dicta-action-harness`: a developer opens their AI agent in it, points it to
@@ -28,8 +39,9 @@ call the site's capability functions. The browser runs the plan with
 
 ## What it is
 
-- A planner. It never acts on the site itself and never holds user credentials;
-  the browser runs every step with the user's own rights.
+- An agent, with its planner on the server. The server never acts on the site
+  itself and never holds user credentials; the browser runs every step with the
+  user's own rights.
 - Site specific. It knows the site well, from the context each round brings,
   instead of guessing from the screen.
 - For sites whose team has the source code and a test environment.
