@@ -27,6 +27,13 @@ calling one of the site's capabilities. It is JSON data, never code.
 `text`, when present, is one short sentence the client shows while the plan runs
 (Limits).
 
+A top-level step can have its own `text`: one short sentence for a step that
+takes a while, such as a long `forEach` (Limits). While that step runs, the
+client shows it in place of the label; a step without one shows the label. A
+`forEach` also shows how many of its items are done, such as `40/80`, with or
+without a `text`. Step texts and counts are shown only; the client does not
+announce them.
+
 ## Checkpoint
 
 A long request is asked about in stretches, so it runs only while the user wants
@@ -70,7 +77,8 @@ sends the plan back unchanged in the exchange.
   the plan is not allowed. `do` holds only `call` steps; a `forEach` cannot hold
   another `forEach`.
 
-A top-level step can also have `includeOutput` (Include output).
+A top-level step can also have `text` (Label) and `includeOutput` (Include
+output).
 
 Steps run one after the other, in order. Nothing else exists: no conditions, no
 expressions and no arithmetic. Decisions are made by the server in the next
@@ -120,14 +128,16 @@ it before it sends it:
 
 - it has only the fields this contract names, each of the right type, and each
   step is either a `call` or a `forEach`;
-- its steps, size, label and progress are within the limits (Limits);
+- its steps, size, label, step texts and progress are within the limits
+  (Limits);
 - every `call` names a capability;
 - every `args` matches that capability's schema, with no properties the schema
   does not name in any object, or is `{}` when the capability has no `args`. A
   reference matches any schema here: its value is known only when the step runs;
 - every reference points to an earlier step or to a `forEach` item;
 - every `forEach` refers to an earlier step;
-- `includeOutput` is a boolean, and only on top-level steps.
+- `includeOutput` is a boolean and a step's `text` a string, both only on
+  top-level steps.
 
 A step fails when its capability throws, when a reference has no value or a
 value that does not fit where it is used, or when a limit is reached. The client
@@ -143,6 +153,7 @@ step and reports the outputs asked for so far and the halt.
   checks the plan, as it does a reply's text (`contract-protocol.md`, Response
   body).
 - `progress`: at most 200 characters, cut by the server like the label.
+- A step's `text`: at most 100 characters, cut by the server like the label.
 - At most 100 items in a `forEach`. A larger array fails the step with the code
   `limit` before any item runs.
 

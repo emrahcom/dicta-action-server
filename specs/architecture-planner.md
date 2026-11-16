@@ -82,8 +82,11 @@ context.
   the LLM gives it a `progress` text, what is done, what comes next and a
   question whether to go on that Continue answers with yes, such as "Shall I go
   on?" (`contract-plan.md`, Checkpoint).
-- Every text for the user, the label, the progress, a question with its options,
-  done, a stop and an info, is in the language of the user's request.
+- A step gets a `text` only when it takes a while, such as a long `forEach` or a
+  slow call; a quick step would only flash past (`contract-plan.md`, Label).
+- Every text for the user, the label, a step's text, the progress, a question
+  with its options, done, a stop and an info, is in the language of the user's
+  request.
 - Every text for the user names things as the user knows them, by their titles
   and names, never by ids or other internal values from the site context,
   outputs or state.
