@@ -171,6 +171,12 @@ test("the instructions ask for the question in the progress", () => {
   );
 });
 
+test("the reply schema has text on a step but not in do", () => {
+  const step = REPLY_SCHEMA.properties.plan.properties.steps.items;
+  assert.deepEqual(step.properties.text, { type: "string" });
+  assert.equal("text" in step.properties.do.items.properties, false);
+});
+
 test("the reply schema has progress but no checkpoint", () => {
   const plan = REPLY_SCHEMA.properties.plan.properties;
   assert.deepEqual(plan.progress, { type: "string" });

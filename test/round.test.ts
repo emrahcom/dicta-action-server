@@ -291,6 +291,25 @@ test("drops a checkpoint the planner sets itself", async (t) => {
   assert.deepEqual(response.reply, PLAN);
 });
 
+test("cuts a step text longer than 100 characters", async (t) => {
+  const base = await start(t);
+  const warn = t.mock.method(console, "warn", () => {});
+  const long = {
+    type: "plan",
+    plan: { steps: [{ ...PLAN.plan.steps[0], text: "a".repeat(101) }] },
+  };
+
+  const { body: response } = await post(base, body([long]));
+
+  const text = response.reply.plan.steps[0].text;
+  assert.equal(Array.from(text).length, 100);
+  assert.ok(text.endsWith("..."));
+  assert.match(
+    String(warn.mock.calls[0]?.arguments[0]),
+    /steps\[0\]\.text cut/,
+  );
+});
+
 test("cuts a progress longer than 200 characters", async (t) => {
   const base = await start(t);
   const warn = t.mock.method(console, "warn", () => {});

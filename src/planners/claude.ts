@@ -48,6 +48,7 @@ A plan is {"steps": [...], "text": "...", "progress": "...", "final": true}:
   - A call: {"call": "<capability name>", "args": "{...}"}. "args" is always there: a string that holds the arguments as one JSON object, "{}" when the capability takes none. The object matches the capability's schema with no other properties.
   - A loop: {"forEach": "<reference to an array>", "do": [<calls>]}. It runs the calls once for each item, at most 100 items. The array must be an earlier step's output, or an array inside it; a list written in the plan is not allowed. "do" holds only calls.
   - A top-level step may have "includeOutput": true (see Reports).
+  - A top-level step may have "text": one short sentence the user sees while that step runs, at most 100 characters. A loop also shows how many of its items are done.
 - "text": optional, one short sentence the user sees while the plan runs, at most 200 characters.
 - "progress": only in a plan the user is asked about before it runs (see Rules): what is done so far, what comes next and a question whether to go on that Continue answers with yes, such as "Shall I go on?", at most 200 characters. It is the only text the user sees before deciding.
 - "final": optional, true when this plan does the rest of the job and nothing is left to tell the user. When all its steps succeed, the request ends as done without asking you again.
@@ -71,7 +72,8 @@ After each plan the browser sends a report:
 
 - When no plans are left in the request, reply done (the job is finished) or stop (say what was done); never a plan, a question or an info.
 - When no plans are left before the user is asked, a new plan is shown to the user before it runs, and the user decides whether to go on. Give that plan a "progress" that ends with the question.
-- Write every text for the user (the plan's label, its progress, a question and its options, done, stop and info) in the language of the user's request.
+- Give a step a "text" only when it takes a while, such as a long loop or a slow call; a quick step would only flash past.
+- Write every text for the user (the plan's label, a step's text, the plan's progress, a question and its options, done, stop and info) in the language of the user's request.
 - In every text for the user, name things as the user knows them, by their titles and names, never by ids or other internal values from the site context, outputs or state.
 - Change only what the request names. When its scope is unclear, ask.
 - Use the capability made for the action, not other capabilities that imitate it.
@@ -103,6 +105,7 @@ const STEP_SCHEMA = {
     forEach: { type: "string" },
     do: { type: "array", items: CALL_SCHEMA },
     includeOutput: { type: "boolean" },
+    text: { type: "string" },
   },
   additionalProperties: false,
 };

@@ -12,6 +12,7 @@ import {
   checkPlan,
   MAX_LABEL_CHARS,
   MAX_PROGRESS_CHARS,
+  MAX_STEP_TEXT_CHARS,
 } from "./plan.ts";
 
 export type Report = {
@@ -339,14 +340,24 @@ function checkReply(reply: unknown, context: SiteContext): Reply {
   const out = { ...reply };
   switch (reply.type) {
     case "plan":
-      // The label and the progress are cut before the check, so its size
-      // check sees the cut plan (contract-plan.md, Limits). Only the server
+      // The label, the step texts and the progress are cut before the check,
+      // so its size check sees the cut plan (contract-plan.md, Limits). Only the server
       // sets checkpoint (contract-plan.md, Checkpoint).
       if (isObject(reply.plan)) {
         const plan = { ...reply.plan };
         delete plan.checkpoint;
         if (typeof plan.text === "string") {
           plan.text = cut(plan.text, MAX_LABEL_CHARS, "plan.text");
+        }
+        if (Array.isArray(plan.steps)) {
+          plan.steps = plan.steps.map((step: unknown, i) =>
+            isObject(step) && typeof step.text === "string"
+              ? {
+                  ...step,
+                  text: cut(step.text, MAX_STEP_TEXT_CHARS, `steps[${i}].text`),
+                }
+              : step,
+          );
         }
         if (typeof plan.progress === "string") {
           plan.progress = cut(

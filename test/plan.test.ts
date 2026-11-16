@@ -90,6 +90,15 @@ const VALID: [string, unknown][] = [
     { steps: [list], text: "\u{1F600}".repeat(200) },
   ],
   [
+    "step texts on a call and a forEach, up to 100 characters",
+    {
+      steps: [
+        { ...list, text: "\u{1F600}".repeat(100) },
+        { forEach: "$1", do: [list], text: "Listing each" },
+      ],
+    },
+  ],
+  [
     "a checkpoint with a progress of 200 characters",
     { steps: [list], checkpoint: true, progress: "\u{1F600}".repeat(200) },
   ],
@@ -370,6 +379,23 @@ const INVALID: [string, unknown, RegExp][] = [
     "includeOutput that is not a boolean",
     { steps: [{ ...list, includeOutput: "yes" }] },
     /includeOutput must be true or false/,
+  ],
+  [
+    "a step text that is not text",
+    { steps: [{ ...list, text: 5 }] },
+    /steps\[0\]\.text must be a string/,
+  ],
+  [
+    "a step text of 101 characters",
+    { steps: [{ ...list, text: "x".repeat(101) }] },
+    /steps\[0\]\.text is longer than 100 characters/,
+  ],
+  [
+    "a text on a call in a do",
+    {
+      steps: [list, { forEach: "$1", do: [{ ...list, text: "Listing" }] }],
+    },
+    /do\[0\] has text/,
   ],
   [
     "includeOutput on a call in a do",

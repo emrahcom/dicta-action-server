@@ -7,6 +7,7 @@ const MAX_STEPS = 50;
 const MAX_BYTES = 16 * 1024;
 export const MAX_LABEL_CHARS = 200;
 export const MAX_PROGRESS_CHARS = 200;
+export const MAX_STEP_TEXT_CHARS = 100;
 
 export class BadPlan extends Error {}
 
@@ -142,12 +143,25 @@ function matches(value: unknown, schema: Schema, path: string) {
   }
 }
 
-function checkIncludeOutput(step: Record<string, unknown>, path: string) {
+// The fields only a top-level step has: includeOutput and text
+// (contract-plan.md, Steps, Label, Limits).
+function checkTopLevel(step: Record<string, unknown>, path: string) {
   if (
     step.includeOutput !== undefined &&
     typeof step.includeOutput !== "boolean"
   ) {
     throw new BadPlan(`${path}.includeOutput must be true or false`);
+  }
+  if (step.text !== undefined && typeof step.text !== "string") {
+    throw new BadPlan(`${path}.text must be a string`);
+  }
+  if (
+    typeof step.text === "string" &&
+    Array.from(step.text).length > MAX_STEP_TEXT_CHARS
+  ) {
+    throw new BadPlan(
+      `${path}.text is longer than ${MAX_STEP_TEXT_CHARS} characters`,
+    );
   }
 }
 
@@ -157,13 +171,15 @@ function checkCall(
   scope: Scope,
   path: string,
 ) {
-  // Only a top-level step may have includeOutput.
+  // Only a top-level step may have includeOutput and text.
   onlyKeys(
     step,
-    scope.inForEach ? ["call", "args"] : ["call", "args", "includeOutput"],
+    scope.inForEach
+      ? ["call", "args"]
+      : ["call", "args", "includeOutput", "text"],
     path,
   );
-  checkIncludeOutput(step, path);
+  checkTopLevel(step, path);
   const capability = context.capabilities.find((c) => c.name === step.call);
   if (!capability) {
     throw new BadPlan(`${path}.call names no capability: ${String(step.call)}`);
@@ -233,8 +249,8 @@ export function checkPlan(plan: unknown, context: SiteContext) {
     if (!("forEach" in step)) {
       throw new BadPlan(`${path} must be a call or a forEach`);
     }
-    onlyKeys(step, ["forEach", "do", "includeOutput"], path);
-    checkIncludeOutput(step, path);
+    onlyKeys(step, ["forEach", "do", "includeOutput", "text"], path);
+    checkTopLevel(step, path);
     if (!isReference(step.forEach) || !/^\$\d/.test(step.forEach)) {
       throw new BadPlan(`${path}.forEach must refer to an earlier step`);
     }
