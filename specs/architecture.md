@@ -44,7 +44,8 @@ Message formats are in `contract-protocol.md`.
 - Checkpoints let the user decide how long a request runs: every
   `PLANS_PER_CHECKPOINT` plans, the user is asked whether to go on
   (`contract-plan.md`, Checkpoint). The server counts the earlier plans in the
-  exchange and marks the plan that starts a new stretch.
+  exchange and marks the plan that comes after each `PLANS_PER_CHECKPOINT`
+  plans.
 - A limit on plans per user request (`MAX_PLANS`) is the site owner's guard
   against cost, which no answer of the user passes. When the planner replies
   with a new plan and the limit is already reached, the server sends a stop

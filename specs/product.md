@@ -14,9 +14,10 @@ call the site's capability functions. The browser runs the plan with
 An agent for web sites. It knows one site well, from the capability module that
 the site's developers write. It takes any request about the site in the user's
 own words and carries it out to the end, also long jobs of many steps, while the
-page is open. It runs every step through the site's own functions, with the
-user's rights. It keeps the user informed and in control: it shows its progress,
-asks when unsure, confirms risky steps and can be stopped at any time.
+site is open in the browser tab. It runs every step through the site's own
+functions, with the user's rights. It keeps the user informed and in control: it
+shows its progress, asks when unsure, confirms risky steps and can be stopped at
+any time.
 
 Each feature moves toward this goal. The sections below say what is there today.
 
