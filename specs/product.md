@@ -69,3 +69,8 @@ Each feature moves toward this goal. The sections below say what is there today.
   plan, a question to the user, done, a stop or an info.
 - Each capability has a level: read, write, destructive or external. Before a
   risky step, the user confirms.
+- A long request asks the user from time to time whether to go on, with a short
+  text on what is done and what comes next.
+- A step that takes a while can carry a short sentence the user sees while it
+  runs, and a loop shows how many of its items are done.
+- A long request stays small: large outputs of older plans are left out.
