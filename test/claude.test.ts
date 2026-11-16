@@ -164,6 +164,13 @@ for (const [plans, before] of [
   });
 }
 
+test("the instructions say old large outputs are left out", () => {
+  assert.match(
+    INSTRUCTIONS,
+    /In plans before the last two, included outputs over 512 bytes are left out/,
+  );
+});
+
 test("the instructions ask for the question in the progress", () => {
   assert.match(
     INSTRUCTIONS,
