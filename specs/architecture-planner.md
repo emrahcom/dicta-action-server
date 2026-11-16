@@ -126,7 +126,9 @@ context.
   from the site with a capability when it needs it.
 - A value that cannot be read again, such as the id of a task an earlier plan
   created, comes from the report: the earlier plan includes that output
-  (`includeOutput`), and the later plan writes the value in directly.
+  (`includeOutput`), and the later plan writes the value in directly. The LLM
+  uses it in the next plan: an output over 512 bytes, such as the ids of many
+  created items, is left out once its plan is older than the last two.
 - A request can refer to an earlier one in the history, such as "undo that" or
   "the same as at the start". The history entry gives what was asked and how it
   ended; when the planner needs what that request did, a plan calls
