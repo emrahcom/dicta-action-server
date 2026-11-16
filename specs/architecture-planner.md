@@ -82,10 +82,10 @@ context.
 - When no plans are left in the request, the LLM replies done (the job is
   finished) or a stop (with what was done), never a plan, a question or an info.
   The server's stop at the limit (`architecture.md`, Requests) stays as a guard.
-- When no plans are left before the next checkpoint, a new plan is a checkpoint:
-  the LLM gives it a `progress` text, what is done, what comes next and a
-  question whether to go on that Continue answers with yes, such as "Shall I go
-  on?" (`contract-plan.md`, Checkpoint).
+- When plans are left in the request but none before the next checkpoint, a new
+  plan is a checkpoint: the LLM gives it a `progress` text, what is done, what
+  comes next and a question whether to go on that Continue answers with yes,
+  such as "Shall I go on?" (`contract-plan.md`, Checkpoint).
 - A step gets a `text` only when it takes a while, such as a long `forEach` or a
   slow call; a quick step would only flash past (`contract-plan.md`, Label).
 - Every text for the user, the label, a step's text, the progress, a question
