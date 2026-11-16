@@ -354,7 +354,9 @@ a planner failure. A planner failure is not an HTTP error; the server sends a
 ## Limits
 
 Each part of a round has a limit. The `413` is the hard limit for the whole
-body; like any other error, it ends the request (Errors).
+body; like any other error, it ends the request (Errors). The parts are not
+meant to add up to less than 1 MB: a long request of many large plans can still
+pass it, and then ends with this error.
 
 - `text`, each answer and each added text: at most 10000 characters (Unicode
   code points). The client does not take longer input from the user.
@@ -366,7 +368,8 @@ body; like any other error, it ends the request (Errors).
   characters.
 - A halt `message`: at most 200 characters. The client cuts longer ones.
 - A plan: `contract-plan.md`, Limits.
-- The included outputs of a report: at most 16 KB together (Report).
+- The included outputs of a report: at most 16 KB together (Report). In the
+  reports of plans before the last two, each at most 512 bytes (Request body).
 - Plans in a request: at most `MAX_PLANS`, which is at most 100.
 - The `text` of a reply: at most 2000 characters. A question's `options`: at
   most 5, each at most 50 characters.
