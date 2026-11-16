@@ -41,12 +41,15 @@ Message formats are in `contract-protocol.md`.
   short entry for each (`contract-protocol.md`, Request body); the planner reads
   one in full with `dicta.getHistory` (`contract-capability.md`,
   `dicta.getHistory`).
-- A limit on plans per user request (`MAX_PLANS`) stops runaway loops and their
-  cost. It is not a target: one plan can hold many steps. The server counts the
-  earlier plans in the exchange. When the planner replies with a new plan and
-  the limit is already reached, the server sends a stop instead of the plan;
-  every other reply goes through, so a request that has finished its job is
-  never stopped by the limit.
+- Checkpoints let the user decide how long a request runs: every
+  `PLANS_PER_CHECKPOINT` plans, the user is asked whether to go on
+  (`contract-plan.md`, Checkpoint). The server counts the earlier plans in the
+  exchange and marks the plan that starts a new stretch.
+- A limit on plans per user request (`MAX_PLANS`) is the site owner's guard
+  against cost, which no answer of the user passes. When the planner replies
+  with a new plan and the limit is already reached, the server sends a stop
+  instead of the plan; every other reply goes through, so a request that has
+  finished its job is never stopped by the limit.
 - All paths start with `/dicta-action/`, so the server can share a domain with
   the application behind a proxy.
 - CORS allows any origin. The token is sent in the `Authorization` header, not
@@ -139,8 +142,10 @@ Environment variables:
 - `PLANNER_CLAUDE_MODEL`: the model of `claude`. Default `claude-opus-5-5`.
 - `PLANNER_CLAUDE_EFFORT`: how much `claude` thinks: `low`, `medium`, `high`,
   `xhigh` or `max`. Default `medium`.
+- `PLANS_PER_CHECKPOINT`: the plans between two checkpoints (Requests), a whole
+  number from `1` to `20`. Default `10`.
 - `MAX_PLANS`: the most plans per user request (Requests), a whole number from
-  `1` to `20`. Default `10`.
+  `1` to `100`. Default `50`.
 - `LOG_ROUNDS`: when `true`, the server logs each round it answers with a reply
   to the console, as one JSON line, so a developer can look at a request later:
   `{"user": ..., "tabId": ..., "round": ..., "response": ...}`. `user` and

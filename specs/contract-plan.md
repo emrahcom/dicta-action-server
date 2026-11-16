@@ -27,6 +27,20 @@ calling one of the site's capabilities. It is JSON data, never code.
 `text`, when present, is one short sentence the client shows while the plan runs
 (Limits).
 
+## Checkpoint
+
+A long request is asked about in stretches, so it runs only while the user wants
+it to. The server marks a plan with `checkpoint: true` when the request already
+has a multiple of `PLANS_PER_CHECKPOINT` plans (`architecture.md`, Requests):
+the 11th, the 21st and so on, with the default of 10. Only the server sets it;
+the planner never does.
+
+`progress`, when present, is a short text from the planner for a checkpoint:
+what is done so far and what comes next (Limits).
+
+Before the first step of a checkpoint, the client asks the user whether to go on
+(Confirmation).
+
 ## Reporting
 
 After a plan, the client always sends a new round with its report, whether the
@@ -105,7 +119,7 @@ it before it sends it:
 
 - it has only the fields this contract names, each of the right type, and each
   step is either a `call` or a `forEach`;
-- its steps, size and label are within the limits (Limits);
+- its steps, size, label and progress are within the limits (Limits);
 - every `call` names a capability;
 - every `args` matches that capability's schema, with no properties the schema
   does not name in any object, or is `{}` when the capability has no `args`. A
@@ -127,15 +141,17 @@ step and reports the outputs asked for so far and the halt.
 - The label: at most 200 characters. The server cuts a longer one before it
   checks the plan, as it does a reply's text (`contract-protocol.md`, Response
   body).
+- `progress`: at most 200 characters, cut by the server like the label.
 - At most 100 items in a `forEach`. A larger array fails the step with the code
   `limit` before any item runs.
 
 ## Confirmation
 
-The plan carries no levels and no confirmation text; both come from the
-capabilities. Before a step that calls a destructive or external capability, the
-client calls the capability's `confirm` with the step's arguments, references
-filled in, and asks the user with the text it returns.
+The plan carries no levels and no confirmation text for its steps; both come
+from the capabilities (a checkpoint's `progress` is not one: Checkpoint). Before
+a step that calls a destructive or external capability, the client calls the
+capability's `confirm` with the step's arguments, references filled in, and asks
+the user with the text it returns.
 
 A `forEach` asks when one of its calls asks: a destructive or external call, or
 a `write` call when there are more items than the module's `confirmOver`
@@ -163,3 +179,10 @@ While a confirmation is open, the user sees only the module's words: the client
 shows the text as plain text and hides the plan's label. The user answers with
 Continue, which runs the step, or Cancel, which cancels the request
 (`contract-protocol.md`, Added text and cancel).
+
+A checkpoint asks like a confirmation, with the same answers: before its first
+step, the client shows the plan's `progress` as plain text, when there is one,
+and its own question whether to go on. Continue runs the plan; Cancel stops at
+its first step, which does not run. This is the only confirmation with the
+planner's words, since it does not approve a risky step: each risky step in the
+plan still asks with the module's words.

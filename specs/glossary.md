@@ -63,7 +63,10 @@ detail.
   so it goes on in the new page.
 - **History**: finished user requests of the browser tab, kept by the client,
   sent as short entries in every round and read in full with `dicta.getHistory`.
-- **Plan limit**: the most plans one user request may have (`MAX_PLANS`).
+- **Plan limit**: the most plans one user request may have (`MAX_PLANS`), the
+  site owner's guard against cost.
+- **Checkpoint**: a plan the server marks every `PLANS_PER_CHECKPOINT` plans;
+  the user is asked whether to go on before it runs.
 
 ## A plan
 
@@ -78,6 +81,7 @@ detail.
 - **Reference**: a string starting with `$` that stands for an earlier output,
   for example `$1.id` or `$item.id`.
 - **Label**: the plan's `text`, shown while the plan runs.
+- **Progress**: the plan's `progress`, the planner's text for a checkpoint.
 - **Final**: a plan the planner marks as the rest of the job (`final`). When it
   succeeds, the server replies with done without asking the planner again.
 - **Include output**: a mark on a top-level step that puts its output in the

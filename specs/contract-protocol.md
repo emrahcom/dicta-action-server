@@ -358,7 +358,7 @@ body; like any other error, it ends the request (Errors).
 - A halt `message`: at most 200 characters. The client cuts longer ones.
 - A plan: `contract-plan.md`, Limits.
 - The included outputs of a report: at most 16 KB together (Report).
-- Plans in a request: at most `MAX_PLANS`, which is at most 20.
+- Plans in a request: at most `MAX_PLANS`, which is at most 100.
 - The `text` of a reply: at most 2000 characters. A question's `options`: at
   most 5, each at most 50 characters.
 

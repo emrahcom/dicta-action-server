@@ -34,8 +34,8 @@ The planner builds one LLM call for each round, from the request body
    request.
 4. Request text: `text`.
 5. Exchange: `exchange`.
-6. Time, state and plans left: `time`, `state` and `MAX_PLANS` minus the plans
-   in the exchange.
+6. Time, state and plans left: `time`, `state`, the plans left before the next
+   checkpoint and the plans left in the request (`architecture.md`, Requests).
 
 Each part is labeled by its source. The state, outputs and history are given as
 JSON values, never as free text.
@@ -75,11 +75,14 @@ context.
   the included outputs (`contract-protocol.md`, Limits). They ask for at most
   200 characters for every text, 2000 for an info, and 50 for an option. The
   last part of the prompt gives the plans left.
-- When no plans are left, the LLM replies done (the job is finished) or a stop
-  (with what was done), never a plan, a question or an info. The server's stop
-  at the limit (`architecture.md`, Requests) stays as a guard.
-- Every text for the user, the label, a question with its options, done, a stop
-  and an info, is in the language of the user's request.
+- When no plans are left in the request, the LLM replies done (the job is
+  finished) or a stop (with what was done), never a plan, a question or an info.
+  The server's stop at the limit (`architecture.md`, Requests) stays as a guard.
+- When no plans are left before the next checkpoint, a new plan is a checkpoint:
+  the LLM gives it a `progress` text, what is done and what comes next
+  (`contract-plan.md`, Checkpoint).
+- Every text for the user, the label, the progress, a question with its options,
+  done, a stop and an info, is in the language of the user's request.
 - Every text for the user names things as the user knows them, by their titles
   and names, never by ids or other internal values from the site context,
   outputs or state.
