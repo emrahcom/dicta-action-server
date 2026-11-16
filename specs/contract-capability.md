@@ -181,8 +181,9 @@ Argument: `requestId`, required: the request to return. An id that is not kept
 fails with the code `not_found`.
 
 Output: the fields of the request's `history` entry, with `text` and
-`outcome.text` not cut, and the request's `exchange` with its reports
-(`contract-protocol.md`).
+`outcome.text` not cut, and the request's `exchange` with its reports, as the
+client keeps it: large outputs of older plans are left out
+(`contract-protocol.md`, Request body).
 
 When the output would be over 16 KB, counted as the UTF-8 bytes of its JSON, the
 client leaves out the outputs in its reports: each one goes into its report's

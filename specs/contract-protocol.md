@@ -75,12 +75,21 @@ The rules from `1.0.0` on are written when that release is planned.
   "undo that" or "the same as at the start". The same in every round of a
   request. Empty when there is none.
 - `exchange`: what happened so far, oldest first. Empty in the first round. The
-  client only adds to it, and sends all of it in every round. Each item is one
-  of:
+  client adds to it, and sends all of it in every round. Each item is one of:
   - a plan the server sent, with the client's `report` on it;
   - a question the server asked, with the user's `answer`;
   - `added`: text the user gave while the request was running (Added text and
     cancel).
+
+  Old outputs: so that a long request stays small, the client keeps the outputs
+  of the last two plans as they are. In the reports of every earlier plan, it
+  leaves out each included output larger than 512 bytes, counted as the UTF-8
+  bytes of its JSON, in `outputs` and in `halt.outputs`. Such an output is
+  simply gone; it is not listed in `tooLarge`. Everything else stays: the plans,
+  their halts, the smaller outputs, the questions with their answers and the
+  added texts. This applies to the exchange the client sends in each round, and
+  to the copy it keeps for the history (History) and for a page load (Page
+  changes).
 
 Every time in the contracts is the user's local time with its offset, in ISO
 8601, for example `2026-10-28T15:20:00+01:00`. The offset is always written as

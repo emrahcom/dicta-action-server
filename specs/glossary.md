@@ -41,7 +41,8 @@ detail.
   user request takes one or more rounds (`contract-protocol.md`).
 - **Exchange**: everything that happened so far in a user request (`exchange`),
   oldest first: plans with their reports, questions with their answers and added
-  text. The client sends all of it in every round.
+  text. The client sends all of it in every round, with the large outputs of
+  older plans left out.
 - **Reply**: what the server's response to a round carries (`reply`): a plan, a
   question, done, a stop or an info.
 - **Question**: the server asks the user something it needs to go on. The user's
