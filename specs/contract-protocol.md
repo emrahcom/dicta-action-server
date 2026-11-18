@@ -372,7 +372,8 @@ pass it, and then ends with this error.
 - A halt `message`: at most 200 characters. The client cuts longer ones.
 - A plan: `contract-plan.md`, Limits.
 - The included outputs of a report: at most 16 KB together (Report). In the
-  reports of plans before the last two, each at most 512 bytes (Request body).
+  reports of plans before the last two, each at most 512 bytes (Request body): a
+  rule the client keeps; the server does not check it.
 - Plans in a request: at most `MAX_PLANS`, which is at most 100.
 - The `text` of a reply: at most 2000 characters. A question's `options`: at
   most 5, each at most 50 characters.
