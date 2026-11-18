@@ -164,11 +164,15 @@ for (const [plans, before] of [
   });
 }
 
-test("the instructions say old large outputs are left out", () => {
-  assert.match(
-    INSTRUCTIONS,
-    /In plans before the last two, included outputs over 512 bytes are left out/,
-  );
+test("the instructions hold the rules from the spec review", () => {
+  for (const rule of [
+    /In plans before the last two, and in every plan of a request that "dicta.getHistory" returns, included outputs over 512 bytes are in "tooLarge"/,
+    /Use it in the next plan: an output over 512 bytes/,
+    /When plans are left in the request but none before the user is asked/,
+    /"progress": [^\n]*at most 300 characters/,
+  ]) {
+    assert.match(INSTRUCTIONS, rule);
+  }
 });
 
 test("the instructions ask for the question in the progress", () => {

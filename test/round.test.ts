@@ -310,17 +310,17 @@ test("cuts a step text longer than 100 characters", async (t) => {
   );
 });
 
-test("cuts a progress longer than 200 characters", async (t) => {
+test("cuts a progress longer than 300 characters", async (t) => {
   const base = await start(t);
   const warn = t.mock.method(console, "warn", () => {});
   const long = {
     type: "plan",
-    plan: { ...PLAN.plan, progress: "a".repeat(201) },
+    plan: { ...PLAN.plan, progress: "a".repeat(301) },
   };
 
   const { body: response } = await post(base, body([long]));
 
-  assert.equal(Array.from(response.reply.plan.progress).length, 200);
+  assert.equal(Array.from(response.reply.plan.progress).length, 300);
   assert.ok(response.reply.plan.progress.endsWith("..."));
   assert.match(String(warn.mock.calls[0]?.arguments[0]), /plan.progress cut/);
 });
