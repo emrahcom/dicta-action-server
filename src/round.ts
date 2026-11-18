@@ -341,8 +341,8 @@ function checkReply(reply: unknown, context: SiteContext): Reply {
   switch (reply.type) {
     case "plan":
       // The label, the step texts and the progress are cut before the check,
-      // so its size check sees the cut plan (contract-plan.md, Limits). Only the server
-      // sets checkpoint (contract-plan.md, Checkpoint).
+      // so its size check sees the cut plan (contract-plan.md, Limits). Only
+      // the server sets checkpoint (contract-plan.md, Checkpoint).
       if (isObject(reply.plan)) {
         const plan = { ...reply.plan };
         delete plan.checkpoint;

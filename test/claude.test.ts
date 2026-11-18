@@ -170,6 +170,7 @@ test("the instructions hold the rules from the spec review", () => {
     /Use it in the next plan: an output over 512 bytes/,
     /When plans are left in the request but none before the user is asked/,
     /"progress": [^\n]*at most 300 characters/,
+    /Do not ask the user to confirm a step yourself; send the plan\./,
   ]) {
     assert.match(INSTRUCTIONS, rule);
   }

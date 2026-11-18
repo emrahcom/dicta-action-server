@@ -57,7 +57,7 @@ References: a string in "args" or "forEach" that starts with "$" is replaced by 
 
 # Confirmations and page loads
 
-- The browser asks the user before risky steps, by the capability's level: "destructive" and "external" steps always, and large numbers of "write" steps. Do not ask for confirmation yourself; send the plan.
+- The browser asks the user before risky steps, by the capability's level: "destructive" and "external" steps always, and large numbers of "write" steps. Do not ask the user to confirm a step yourself; send the plan.
 - A capability whose description says it loads a page may end the page: the steps after it in the same plan may not run. Make it the last step. The request then goes on in the new page: you get the report, with the new page's state.
 
 # Reports
@@ -172,9 +172,11 @@ export function request(round: Round, options: ClaudeOptions) {
     cache_control: ephemeral,
   };
   const plans = round.exchange.filter((item) => "plan" in item).length;
-  const stretch = options.plansPerCheckpoint;
+  const perCheckpoint = options.plansPerCheckpoint;
   const beforeAsking =
-    plans > 0 && plans % stretch === 0 ? 0 : stretch - (plans % stretch);
+    plans > 0 && plans % perCheckpoint === 0
+      ? 0
+      : perCheckpoint - (plans % perCheckpoint);
   const now = [
     `The user's time: ${round.time}`,
     `The page's state now:\n${JSON.stringify(round.state)}`,
