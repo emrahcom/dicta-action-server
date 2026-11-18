@@ -36,6 +36,8 @@ The planner builds one LLM call for each round, from the request body
 5. Exchange: `exchange`.
 6. Time, state and plans left: `time`, `state`, the plans left before the next
    checkpoint and the plans left in the request (`architecture.md`, Requests).
+   When the next plan would be a checkpoint, this part also says so and asks for
+   its `progress`, since the numbers alone are easy to miss.
 
 Each part is labeled by its source. The state, outputs and history are given as
 JSON values, never as free text.
