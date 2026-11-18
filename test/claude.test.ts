@@ -160,7 +160,7 @@ for (const [plans, before] of [
     const blocks = messages[0]!.content as { text: string }[];
     const now = blocks.at(-1)!.text;
     assert.match(now, new RegExp(`asked: ${before}\\n`));
-    assert.match(now, new RegExp(`request: ${50 - plans}$`));
+    assert.match(now, new RegExp(`request: ${50 - plans}(\\n|$)`));
   });
 }
 
@@ -182,6 +182,24 @@ test("the instructions ask for the question in the progress", () => {
     /- "progress": [^\n]*a question whether to go on that Continue answers with yes/,
   );
 });
+
+for (const [plans, maxPlans, shown] of [
+  [10, 50, true],
+  [20, 50, true],
+  [9, 50, false],
+  [11, 50, false],
+  [0, 50, false],
+  [10, 10, false],
+] as const) {
+  test(`after ${plans} of ${maxPlans} plans the checkpoint line is ${shown ? "there" : "not there"}`, () => {
+    const item = { plan: PLAN, report: {} };
+    const exchange = Array.from({ length: plans }, () => item);
+    const { messages } = request(round(exchange), { ...OPTIONS, maxPlans });
+    const blocks = messages[0]!.content as { text: string }[];
+    const now = blocks.at(-1)!.text;
+    assert.equal(now.includes("If you send a plan now"), shown);
+  });
+}
 
 test("the reply schema has text on a step but not in do", () => {
   const step = REPLY_SCHEMA.properties.plan.properties.steps.items;

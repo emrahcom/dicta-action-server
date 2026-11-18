@@ -19,6 +19,10 @@ export type ClaudeOptions = {
 
 const MAX_TOKENS = 16000;
 
+// The line that tells the LLM its next plan is a checkpoint.
+const CHECKPOINT_NEXT =
+  'If you send a plan now, the user sees it before it runs and decides whether to go on: give it a "progress" that ends with the question.';
+
 // The planner's own text, the same for every site (architecture-planner.md,
 // Prompt, Reply format, Rules for the LLM).
 export const INSTRUCTIONS = `You plan actions on one website for its signed-in user. You never act yourself: the user's browser runs your plans by calling the site's capabilities, with the user's own rights.
@@ -182,6 +186,10 @@ export function request(round: Round, options: ClaudeOptions) {
     `The page's state now:\n${JSON.stringify(round.state)}`,
     `Plans left before the user is asked: ${beforeAsking}`,
     `Plans left in the request: ${Math.max(0, options.maxPlans - plans)}`,
+    // The numbers alone are easy to miss (architecture-planner.md, Prompt).
+    ...(beforeAsking === 0 && plans < options.maxPlans
+      ? [CHECKPOINT_NEXT]
+      : []),
   ].join("\n\n");
   return {
     model: options.model,
