@@ -5,9 +5,9 @@ import { isObject, type Schema, type SiteContext } from "./context.ts";
 
 const MAX_STEPS = 50;
 const MAX_BYTES = 16 * 1024;
-export const MAX_LABEL_CHARS = 200;
-export const MAX_PROGRESS_CHARS = 300;
-export const MAX_STEP_TEXT_CHARS = 100;
+const MAX_LABEL_CHARS = 200;
+const MAX_PROGRESS_CHARS = 300;
+const MAX_STEP_TEXT_CHARS = 100;
 
 export class BadPlan extends Error {}
 
@@ -15,6 +15,43 @@ export class BadPlan extends Error {}
 // Limits).
 export function chars(value: string) {
   return Array.from(value).length;
+}
+
+// Cuts a text over its limit, so the reply is still sent: its first
+// characters and "...", the whole within the limit (contract-protocol.md,
+// Response body). The log names the field, never the text.
+export function cut(value: string, max: number, field: string) {
+  const list = Array.from(value);
+  if (list.length <= max) {
+    return value;
+  }
+  console.warn(`${field} cut: ${list.length} characters, at most ${max}`);
+  return list.slice(0, max - 3).join("") + "...";
+}
+
+// The planner's plan with its label, step texts and progress cut to their
+// limits, so the size check sees the cut plan, and without a checkpoint of
+// its own: only the server sets it (contract-plan.md, Limits, Checkpoint).
+export function cutPlanTexts(plan: Record<string, unknown>) {
+  const out = { ...plan };
+  delete out.checkpoint;
+  if (typeof out.text === "string") {
+    out.text = cut(out.text, MAX_LABEL_CHARS, "plan.text");
+  }
+  if (Array.isArray(out.steps)) {
+    out.steps = out.steps.map((step: unknown, i) =>
+      isObject(step) && typeof step.text === "string"
+        ? {
+            ...step,
+            text: cut(step.text, MAX_STEP_TEXT_CHARS, `steps[${i}].text`),
+          }
+        : step,
+    );
+  }
+  if (typeof out.progress === "string") {
+    out.progress = cut(out.progress, MAX_PROGRESS_CHARS, "plan.progress");
+  }
+  return out;
 }
 
 // A text that may be left out, of at most max characters.
@@ -201,6 +238,33 @@ function checkCall(
   matches(step.args, capability.args ?? {}, `${path}.args`);
 }
 
+// A forEach step: its array is an earlier step's output, and its do holds only
+// calls, which may also refer to the item (contract-plan.md, Steps).
+function checkForEach(
+  step: Record<string, unknown>,
+  context: SiteContext,
+  scope: Scope,
+  path: string,
+) {
+  onlyKeys(step, ["forEach", "do", "includeOutput", "text"], path);
+  checkTopLevel(step, path);
+  if (!isReference(step.forEach) || !/^\$\d/.test(step.forEach)) {
+    throw new BadPlan(`${path}.forEach must refer to an earlier step`);
+  }
+  checkReference(step.forEach, scope, `${path}.forEach`);
+  if (!Array.isArray(step.do)) {
+    throw new BadPlan(`${path}.do must be an array`);
+  }
+  const inner: Scope = { ...scope, inForEach: true };
+  step.do.forEach((call: unknown, j) => {
+    const innerPath = `${path}.do[${j}]`;
+    if (!isObject(call) || !("call" in call)) {
+      throw new BadPlan(`${innerPath} must be a call`);
+    }
+    checkCall(call, context, inner, innerPath);
+  });
+}
+
 // Checks a plan from the planner. Throws BadPlan with the reason.
 export function checkPlan(plan: unknown, context: SiteContext) {
   if (!isObject(plan)) {
@@ -233,27 +297,10 @@ export function checkPlan(plan: unknown, context: SiteContext) {
     }
     if ("call" in step) {
       checkCall(step, context, scope, path);
-      return;
-    }
-    if (!("forEach" in step)) {
+    } else if ("forEach" in step) {
+      checkForEach(step, context, scope, path);
+    } else {
       throw new BadPlan(`${path} must be a call or a forEach`);
     }
-    onlyKeys(step, ["forEach", "do", "includeOutput", "text"], path);
-    checkTopLevel(step, path);
-    if (!isReference(step.forEach) || !/^\$\d/.test(step.forEach)) {
-      throw new BadPlan(`${path}.forEach must refer to an earlier step`);
-    }
-    checkReference(step.forEach, scope, `${path}.forEach`);
-    if (!Array.isArray(step.do)) {
-      throw new BadPlan(`${path}.do must be an array`);
-    }
-    const inner: Scope = { earlierSteps: i, inForEach: true };
-    step.do.forEach((call: unknown, j) => {
-      const innerPath = `${path}.do[${j}]`;
-      if (!isObject(call) || !("call" in call)) {
-        throw new BadPlan(`${innerPath} must be a call`);
-      }
-      checkCall(call, context, inner, innerPath);
-    });
   });
 }

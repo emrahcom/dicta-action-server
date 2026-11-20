@@ -6,7 +6,7 @@ import {
   type ClaudeOptions,
   INSTRUCTIONS,
   REPLY_SCHEMA,
-  request,
+  callParams,
 } from "../src/planners/claude.ts";
 import { checkRound, pickReply, type Round } from "../src/round.ts";
 
@@ -93,7 +93,7 @@ function json(body: unknown, status = 200) {
 // The prompt (architecture-planner-claude.md, Prompt).
 
 test("the system prompt is the instructions, then the site context with the first cache point", () => {
-  const { system } = request(round([]), OPTIONS);
+  const { system } = callParams(round([]), OPTIONS);
   assert.deepEqual(system, [
     { type: "text", text: INSTRUCTIONS },
     {
@@ -120,7 +120,7 @@ test("the user message has the request and the exchange, the second cache point,
     { question: "Which one?", answer: "The first" },
     { added: "and the closed ones" },
   ];
-  const { messages } = request(round(exchange), OPTIONS);
+  const { messages } = callParams(round(exchange), OPTIONS);
   assert.equal(messages.length, 1);
   const blocks = messages[0]!.content as {
     text: string;
@@ -156,7 +156,7 @@ for (const [plans, before] of [
     const item = { plan: PLAN, report: {} };
     const exchange = Array.from({ length: plans }, () => item);
     const options = { ...OPTIONS, maxPlans: 50 };
-    const { messages } = request(round(exchange), options);
+    const { messages } = callParams(round(exchange), options);
     const blocks = messages[0]!.content as { text: string }[];
     const now = blocks.at(-1)!.text;
     assert.match(now, new RegExp(`asked: ${before}\\n`));
@@ -194,7 +194,7 @@ for (const [plans, maxPlans, shown] of [
   test(`after ${plans} of ${maxPlans} plans the checkpoint line is ${shown ? "there" : "not there"}`, () => {
     const item = { plan: PLAN, report: {} };
     const exchange = Array.from({ length: plans }, () => item);
-    const { messages } = request(round(exchange), { ...OPTIONS, maxPlans });
+    const { messages } = callParams(round(exchange), { ...OPTIONS, maxPlans });
     const blocks = messages[0]!.content as { text: string }[];
     const now = blocks.at(-1)!.text;
     assert.equal(now.includes("If you send a plan now"), shown);
@@ -215,7 +215,7 @@ test("the reply schema has progress but no checkpoint", () => {
 
 test("the history comes first in the user message, oldest first, as JSON", () => {
   const exchange = [{ plan: PLAN, report: {} }];
-  const { messages } = request(round(exchange, HISTORY), OPTIONS);
+  const { messages } = callParams(round(exchange, HISTORY), OPTIONS);
   const blocks = messages[0]!.content as {
     text: string;
     cache_control?: unknown;
@@ -240,18 +240,21 @@ test("the history comes first in the user message, oldest first, as JSON", () =>
 });
 
 test("the prompt does not hold the tab id", () => {
-  const params = request(round([{ plan: PLAN, report: {} }], HISTORY), OPTIONS);
+  const params = callParams(
+    round([{ plan: PLAN, report: {} }], HISTORY),
+    OPTIONS,
+  );
   assert.doesNotMatch(JSON.stringify(params), /tab-1/);
 });
 
 test("an empty history has no block", () => {
-  const { messages } = request(round([], []), OPTIONS);
+  const { messages } = callParams(round([], []), OPTIONS);
   const blocks = messages[0]!.content as { text: string }[];
   assert.match(blocks[0]!.text, /^The user's request:/);
 });
 
 test("with a history and no exchange the second cache point is on the request", () => {
-  const { messages } = request(round([], HISTORY), OPTIONS);
+  const { messages } = callParams(round([], HISTORY), OPTIONS);
   const blocks = messages[0]!.content as { cache_control?: unknown }[];
   assert.deepEqual(
     blocks.map((block) => block.cache_control),
@@ -260,14 +263,17 @@ test("with a history and no exchange the second cache point is on the request", 
 });
 
 test("without an exchange the second cache point is on the request", () => {
-  const { messages } = request(round([]), OPTIONS);
+  const { messages } = callParams(round([]), OPTIONS);
   const blocks = messages[0]!.content as { cache_control?: unknown }[];
   assert.deepEqual(blocks[0]!.cache_control, { type: "ephemeral" });
 });
 
 test("the cached part of the prompt is written the same way in every round", () => {
-  const first = request(round([], HISTORY), OPTIONS);
-  const later = request(round([{ plan: PLAN, report: {} }], HISTORY), OPTIONS);
+  const first = callParams(round([], HISTORY), OPTIONS);
+  const later = callParams(
+    round([{ plan: PLAN, report: {} }], HISTORY),
+    OPTIONS,
+  );
   assert.deepEqual(later.system, first.system);
   const texts = (r: typeof first) =>
     (r.messages[0]!.content as { text: string }[])
@@ -277,7 +283,7 @@ test("the cached part of the prompt is written the same way in every round", () 
 });
 
 test("the call uses the model, the effort, adaptive thinking and 16000 tokens", () => {
-  const params = request(round([]), { ...OPTIONS, effort: "low" });
+  const params = callParams(round([]), { ...OPTIONS, effort: "low" });
   assert.equal(params.model, "claude-opus-5-5");
   assert.equal(params.output_config.effort, "low");
   assert.deepEqual(params.thinking, { type: "adaptive" });
@@ -285,7 +291,7 @@ test("the call uses the model, the effort, adaptive thinking and 16000 tokens", 
 });
 
 test("the call forces the reply schema", () => {
-  const params = request(round([]), OPTIONS);
+  const params = callParams(round([]), OPTIONS);
   assert.deepEqual(params.output_config.format, {
     type: "json_schema",
     schema: REPLY_SCHEMA,

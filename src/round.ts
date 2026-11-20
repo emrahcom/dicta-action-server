@@ -7,14 +7,8 @@ import {
   isObject,
   type SiteContext,
 } from "./context.ts";
-import {
-  BadPlan,
-  chars,
-  checkPlan,
-  MAX_LABEL_CHARS,
-  MAX_PROGRESS_CHARS,
-  MAX_STEP_TEXT_CHARS,
-} from "./plan.ts";
+import { BadPlan, chars } from "./plan.ts";
+import { BadReply, checkReply } from "./reply.ts";
 
 type Report = {
   outputs?: Record<string, unknown>;
@@ -73,7 +67,6 @@ export type Planner = (round: Round, signal: AbortSignal) => Promise<Reply>;
 export type PlanLimits = { maxPlans: number; plansPerCheckpoint: number };
 
 export class BadRound extends Error {}
-class BadReply extends Error {}
 
 // The limits of the parts of a round (contract-protocol.md, Limits).
 const MAX_TEXT_CHARS = 10000;
@@ -81,9 +74,6 @@ const MAX_STATE_BYTES = 16 * 1024;
 const MAX_CONTEXT_BYTES = 64 * 1024;
 const MAX_MESSAGE_CHARS = 200;
 const MAX_OUTPUTS_BYTES = 16 * 1024;
-const MAX_REPLY_CHARS = 2000;
-const MAX_OPTIONS = 5;
-const MAX_OPTION_CHARS = 50;
 const MAX_HISTORY = 20;
 const MAX_HISTORY_CHARS = 200;
 const OUTCOMES = ["done", "stop", "info", "cancelled", "error"];
@@ -317,96 +307,36 @@ export function checkRound(body: unknown): Round {
   };
 }
 
-// Cuts a text over its limit, so the reply is still sent: its first
-// characters and "...", the whole within the limit (contract-protocol.md,
-// Response body). The log names the field, never the text.
-function cut(value: string, max: number, field: string) {
-  const list = Array.from(value);
-  if (list.length <= max) {
-    return value;
-  }
-  console.warn(`${field} cut: ${list.length} characters, at most ${max}`);
-  return list.slice(0, max - 3).join("") + "...";
+// The plans so far in a request.
+export function countPlans(exchange: ExchangeItem[]) {
+  return exchange.filter((item) => "plan" in item).length;
 }
 
-function checkReplyText(value: unknown) {
-  if (typeof value !== "string") {
-    throw new BadReply("text must be a string");
-  }
-  return cut(value, MAX_REPLY_CHARS, "text");
+// Whether the plan that follows the given number of plans is a checkpoint
+// (contract-plan.md, Checkpoint).
+export function isCheckpoint(plans: number, perCheckpoint: number) {
+  return plans > 0 && plans % perCheckpoint === 0;
 }
 
-// Checks a reply of the planner before it is sent and cuts its texts to their
-// limits (contract-protocol.md, Response body, Limits). Throws BadReply or
-// BadPlan with the reason.
-function checkReply(reply: unknown, context: SiteContext): Reply {
-  if (!isObject(reply)) {
-    throw new BadReply("the reply must be an object");
+// Calls the planner within its time limit. A planner that takes too long is a
+// planner failure: its call is cancelled and a late reply is dropped
+// (architecture.md, Planner).
+async function callPlanner(round: Round, planner: Planner): Promise<Reply> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const controller = new AbortController();
+  try {
+    return await Promise.race([
+      planner(round, controller.signal),
+      new Promise<never>((_, reject) => {
+        timer = setTimeout(() => {
+          controller.abort();
+          reject(new Error("the planner took too long"));
+        }, PLANNER_MS);
+      }),
+    ]);
+  } finally {
+    clearTimeout(timer);
   }
-  const out = { ...reply };
-  switch (reply.type) {
-    case "plan":
-      // The label, the step texts and the progress are cut before the check,
-      // so its size check sees the cut plan (contract-plan.md, Limits). Only
-      // the server sets checkpoint (contract-plan.md, Checkpoint).
-      if (isObject(reply.plan)) {
-        const plan = { ...reply.plan };
-        delete plan.checkpoint;
-        if (typeof plan.text === "string") {
-          plan.text = cut(plan.text, MAX_LABEL_CHARS, "plan.text");
-        }
-        if (Array.isArray(plan.steps)) {
-          plan.steps = plan.steps.map((step: unknown, i) =>
-            isObject(step) && typeof step.text === "string"
-              ? {
-                  ...step,
-                  text: cut(step.text, MAX_STEP_TEXT_CHARS, `steps[${i}].text`),
-                }
-              : step,
-          );
-        }
-        if (typeof plan.progress === "string") {
-          plan.progress = cut(
-            plan.progress,
-            MAX_PROGRESS_CHARS,
-            "plan.progress",
-          );
-        }
-        out.plan = plan;
-      }
-      checkPlan(out.plan, context);
-      break;
-    case "question":
-      out.text = checkReplyText(reply.text);
-      if (reply.options !== undefined) {
-        const options = reply.options;
-        if (
-          !Array.isArray(options) ||
-          !options.every((option) => typeof option === "string")
-        ) {
-          throw new BadReply("options must be a list of strings");
-        }
-        if (options.length > MAX_OPTIONS) {
-          throw new BadReply(`a question has at most ${MAX_OPTIONS} options`);
-        }
-        out.options = options.map((option, i) =>
-          cut(option, MAX_OPTION_CHARS, `options[${i}]`),
-        );
-      }
-      break;
-    case "done":
-      if (reply.text !== undefined) {
-        out.text = checkReplyText(reply.text);
-      }
-      break;
-    case "stop":
-    case "info":
-      out.text = checkReplyText(reply.text);
-      break;
-    default:
-      throw new BadReply("type must be plan, question, done, stop or info");
-  }
-  return out as Reply;
 }
 
 // The rules before the planner, then the planner, its reply check, the plan
@@ -426,27 +356,13 @@ export async function pickReply(
     return { type: "done" };
   }
   let reply: Reply;
-  let timer: ReturnType<typeof setTimeout> | undefined;
-  const controller = new AbortController();
   try {
-    // A planner that takes too long is a planner failure; its call is
-    // cancelled and a late reply is dropped.
-    reply = await Promise.race([
-      planner(round, controller.signal),
-      new Promise<never>((_, reject) => {
-        timer = setTimeout(() => {
-          controller.abort();
-          reject(new Error("the planner took too long"));
-        }, PLANNER_MS);
-      }),
-    ]);
+    reply = await callPlanner(round, planner);
   } catch (err) {
     console.warn(
       `planner failed: ${err instanceof Error ? err.message : String(err)}`,
     );
     return FAILED;
-  } finally {
-    clearTimeout(timer);
   }
   try {
     reply = checkReply(reply, round.context);
@@ -458,11 +374,11 @@ export async function pickReply(
     return FAILED;
   }
   if (reply.type === "plan") {
-    const plans = round.exchange.filter((item) => "plan" in item).length;
+    const plans = countPlans(round.exchange);
     if (plans >= limits.maxPlans) {
       return { type: "stop", text: "This took too many steps." };
     }
-    if (plans > 0 && plans % limits.plansPerCheckpoint === 0) {
+    if (isCheckpoint(plans, limits.plansPerCheckpoint)) {
       return { ...reply, plan: { ...reply.plan, checkpoint: true } };
     }
   }

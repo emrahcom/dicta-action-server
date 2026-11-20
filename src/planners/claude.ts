@@ -3,12 +3,14 @@
 
 import Anthropic from "@anthropic-ai/sdk";
 import { isObject } from "../context.ts";
-import type {
-  ExchangeItem,
-  PlanLimits,
-  Planner,
-  Reply,
-  Round,
+import {
+  countPlans,
+  type ExchangeItem,
+  isCheckpoint,
+  type PlanLimits,
+  type Planner,
+  type Reply,
+  type Round,
 } from "../round.ts";
 
 export const EFFORTS = ["low", "medium", "high", "xhigh", "max"] as const;
@@ -159,7 +161,7 @@ function exchangeText(item: ExchangeItem) {
 // The call for one round: the system prompt with the first cache point after
 // the site context, then one user message, the history first, with the second
 // cache point after the exchange (architecture-planner-claude.md, Prompt).
-export function request(round: Round, options: ClaudeOptions) {
+export function callParams(round: Round, options: ClaudeOptions) {
   const ephemeral = { type: "ephemeral" } as const;
   const stable: Anthropic.TextBlockParam[] = [
     ...(round.history.length === 0
@@ -180,12 +182,11 @@ export function request(round: Round, options: ClaudeOptions) {
     ...stable[stable.length - 1]!,
     cache_control: ephemeral,
   };
-  const plans = round.exchange.filter((item) => "plan" in item).length;
+  const plans = countPlans(round.exchange);
   const perCheckpoint = options.plansPerCheckpoint;
-  const beforeAsking =
-    plans > 0 && plans % perCheckpoint === 0
-      ? 0
-      : perCheckpoint - (plans % perCheckpoint);
+  const beforeAsking = isCheckpoint(plans, perCheckpoint)
+    ? 0
+    : perCheckpoint - (plans % perCheckpoint);
   const now = [
     `The user's time: ${round.time}`,
     `The page's state now:\n${JSON.stringify(round.state)}`,
@@ -283,7 +284,7 @@ export function claudePlanner(options: ClaudeOptions): Planner {
   });
   return async (round, signal) => {
     const started = Date.now();
-    const message = await client.messages.create(request(round, options), {
+    const message = await client.messages.create(callParams(round, options), {
       signal,
     });
     const { usage } = message;
