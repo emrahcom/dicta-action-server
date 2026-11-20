@@ -1,8 +1,8 @@
 // The site context: it comes with every round and is checked there
 // (contract-context.md).
 
-export const LEVELS = ["read", "write", "destructive", "external"] as const;
-export type Level = (typeof LEVELS)[number];
+const LEVELS = ["read", "write", "destructive", "external"] as const;
+type Level = (typeof LEVELS)[number];
 
 // The JSON Schema keywords capability arguments may use
 // (contract-capability.md, Capabilities).
@@ -36,7 +36,7 @@ export type Schema = {
   description?: string;
 };
 
-export type Capability = {
+type Capability = {
   name: string;
   level: Level;
   desc: string;

@@ -8,7 +8,13 @@ import {
   type ServerResponse,
 } from "node:http";
 import { jwtVerify } from "jose";
-import { BadRound, checkRound, pickReply, type Planner } from "./round.ts";
+import {
+  BadRound,
+  checkRound,
+  pickReply,
+  type PlanLimits,
+  type Planner,
+} from "./round.ts";
 
 const ROUND_PATH = "/dicta-action/v1/round";
 const MAX_BODY_BYTES = 1024 * 1024;
@@ -20,11 +26,10 @@ export type AuthOptions =
 
 // logRounds: log each answered round to the console, for development only
 // (architecture.md, Configuration).
-export type ServerOptions = {
+type ServerOptions = {
   auth: AuthOptions;
   planner: Planner;
-  maxPlans: number;
-  plansPerCheckpoint: number;
+  limits: PlanLimits;
   logRounds?: boolean;
 };
 
@@ -79,7 +84,10 @@ async function readBody(request: IncomingMessage): Promise<unknown> {
   for await (const chunk of request) {
     size += (chunk as Buffer).length;
     if (size > MAX_BODY_BYTES) {
-      throw new HttpError(413, "body larger than 1 MB");
+      throw new HttpError(
+        413,
+        `body larger than ${MAX_BODY_BYTES / 1024 / 1024} MB`,
+      );
     }
     chunks.push(chunk as Buffer);
   }
@@ -106,10 +114,7 @@ async function handleRound(
     }
     throw err;
   }
-  const reply = await pickReply(round, options.planner, {
-    maxPlans: options.maxPlans,
-    plansPerCheckpoint: options.plansPerCheckpoint,
-  });
+  const reply = await pickReply(round, options.planner, options.limits);
   const answer = { requestId: round.requestId ?? randomUUID(), reply };
   if (options.logRounds) {
     console.log(

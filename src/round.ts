@@ -9,13 +9,14 @@ import {
 } from "./context.ts";
 import {
   BadPlan,
+  chars,
   checkPlan,
   MAX_LABEL_CHARS,
   MAX_PROGRESS_CHARS,
   MAX_STEP_TEXT_CHARS,
 } from "./plan.ts";
 
-export type Report = {
+type Report = {
   outputs?: Record<string, unknown>;
   tooLarge?: Record<string, number>;
   halt?: {
@@ -36,7 +37,7 @@ export type ExchangeItem =
 
 // A short entry of an earlier request of the tab, its short fields first
 // (contract-protocol.md, History).
-export type HistoryEntry = {
+type HistoryEntry = {
   requestId: string;
   time: string;
   outcome: { type: string; text?: string };
@@ -67,7 +68,12 @@ export type Reply =
 // Planner); a planner that calls a provider cancels the call then.
 export type Planner = (round: Round, signal: AbortSignal) => Promise<Reply>;
 
+// The plan limit and the plans between two checkpoints (architecture.md,
+// Requests, Configuration).
+export type PlanLimits = { maxPlans: number; plansPerCheckpoint: number };
+
 export class BadRound extends Error {}
+class BadReply extends Error {}
 
 // The limits of the parts of a round (contract-protocol.md, Limits).
 const MAX_TEXT_CHARS = 10000;
@@ -81,25 +87,36 @@ const MAX_OPTION_CHARS = 50;
 const MAX_HISTORY = 20;
 const MAX_HISTORY_CHARS = 200;
 const OUTCOMES = ["done", "stop", "info", "cancelled", "error"];
+// The longest a planner may take for a round (architecture.md, Planner).
+const PLANNER_MS = 45_000;
+// The server's own stop after a planner failure or a failed check.
+const FAILED: Reply = { type: "stop", text: "Something went wrong." };
 
-// Characters are Unicode code points; bytes are the UTF-8 bytes of the JSON.
-function chars(value: string) {
-  return Array.from(value).length;
-}
-
+// Bytes are the UTF-8 bytes of the JSON; characters are counted by chars.
 function bytes(value: unknown) {
   return value === undefined ? 0 : Buffer.byteLength(JSON.stringify(value));
 }
 
-// The user's text, an answer or an added text.
-function checkText(value: unknown, path: string) {
+// A text of at most max characters: the user's text, an answer, an added
+// text, or a text of the history.
+function checkText(value: unknown, path: string, max = MAX_TEXT_CHARS) {
   if (typeof value !== "string") {
     throw new BadRound(`${path} must be a string`);
   }
-  if (chars(value) > MAX_TEXT_CHARS) {
-    throw new BadRound(`${path} is longer than ${MAX_TEXT_CHARS} characters`);
+  if (chars(value) > max) {
+    throw new BadRound(`${path} is longer than ${max} characters`);
   }
   return value;
+}
+
+// A time like 2026-10-28T15:20:00+01:00: ISO 8601 with an offset written as
+// numbers, never Z (contract-protocol.md, Request body).
+function isLocalTime(value: string) {
+  return (
+    /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2}(\.\d+)?)?[+-]\d{2}:\d{2}$/.test(
+      value,
+    ) && !Number.isNaN(Date.parse(value))
+  );
 }
 
 function isOptionalWhole(value: unknown) {
@@ -120,26 +137,26 @@ function checkReport(value: unknown, path: string): Report {
   ) {
     throw new BadRound(`${path}.tooLarge must map steps to sizes`);
   }
-  const f = value.halt;
-  if (f !== undefined) {
+  const halt = value.halt;
+  if (halt !== undefined) {
     if (
-      !isObject(f) ||
-      typeof f.code !== "string" ||
-      typeof f.message !== "string"
+      !isObject(halt) ||
+      typeof halt.code !== "string" ||
+      typeof halt.message !== "string"
     ) {
       throw new BadRound(`${path}.halt must have a code and a message`);
     }
     if (
-      !isOptionalWhole(f.step) ||
-      !isOptionalWhole(f.item) ||
-      !isOptionalWhole(f.do) ||
-      !isOptionalWhole(f.tooLarge)
+      !isOptionalWhole(halt.step) ||
+      !isOptionalWhole(halt.item) ||
+      !isOptionalWhole(halt.do) ||
+      !isOptionalWhole(halt.tooLarge)
     ) {
       throw new BadRound(
         `${path}.halt step, item, do and tooLarge must be numbers`,
       );
     }
-    if (chars(f.message) > MAX_MESSAGE_CHARS) {
+    if (chars(halt.message) > MAX_MESSAGE_CHARS) {
       throw new BadRound(
         `${path}.halt.message is longer than ${MAX_MESSAGE_CHARS} characters`,
       );
@@ -149,19 +166,26 @@ function checkReport(value: unknown, path: string): Report {
   // (contract-protocol.md, Report).
   const outputs = [
     ...Object.values(isObject(value.outputs) ? value.outputs : {}),
-    isObject(f) ? f.outputs : undefined,
+    isObject(halt) ? halt.outputs : undefined,
   ];
   if (
     outputs.reduce((sum: number, output) => sum + bytes(output), 0) >
     MAX_OUTPUTS_BYTES
   ) {
-    throw new BadRound(`${path} has included outputs larger than 16 KB`);
+    throw new BadRound(
+      `${path} has included outputs larger than ${MAX_OUTPUTS_BYTES / 1024} KB`,
+    );
   }
   return value as Report;
 }
 
 function checkItem(value: unknown, path: string): ExchangeItem {
-  if (isObject(value) && "plan" in value) {
+  if (!isObject(value)) {
+    throw new BadRound(
+      `${path} must be a plan with its report, a question or added text`,
+    );
+  }
+  if ("plan" in value) {
     if (!isObject(value.plan)) {
       throw new BadRound(`${path}.plan must be an object`);
     }
@@ -170,7 +194,7 @@ function checkItem(value: unknown, path: string): ExchangeItem {
       report: checkReport(value.report, `${path}.report`),
     };
   }
-  if (isObject(value) && "question" in value) {
+  if ("question" in value) {
     if (typeof value.question !== "string") {
       throw new BadRound(`${path} must have a question and an answer`);
     }
@@ -179,24 +203,12 @@ function checkItem(value: unknown, path: string): ExchangeItem {
       answer: checkText(value.answer, `${path}.answer`),
     };
   }
-  if (isObject(value) && "added" in value) {
+  if ("added" in value) {
     return { added: checkText(value.added, `${path}.added`) };
   }
   throw new BadRound(
     `${path} must be a plan with its report, a question or added text`,
   );
-}
-
-function checkHistoryText(value: unknown, path: string) {
-  if (typeof value !== "string") {
-    throw new BadRound(`${path} must be a string`);
-  }
-  if (chars(value) > MAX_HISTORY_CHARS) {
-    throw new BadRound(
-      `${path} is longer than ${MAX_HISTORY_CHARS} characters`,
-    );
-  }
-  return value;
 }
 
 // The history (contract-protocol.md, Request body, History).
@@ -233,21 +245,17 @@ function checkHistory(value: unknown): HistoryEntry[] {
         type: outcome.type,
         ...(outcome.text === undefined
           ? {}
-          : { text: checkHistoryText(outcome.text, `${path}.outcome.text`) }),
+          : {
+              text: checkText(
+                outcome.text,
+                `${path}.outcome.text`,
+                MAX_HISTORY_CHARS,
+              ),
+            }),
       },
-      text: checkHistoryText(entry.text, `${path}.text`),
+      text: checkText(entry.text, `${path}.text`, MAX_HISTORY_CHARS),
     };
   });
-}
-
-// A time like 2026-10-28T15:20:00+01:00: ISO 8601 with an offset written as
-// numbers, never Z (contract-protocol.md, Request body).
-function isLocalTime(value: string) {
-  return (
-    /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2}(\.\d+)?)?[+-]\d{2}:\d{2}$/.test(
-      value,
-    ) && !Number.isNaN(Date.parse(value))
-  );
 }
 
 // Checks a request body. Throws BadRound when it does not fit.
@@ -279,10 +287,10 @@ export function checkRound(body: unknown): Round {
     throw new BadRound("state must be an object");
   }
   if (bytes(body.state) > MAX_STATE_BYTES) {
-    throw new BadRound("state is larger than 16 KB");
+    throw new BadRound(`state is larger than ${MAX_STATE_BYTES / 1024} KB`);
   }
   if (bytes(body.context) > MAX_CONTEXT_BYTES) {
-    throw new BadRound("context is larger than 64 KB");
+    throw new BadRound(`context is larger than ${MAX_CONTEXT_BYTES / 1024} KB`);
   }
   let context: SiteContext;
   try {
@@ -308,8 +316,6 @@ export function checkRound(body: unknown): Round {
     exchange: body.exchange.map((item, i) => checkItem(item, `exchange[${i}]`)),
   };
 }
-
-class BadReply extends Error {}
 
 // Cuts a text over its limit, so the reply is still sent: its first
 // characters and "...", the whole within the limit (contract-protocol.md,
@@ -403,13 +409,6 @@ function checkReply(reply: unknown, context: SiteContext): Reply {
   return out as Reply;
 }
 
-// The longest a planner may take for a round (architecture.md, Planner).
-const PLANNER_MS = 45_000;
-
-// The plan limit and the plans between two checkpoints (architecture.md,
-// Requests, Configuration).
-export type PlanLimits = { maxPlans: number; plansPerCheckpoint: number };
-
 // The rules before the planner, then the planner, its reply check, the plan
 // limit and the checkpoint (architecture.md, Requests, Planner).
 export async function pickReply(
@@ -445,7 +444,7 @@ export async function pickReply(
     console.warn(
       `planner failed: ${err instanceof Error ? err.message : String(err)}`,
     );
-    return { type: "stop", text: "Something went wrong." };
+    return FAILED;
   } finally {
     clearTimeout(timer);
   }
@@ -456,7 +455,7 @@ export async function pickReply(
       throw err;
     }
     console.warn(`reply not sent: ${err.message}`);
-    return { type: "stop", text: "Something went wrong." };
+    return FAILED;
   }
   if (reply.type === "plan") {
     const plans = round.exchange.filter((item) => "plan" in item).length;

@@ -38,8 +38,10 @@ async function start(
   const server = createServer({
     auth: options.auth ?? { jwtSecret: SECRET },
     planner: options.planner ?? stubPlanner,
-    maxPlans: options.maxPlans ?? 10,
-    plansPerCheckpoint: options.plansPerCheckpoint ?? 10,
+    limits: {
+      maxPlans: options.maxPlans ?? 10,
+      plansPerCheckpoint: options.plansPerCheckpoint ?? 10,
+    },
     logRounds: options.logRounds,
   });
   server.listen(0);

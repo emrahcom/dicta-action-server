@@ -14,6 +14,15 @@ function fail(message: string): never {
   process.exit(1);
 }
 
+// A whole-number setting from 1 to max, or its fallback when it is not set.
+function wholeNumber(name: string, fallback: number, max: number) {
+  const value = Number(process.env[name] || fallback);
+  if (!Number.isInteger(value) || value < 1 || value > max) {
+    fail(`${name} must be a whole number from 1 to ${max}`);
+  }
+  return value;
+}
+
 const port = Number(process.env.PORT || 8741);
 
 let auth: AuthOptions;
@@ -35,22 +44,14 @@ if (!PLANNERS.includes(process.env.PLANNER ?? "")) {
   fail(`PLANNER must be one of: ${PLANNERS.join(", ")}`);
 }
 
-const maxPlans = Number(process.env.MAX_PLANS || 50);
-if (!Number.isInteger(maxPlans) || maxPlans < 1 || maxPlans > MAX_PLANS_LIMIT) {
-  fail(`MAX_PLANS must be a whole number from 1 to ${MAX_PLANS_LIMIT}`);
-}
-
-const plansPerCheckpoint = Number(process.env.PLANS_PER_CHECKPOINT || 10);
-if (
-  !Number.isInteger(plansPerCheckpoint) ||
-  plansPerCheckpoint < 1 ||
-  plansPerCheckpoint > PLANS_PER_CHECKPOINT_LIMIT
-) {
-  fail(
-    "PLANS_PER_CHECKPOINT must be a whole number from 1 to " +
-      PLANS_PER_CHECKPOINT_LIMIT,
-  );
-}
+const limits = {
+  maxPlans: wholeNumber("MAX_PLANS", 50, MAX_PLANS_LIMIT),
+  plansPerCheckpoint: wholeNumber(
+    "PLANS_PER_CHECKPOINT",
+    10,
+    PLANS_PER_CHECKPOINT_LIMIT,
+  ),
+};
 
 // A planner's own variables start with PLANNER_ and its name, so they do not
 // clash with other tools in the same shell (architecture.md, Configuration).
@@ -70,8 +71,7 @@ if (process.env.PLANNER === "claude") {
     apiKey,
     model,
     effort: effort as Effort,
-    maxPlans,
-    plansPerCheckpoint,
+    ...limits,
   });
   plannerLog = `planner claude, model ${model}, effort ${effort}`;
 }
@@ -87,8 +87,7 @@ if (logRounds) {
 const server = createServer({
   auth,
   planner,
-  maxPlans,
-  plansPerCheckpoint,
+  limits,
   logRounds,
 });
 

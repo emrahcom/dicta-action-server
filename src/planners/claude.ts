@@ -2,17 +2,22 @@
 // (architecture-planner.md, architecture-planner-claude.md).
 
 import Anthropic from "@anthropic-ai/sdk";
-import type { ExchangeItem, Planner, Reply, Round } from "../round.ts";
+import { isObject } from "../context.ts";
+import type {
+  ExchangeItem,
+  PlanLimits,
+  Planner,
+  Reply,
+  Round,
+} from "../round.ts";
 
 export const EFFORTS = ["low", "medium", "high", "xhigh", "max"] as const;
 export type Effort = (typeof EFFORTS)[number];
 
-export type ClaudeOptions = {
+export type ClaudeOptions = PlanLimits & {
   apiKey: string;
   model: string;
   effort: Effort;
-  maxPlans: number;
-  plansPerCheckpoint: number;
   // For tests: answers the SDK's HTTP calls instead of the API.
   fetch?: typeof fetch;
 };
@@ -216,10 +221,6 @@ export function request(round: Round, options: ClaudeOptions) {
   } satisfies Anthropic.MessageCreateParamsNonStreaming;
 }
 
-function isObject(value: unknown) {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
-}
-
 type Call = { args?: unknown };
 type Step = Call & { do?: Call[] };
 
@@ -251,7 +252,7 @@ function parseArgs(reply: Record<string, unknown>) {
 // The reply in the answer, one JSON object by the reply schema, with its args
 // parsed. Anything else is a planner failure (architecture-planner.md, Reply
 // format).
-export function readReply(message: Anthropic.Message): Reply {
+function readReply(message: Anthropic.Message): Reply {
   if (message.stop_reason !== "end_turn") {
     throw new Error(`the answer ended with ${message.stop_reason}`);
   }
@@ -268,7 +269,7 @@ export function readReply(message: Anthropic.Message): Reply {
   if (!isObject(reply)) {
     throw new Error("the answer is not one JSON object");
   }
-  parseArgs(reply as Record<string, unknown>);
+  parseArgs(reply);
   // The server checks the reply like any other (architecture.md, Planner).
   return reply as Reply;
 }
