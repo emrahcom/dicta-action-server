@@ -150,7 +150,7 @@ for (const [plans, before] of [
   });
 }
 
-test("the instructions hold the rules on scope, outputs, progress and confirmation", () => {
+test("the instructions hold the rules on scope, outputs, limits, progress and confirmation", () => {
   for (const rule of [
     "- Change only what the request names. When its scope is unclear, ask.",
     "- Use the capability made for the action, not other capabilities that imitate it.",
@@ -161,6 +161,7 @@ test("the instructions hold the rules on scope, outputs, progress and confirmati
     /"progress": [^\n]*at most 300 characters/,
     /Do not ask the user to confirm a step yourself; send the plan\./,
     /- "progress": [^\n]*a question whether to go on that Continue answers with yes/,
+    /the included outputs of a plan are at most 16 KB together/,
   ]) {
     if (typeof rule === "string") {
       assert.ok(INSTRUCTIONS.includes(rule), rule);

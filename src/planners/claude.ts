@@ -76,7 +76,7 @@ References: a string in "args" or "forEach" that starts with "$" is replaced by 
 After each plan the browser sends a report:
 
 - "outputs": the outputs of the succeeded steps that have "includeOutput", by step number. A "forEach" output has one entry per item: the outputs of its calls.
-- "tooLarge": steps whose output did not fit, with its size in bytes. You cannot see those outputs.
+- "tooLarge": steps whose output did not fit, with its size in bytes; the included outputs of a plan are at most 16 KB together. You cannot see those outputs.
 - "halt": only when the plan stopped early: "step", "code", "message", and for a "forEach", "item" and "do" (from 0). The steps before it succeeded. Codes: "capability" or the capability's own code (a call failed), "reference" (a reference had no fitting value), "limit" (a loop over more than 100 items), "invalid" (the plan failed the browser's check and nothing ran), "interrupted" (the user added text, which follows the report), "navigated" (a page load started, and the request goes on in the new page).
 
 # Rules

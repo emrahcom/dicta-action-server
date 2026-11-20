@@ -364,8 +364,13 @@ export async function pickReply(
     );
     return FAILED;
   }
+  const plans = countPlans(round.exchange);
   try {
-    reply = checkReply(reply, round.context);
+    reply = checkReply(
+      reply,
+      round.context,
+      isCheckpoint(plans, limits.plansPerCheckpoint),
+    );
   } catch (err) {
     if (!(err instanceof BadReply || err instanceof BadPlan)) {
       throw err;
@@ -373,14 +378,8 @@ export async function pickReply(
     console.warn(`reply not sent: ${err.message}`);
     return FAILED;
   }
-  if (reply.type === "plan") {
-    const plans = countPlans(round.exchange);
-    if (plans >= limits.maxPlans) {
-      return { type: "stop", text: "This took too many steps." };
-    }
-    if (isCheckpoint(plans, limits.plansPerCheckpoint)) {
-      return { ...reply, plan: { ...reply.plan, checkpoint: true } };
-    }
+  if (reply.type === "plan" && plans >= limits.maxPlans) {
+    return { type: "stop", text: "This took too many steps." };
   }
   return reply;
 }

@@ -91,23 +91,27 @@ function isReference(value: unknown): value is string {
 // this one, and $item inside the do of a forEach.
 type Scope = { earlierSteps: number; inForEach: boolean };
 
+// The messages name where the reference is, never its text: a failed plan is
+// logged, and the text can hold the user's data (architecture.md, Requests).
 function checkReference(ref: string, scope: Scope, path: string) {
   const [head = "", ...rest] = ref.slice(1).split(".");
   if (rest.some((part) => part === "")) {
-    throw new BadPlan(`${path}: ${ref} has an empty path part`);
+    throw new BadPlan(`${path}: the reference has an empty path part`);
   }
   if (/^\d+$/.test(head)) {
     const step = Number(head);
     if (step < 1 || step > scope.earlierSteps) {
-      throw new BadPlan(`${path}: ${ref} does not point to an earlier step`);
+      throw new BadPlan(
+        `${path}: the reference does not point to an earlier step`,
+      );
     }
     return;
   }
   if (head !== "item") {
-    throw new BadPlan(`${path}: ${ref} is not a step number or $item`);
+    throw new BadPlan(`${path}: the reference is not a step number or $item`);
   }
   if (!scope.inForEach) {
-    throw new BadPlan(`${path}: ${ref} is used outside a forEach`);
+    throw new BadPlan(`${path}: the reference is used outside a forEach`);
   }
 }
 

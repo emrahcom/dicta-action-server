@@ -33,15 +33,24 @@ function checkOptions(value: unknown) {
 
 // Checks a reply of the planner and cuts its texts to their limits. Throws
 // BadReply or BadPlan with the reason.
-export function checkReply(reply: unknown, context: SiteContext): Reply {
+export function checkReply(
+  reply: unknown,
+  context: SiteContext,
+  checkpoint: boolean,
+): Reply {
   if (!isObject(reply)) {
     throw new BadReply("the reply must be an object");
   }
   const out = { ...reply };
   switch (reply.type) {
     case "plan":
+      // A checkpoint is checked with its mark, as it is sent
+      // (contract-plan.md, Checkpoint and Limits).
       if (isObject(reply.plan)) {
-        out.plan = cutPlanTexts(reply.plan);
+        out.plan = {
+          ...cutPlanTexts(reply.plan),
+          ...(checkpoint ? { checkpoint: true } : {}),
+        };
       }
       checkPlan(out.plan, context);
       break;

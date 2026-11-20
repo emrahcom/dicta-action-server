@@ -249,6 +249,54 @@ test("questions do not count as plans for the limit", async (t) => {
   assert.equal(response.reply.type, "plan");
 });
 
+// A plan of exactly 16 KB: one create step whose title fills it up.
+function planOf16Kb() {
+  const plan = { steps: [{ call: "tasks.create", args: { title: "" } }] };
+  const room = 16 * 1024 - Buffer.byteLength(JSON.stringify(plan));
+  plan.steps[0]!.args.title = "x".repeat(room);
+  return plan;
+}
+
+test("a checkpoint plan is checked with its mark", async (t) => {
+  const warn = t.mock.method(console, "warn", () => {});
+  const plan = { type: "plan" as const, plan: planOf16Kb() };
+  const limits = { maxPlans: 50, plansPerCheckpoint: 10 };
+  const after = (plans: number) =>
+    pickReply(
+      checkRound(
+        body(
+          [],
+          Array.from({ length: plans }, () => PLANNED),
+        ),
+      ),
+      async () => plan,
+      limits,
+    );
+
+  // The 16 KB plan fits as the 10th plan, but not as the 11th, with its mark.
+  assert.equal((await after(9)).type, "plan");
+  assert.equal((await after(10)).type, "stop");
+  assert.match(String(warn.mock.calls[0]?.arguments[0]), /at most 16 KB/);
+});
+
+test("a bad reference is logged without its text", async (t) => {
+  const base = await start(t);
+  const warn = t.mock.method(console, "warn", () => {});
+  const bad = {
+    type: "plan",
+    plan: {
+      steps: [{ call: "tasks.create", args: { title: "$100 for Jane Doe" } }],
+    },
+  };
+
+  const { body: response } = await post(base, body([bad]));
+
+  assert.equal(response.reply.type, "stop");
+  const logged = String(warn.mock.calls[0]?.arguments[0]);
+  assert.match(logged, /args\.title: the reference/);
+  assert.doesNotMatch(logged, /Jane Doe/);
+});
+
 test("a plan that fails the check gets a stop", async (t) => {
   const base = await start(t);
   const warn = t.mock.method(console, "warn", () => {});

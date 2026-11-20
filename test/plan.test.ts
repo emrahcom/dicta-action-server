@@ -331,27 +331,27 @@ const INVALID: [string, unknown, RegExp][] = [
   [
     "a reference to the same step",
     { steps: [create({ title: "$1" })] },
-    /\$1 does not point to an earlier step/,
+    /args\.title: the reference does not point to an earlier step/,
   ],
   [
     "a reference to a later step",
     { steps: [list, create({ title: "$3" })] },
-    /\$3 does not point/,
+    /the reference does not point/,
   ],
   [
     "a reference to step 0",
     { steps: [list, create({ title: "$0" })] },
-    /\$0 does not point/,
+    /the reference does not point/,
   ],
   [
     "$item outside a forEach",
     { steps: [list, create({ title: "$item.title" })] },
-    /\$item\.title is used outside a forEach/,
+    /the reference is used outside a forEach/,
   ],
   [
     "a reference that is neither a step nor $item",
     { steps: [list, create({ title: "$task.title" })] },
-    /\$task\.title is not a step number or \$item/,
+    /the reference is not a step number or \$item/,
   ],
   [
     "a reference with an empty path part",
@@ -361,7 +361,7 @@ const INVALID: [string, unknown, RegExp][] = [
   [
     "a forEach over a later step",
     { steps: [{ forEach: "$1", do: [list] }] },
-    /\$1 does not point/,
+    /forEach: the reference does not point/,
   ],
   [
     "a forEach over an item name",
