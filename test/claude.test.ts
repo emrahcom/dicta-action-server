@@ -1,5 +1,4 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
 import { test, type TestContext } from "node:test";
 import {
   claudePlanner,
@@ -9,30 +8,32 @@ import {
   callParams,
 } from "../src/planners/claude.ts";
 import { checkRound, pickReply, type Round } from "../src/round.ts";
+import { CONTEXT, LIMITS, PLAN, PLANNED, roundBody, TIME } from "./helpers.ts";
 
-const CONTEXT = JSON.parse(
-  readFileSync(new URL("fixtures/context.json", import.meta.url), "utf8"),
-);
 const OPTIONS: ClaudeOptions = {
   apiKey: "test-key",
   model: "claude-opus-5-5",
   effort: "medium",
-  maxPlans: 10,
-  plansPerCheckpoint: 10,
+  ...LIMITS,
 };
-const LIMITS = { maxPlans: 10, plansPerCheckpoint: 10 };
-const PLAN = { steps: [{ call: "tasks.list", args: {} }] };
 
-function round(exchange: unknown[], history?: unknown[]): Round {
-  return checkRound({
-    tabId: "tab-1",
-    text: "show my tasks",
-    time: "2026-11-03T17:00:00+01:00",
-    state: { page: "list" },
-    context: CONTEXT,
-    history: history ?? [],
-    exchange,
-  });
+function round(exchange: unknown[], history: unknown[] = []): Round {
+  return checkRound(roundBody({ exchange, history }));
+}
+
+type Params = ReturnType<typeof callParams>;
+
+// The blocks of the user message.
+function userBlocks(params: Params) {
+  return params.messages[0]!.content as {
+    text: string;
+    cache_control?: unknown;
+  }[];
+}
+
+// The last block of the user message: time, state and plans left.
+function now(params: Params) {
+  return userBlocks(params).at(-1)!.text;
 }
 
 const HISTORY = [
@@ -104,28 +105,15 @@ test("the system prompt is the instructions, then the site context with the firs
   ]);
 });
 
-test("the instructions hold the scope rules", () => {
-  for (const rule of [
-    "- Change only what the request names. When its scope is unclear, ask.",
-    "- Use the capability made for the action, not other capabilities that imitate it.",
-    "- Never ask the user to do what a capability can do.",
-  ]) {
-    assert.ok(INSTRUCTIONS.includes(rule), rule);
-  }
-});
-
 test("the user message has the request and the exchange, the second cache point, then time, state and plans left", () => {
   const exchange = [
-    { plan: PLAN, report: {} },
+    PLANNED,
     { question: "Which one?", answer: "The first" },
     { added: "and the closed ones" },
   ];
-  const { messages } = callParams(round(exchange), OPTIONS);
-  assert.equal(messages.length, 1);
-  const blocks = messages[0]!.content as {
-    text: string;
-    cache_control?: unknown;
-  }[];
+  const params = callParams(round(exchange), OPTIONS);
+  assert.equal(params.messages.length, 1);
+  const blocks = userBlocks(params);
   assert.deepEqual(
     blocks.map((block) => block.text.split("\n")[0]),
     [
@@ -133,16 +121,17 @@ test("the user message has the request and the exchange, the second cache point,
       "Your plan and its report:",
       "Your question and the user's answer:",
       "Text the user added:",
-      "The user's time: 2026-11-03T17:00:00+01:00",
+      `The user's time: ${TIME}`,
     ],
   );
   assert.deepEqual(
     blocks.map((block) => block.cache_control),
     [undefined, undefined, undefined, { type: "ephemeral" }, undefined],
   );
-  assert.match(blocks[4]!.text, /The page's state now:\n\{"page":"list"\}/);
-  assert.match(blocks[4]!.text, /Plans left before the user is asked: 9\n/);
-  assert.match(blocks[4]!.text, /Plans left in the request: 9$/);
+  const text = now(params);
+  assert.match(text, /The page's state now:\n\{"page":"tasks"\}/);
+  assert.match(text, /Plans left before the user is asked: 9\n/);
+  assert.match(text, /Plans left in the request: 9$/);
 });
 
 for (const [plans, before] of [
@@ -153,34 +142,32 @@ for (const [plans, before] of [
   [20, 0],
 ] as const) {
   test(`after ${plans} plans, ${before} are left before the user is asked`, () => {
-    const item = { plan: PLAN, report: {} };
-    const exchange = Array.from({ length: plans }, () => item);
+    const exchange = Array.from({ length: plans }, () => PLANNED);
     const options = { ...OPTIONS, maxPlans: 50 };
-    const { messages } = callParams(round(exchange), options);
-    const blocks = messages[0]!.content as { text: string }[];
-    const now = blocks.at(-1)!.text;
-    assert.match(now, new RegExp(`asked: ${before}\\n`));
-    assert.match(now, new RegExp(`request: ${50 - plans}(\\n|$)`));
+    const text = now(callParams(round(exchange), options));
+    assert.match(text, new RegExp(`asked: ${before}\\n`));
+    assert.match(text, new RegExp(`request: ${50 - plans}(\\n|$)`));
   });
 }
 
-test("the instructions hold the rules from the spec review", () => {
+test("the instructions hold the rules on scope, outputs, progress and confirmation", () => {
   for (const rule of [
+    "- Change only what the request names. When its scope is unclear, ask.",
+    "- Use the capability made for the action, not other capabilities that imitate it.",
+    "- Never ask the user to do what a capability can do.",
     /In plans before the last two, and in every plan of a request that "dicta.getHistory" returns, included outputs over 512 bytes are in "tooLarge"/,
     /Use it in the next plan: an output over 512 bytes/,
     /When plans are left in the request but none before the user is asked/,
     /"progress": [^\n]*at most 300 characters/,
     /Do not ask the user to confirm a step yourself; send the plan\./,
-  ]) {
-    assert.match(INSTRUCTIONS, rule);
-  }
-});
-
-test("the instructions ask for the question in the progress", () => {
-  assert.match(
-    INSTRUCTIONS,
     /- "progress": [^\n]*a question whether to go on that Continue answers with yes/,
-  );
+  ]) {
+    if (typeof rule === "string") {
+      assert.ok(INSTRUCTIONS.includes(rule), rule);
+    } else {
+      assert.match(INSTRUCTIONS, rule);
+    }
+  }
 });
 
 for (const [plans, maxPlans, shown] of [
@@ -192,12 +179,9 @@ for (const [plans, maxPlans, shown] of [
   [10, 10, false],
 ] as const) {
   test(`after ${plans} of ${maxPlans} plans the checkpoint line is ${shown ? "there" : "not there"}`, () => {
-    const item = { plan: PLAN, report: {} };
-    const exchange = Array.from({ length: plans }, () => item);
-    const { messages } = callParams(round(exchange), { ...OPTIONS, maxPlans });
-    const blocks = messages[0]!.content as { text: string }[];
-    const now = blocks.at(-1)!.text;
-    assert.equal(now.includes("If you send a plan now"), shown);
+    const exchange = Array.from({ length: plans }, () => PLANNED);
+    const text = now(callParams(round(exchange), { ...OPTIONS, maxPlans }));
+    assert.equal(text.includes("If you send a plan now"), shown);
   });
 }
 
@@ -214,12 +198,7 @@ test("the reply schema has progress but no checkpoint", () => {
 });
 
 test("the history comes first in the user message, oldest first, as JSON", () => {
-  const exchange = [{ plan: PLAN, report: {} }];
-  const { messages } = callParams(round(exchange, HISTORY), OPTIONS);
-  const blocks = messages[0]!.content as {
-    text: string;
-    cache_control?: unknown;
-  }[];
+  const blocks = userBlocks(callParams(round([PLANNED], HISTORY), OPTIONS));
   assert.equal(
     blocks[0]!.text,
     `Earlier requests of this browser tab, oldest first:\n${JSON.stringify(HISTORY)}`,
@@ -230,7 +209,7 @@ test("the history comes first in the user message, oldest first, as JSON", () =>
       "Earlier requests of this browser tab, oldest first:",
       "The user's request:",
       "Your plan and its report:",
-      "The user's time: 2026-11-03T17:00:00+01:00",
+      `The user's time: ${TIME}`,
     ],
   );
   assert.deepEqual(
@@ -240,22 +219,17 @@ test("the history comes first in the user message, oldest first, as JSON", () =>
 });
 
 test("the prompt does not hold the tab id", () => {
-  const params = callParams(
-    round([{ plan: PLAN, report: {} }], HISTORY),
-    OPTIONS,
-  );
+  const params = callParams(round([PLANNED], HISTORY), OPTIONS);
   assert.doesNotMatch(JSON.stringify(params), /tab-1/);
 });
 
 test("an empty history has no block", () => {
-  const { messages } = callParams(round([], []), OPTIONS);
-  const blocks = messages[0]!.content as { text: string }[];
+  const blocks = userBlocks(callParams(round([], []), OPTIONS));
   assert.match(blocks[0]!.text, /^The user's request:/);
 });
 
 test("with a history and no exchange the second cache point is on the request", () => {
-  const { messages } = callParams(round([], HISTORY), OPTIONS);
-  const blocks = messages[0]!.content as { cache_control?: unknown }[];
+  const blocks = userBlocks(callParams(round([], HISTORY), OPTIONS));
   assert.deepEqual(
     blocks.map((block) => block.cache_control),
     [undefined, { type: "ephemeral" }, undefined],
@@ -263,20 +237,16 @@ test("with a history and no exchange the second cache point is on the request", 
 });
 
 test("without an exchange the second cache point is on the request", () => {
-  const { messages } = callParams(round([]), OPTIONS);
-  const blocks = messages[0]!.content as { cache_control?: unknown }[];
+  const blocks = userBlocks(callParams(round([]), OPTIONS));
   assert.deepEqual(blocks[0]!.cache_control, { type: "ephemeral" });
 });
 
 test("the cached part of the prompt is written the same way in every round", () => {
   const first = callParams(round([], HISTORY), OPTIONS);
-  const later = callParams(
-    round([{ plan: PLAN, report: {} }], HISTORY),
-    OPTIONS,
-  );
+  const later = callParams(round([PLANNED], HISTORY), OPTIONS);
   assert.deepEqual(later.system, first.system);
-  const texts = (r: typeof first) =>
-    (r.messages[0]!.content as { text: string }[])
+  const texts = (params: Params) =>
+    userBlocks(params)
       .slice(0, 2)
       .map((block) => block.text);
   assert.deepEqual(texts(later), texts(first));
@@ -303,7 +273,7 @@ test("the call forces the reply schema", () => {
 for (const [answered, reply] of [
   [
     { type: "plan", plan: { steps: [{ call: "tasks.list", args: "{}" }] } },
-    { type: "plan", plan: PLAN },
+    PLAN,
   ],
   [
     { type: "question", text: "Which one?", options: ["A", "B"] },

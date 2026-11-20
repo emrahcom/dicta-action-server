@@ -1,33 +1,18 @@
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
 import { once } from "node:events";
-import { readFileSync } from "node:fs";
 import { test } from "node:test";
+import { roundBody, SECRET } from "./helpers.ts";
 
-const SECRET = "s".repeat(32);
-const CONTEXT = JSON.parse(
-  readFileSync(new URL("fixtures/context.json", import.meta.url), "utf8"),
-);
 const VALID_ENV = {
   JWT_SECRET: SECRET,
   PLANNER: "stub",
 };
 
+// Only PATH comes from the shell, so its settings cannot change the results.
 function startIndex(env: Record<string, string>) {
-  const {
-    PORT,
-    JWT_SECRET,
-    ALLOW_UNAUTHENTICATED,
-    PLANNER,
-    MAX_PLANS,
-    LOG_ROUNDS,
-    ANTHROPIC_API_KEY,
-    PLANNER_CLAUDE_MODEL,
-    PLANNER_CLAUDE_EFFORT,
-    ...rest
-  } = process.env;
   return spawn("node", ["src/index.ts"], {
-    env: { ...rest, PORT: "0", ...env },
+    env: { PATH: process.env.PATH ?? "", PORT: "0", ...env },
   });
 }
 
@@ -88,15 +73,7 @@ test("starts, logs one line and replies to rounds", async (t) => {
     `http://localhost:${server.port}/dicta-action/v1/round`,
     {
       method: "POST",
-      body: JSON.stringify({
-        tabId: "tab-1",
-        text: "[]",
-        time: "2026-10-28T15:20:00+01:00",
-        state: {},
-        context: CONTEXT,
-        history: [],
-        exchange: [],
-      }),
+      body: JSON.stringify(roundBody({ text: "[]" })),
     },
   );
   assert.equal(response.status, 200);

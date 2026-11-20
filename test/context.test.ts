@@ -1,16 +1,11 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
 import { test } from "node:test";
 import { checkContext } from "../src/context.ts";
-
-const VALID = readFileSync(
-  new URL("fixtures/context.json", import.meta.url),
-  "utf8",
-);
+import { CONTEXT } from "./helpers.ts";
 
 // A valid context, changed by `change`.
 function context(change: (c: any) => void = () => {}) {
-  const c = JSON.parse(VALID);
+  const c = structuredClone(CONTEXT);
   change(c);
   return c;
 }

@@ -1,13 +1,11 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
 import { test } from "node:test";
 import { checkContext } from "../src/context.ts";
 import { checkPlan } from "../src/plan.ts";
+import { CONTEXT as FIXTURE } from "./helpers.ts";
 
 const CONTEXT = checkContext({
-  ...JSON.parse(
-    readFileSync(new URL("fixtures/context.json", import.meta.url), "utf8"),
-  ),
+  ...FIXTURE,
   capabilities: [
     {
       name: "tasks.list",

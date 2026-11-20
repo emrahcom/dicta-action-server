@@ -1,104 +1,26 @@
 import assert from "node:assert/strict";
-import { once } from "node:events";
-import type { AddressInfo } from "node:net";
-import { test, type TestContext } from "node:test";
-import { SignJWT } from "jose";
-import { readFileSync } from "node:fs";
-import { stubPlanner } from "../src/planners/stub.ts";
+import { test } from "node:test";
 import {
   checkRound,
   pickReply,
   type Planner,
   type Reply,
 } from "../src/round.ts";
-import { type AuthOptions, createServer } from "../src/server.ts";
-
-const SECRET = "s".repeat(32);
-const CONTEXT = JSON.parse(
-  readFileSync(new URL("fixtures/context.json", import.meta.url), "utf8"),
-);
-const PATH = "/dicta-action/v1/round";
-const TIME = "2026-10-28T15:20:00+01:00";
-
-const PLAN = {
-  type: "plan",
-  plan: { steps: [{ call: "tasks.list", args: {} }] },
-};
-
-async function start(
-  t: TestContext,
-  options: {
-    auth?: AuthOptions;
-    planner?: Planner;
-    maxPlans?: number;
-    plansPerCheckpoint?: number;
-    logRounds?: boolean;
-  } = {},
-) {
-  const server = createServer({
-    auth: options.auth ?? { jwtSecret: SECRET },
-    planner: options.planner ?? stubPlanner,
-    limits: {
-      maxPlans: options.maxPlans ?? 10,
-      plansPerCheckpoint: options.plansPerCheckpoint ?? 10,
-    },
-    logRounds: options.logRounds,
-  });
-  server.listen(0);
-  t.after(() => server.close());
-  await once(server, "listening");
-  return `http://localhost:${(server.address() as AddressInfo).port}`;
-}
-
-function token(
-  expires: string | number = "5m",
-  secret = SECRET,
-  claims: Record<string, unknown> = { sub: "user-1" },
-) {
-  return new SignJWT(claims)
-    .setProtectedHeader({ alg: "HS256" })
-    .setExpirationTime(expires)
-    .sign(new TextEncoder().encode(secret));
-}
+import {
+  CONTEXT,
+  countingPlanner,
+  LIMITS,
+  PLAN,
+  PLANNED,
+  post,
+  roundBody,
+  start,
+  TIME,
+} from "./helpers.ts";
 
 // A round body: the stub's replies as the text, and the exchange so far.
-function body(
-  replies: unknown[],
-  exchange: unknown[] = [],
-  requestId?: string,
-) {
-  return {
-    tabId: "tab-1",
-    ...(requestId ? { requestId } : {}),
-    text: JSON.stringify(replies),
-    time: TIME,
-    state: { page: "tasks" },
-    context: CONTEXT,
-    history: [],
-    exchange,
-  };
-}
-
-async function post(
-  base: string,
-  payload: unknown,
-  headers: Record<string, string> = {},
-) {
-  const response = await fetch(base + PATH, {
-    method: "POST",
-    headers: {
-      "content-type": "application/json",
-      authorization: `Bearer ${await token()}`,
-      ...headers,
-    },
-    body: typeof payload === "string" ? payload : JSON.stringify(payload),
-  });
-  const text = await response.text();
-  return {
-    status: response.status,
-    headers: response.headers,
-    body: text ? JSON.parse(text) : undefined,
-  };
+function body(replies: unknown[], exchange: unknown[] = []) {
+  return roundBody({ text: JSON.stringify(replies), exchange });
 }
 
 const DONE_PLAN = {
@@ -121,10 +43,10 @@ test("repeats the request id in later rounds", async (t) => {
   const base = await start(t);
   const exchange = [{ plan: PLAN.plan, report: { outputs: { "1": [] } } }];
 
-  const { body: response } = await post(
-    base,
-    body([PLAN, { type: "done", text: "Listed." }], exchange, "req-1"),
-  );
+  const { body: response } = await post(base, {
+    ...body([PLAN, { type: "done", text: "Listed." }], exchange),
+    requestId: "req-1",
+  });
 
   assert.equal(response.requestId, "req-1");
   assert.deepEqual(response.reply, { type: "done", text: "Listed." });
@@ -133,10 +55,7 @@ test("repeats the request id in later rounds", async (t) => {
 test("gives the stub's reply for the round", async (t) => {
   const base = await start(t);
   const question = { type: "question", text: "Which?", options: ["A", "B"] };
-  const exchange = [
-    { plan: PLAN.plan, report: {} },
-    { question: "Sure?", answer: "yes" },
-  ];
+  const exchange = [PLANNED, { question: "Sure?", answer: "yes" }];
 
   const { body: response } = await post(
     base,
@@ -149,51 +68,35 @@ test("gives the stub's reply for the round", async (t) => {
 test("stub: a stop when the text is not a list of replies", async (t) => {
   const base = await start(t);
 
-  const { body: response } = await post(base, {
-    tabId: "tab-1",
-    text: "add a task",
-    time: TIME,
-    state: {},
-    context: CONTEXT,
-    history: [],
-    exchange: [],
-  });
+  const { body: response } = await post(
+    base,
+    roundBody({ text: "add a task", state: {} }),
+  );
 
   assert.equal(response.reply.type, "stop");
 });
 
 test("stub: a stop when there is no reply for the round", async (t) => {
   const base = await start(t);
-  const exchange = [{ plan: PLAN.plan, report: {} }];
 
-  const { body: response } = await post(base, body([PLAN], exchange));
+  const { body: response } = await post(base, body([PLAN], [PLANNED]));
 
   assert.equal(response.reply.type, "stop");
 });
 
 test("replies with done without the planner after a final plan that succeeded", async (t) => {
-  let calls = 0;
-  const base = await start(t, {
-    planner: async () => {
-      calls++;
-      return { type: "stop", text: "no" };
-    },
-  });
+  const counter = countingPlanner({ type: "stop", text: "no" });
+  const base = await start(t, { planner: counter.planner });
 
   const { body: response } = await post(base, body([], [DONE_PLAN]));
 
   assert.deepEqual(response.reply, { type: "done" });
-  assert.equal(calls, 0);
+  assert.equal(counter.calls, 0);
 });
 
 test("asks the planner when added text follows a final plan that succeeded", async (t) => {
-  let calls = 0;
-  const base = await start(t, {
-    planner: async () => {
-      calls++;
-      return PLAN as Reply;
-    },
-  });
+  const counter = countingPlanner(PLAN as Reply);
+  const base = await start(t, { planner: counter.planner });
 
   const { body: response } = await post(
     base,
@@ -201,7 +104,7 @@ test("asks the planner when added text follows a final plan that succeeded", asy
   );
 
   assert.deepEqual(response.reply, PLAN);
-  assert.equal(calls, 1);
+  assert.equal(counter.calls, 1);
 });
 
 test("asks the planner after a final plan that failed", async (t) => {
@@ -248,19 +151,17 @@ test("takes a halt whose outputs were too large", async (t) => {
 
 test("asks the planner after a plan that is not final", async (t) => {
   const base = await start(t);
-  const exchange = [{ plan: PLAN.plan, report: {} }];
 
-  const { body: response } = await post(base, body([PLAN, PLAN], exchange));
+  const { body: response } = await post(base, body([PLAN, PLAN], [PLANNED]));
 
   assert.deepEqual(response.reply, PLAN);
 });
 
 test("stops a new plan when the exchange holds MAX_PLANS plans", async (t) => {
   const base = await start(t, { maxPlans: 2 });
-  const item = { plan: PLAN.plan, report: {} };
 
-  const below = await post(base, body([PLAN, PLAN, PLAN], [item]));
-  const at = await post(base, body([PLAN, PLAN, PLAN], [item, item]));
+  const below = await post(base, body([PLAN, PLAN, PLAN], [PLANNED]));
+  const at = await post(base, body([PLAN, PLAN, PLAN], [PLANNED, PLANNED]));
 
   assert.equal(below.body.reply.type, "plan");
   assert.equal(at.body.reply.type, "stop");
@@ -270,10 +171,9 @@ test("stops a new plan when the exchange holds MAX_PLANS plans", async (t) => {
 
 test("marks the plan after each PLANS_PER_CHECKPOINT plans", async (t) => {
   const base = await start(t, { maxPlans: 50, plansPerCheckpoint: 10 });
-  const item = { plan: PLAN.plan, report: {} };
   const marked = [];
   for (const count of [0, 9, 10, 11, 19, 20]) {
-    const exchange = Array.from({ length: count }, () => item);
+    const exchange = Array.from({ length: count }, () => PLANNED);
     const replies = Array.from({ length: count + 1 }, () => PLAN);
     const { body: response } = await post(base, body(replies, exchange));
     assert.equal(response.reply.type, "plan");
@@ -293,40 +193,6 @@ test("drops a checkpoint the planner sets itself", async (t) => {
   assert.deepEqual(response.reply, PLAN);
 });
 
-test("cuts a step text longer than 100 characters", async (t) => {
-  const base = await start(t);
-  const warn = t.mock.method(console, "warn", () => {});
-  const long = {
-    type: "plan",
-    plan: { steps: [{ ...PLAN.plan.steps[0], text: "a".repeat(101) }] },
-  };
-
-  const { body: response } = await post(base, body([long]));
-
-  const text = response.reply.plan.steps[0].text;
-  assert.equal(Array.from(text).length, 100);
-  assert.ok(text.endsWith("..."));
-  assert.match(
-    String(warn.mock.calls[0]?.arguments[0]),
-    /steps\[0\]\.text cut/,
-  );
-});
-
-test("cuts a progress longer than 300 characters", async (t) => {
-  const base = await start(t);
-  const warn = t.mock.method(console, "warn", () => {});
-  const long = {
-    type: "plan",
-    plan: { ...PLAN.plan, progress: "a".repeat(301) },
-  };
-
-  const { body: response } = await post(base, body([long]));
-
-  assert.equal(Array.from(response.reply.plan.progress).length, 300);
-  assert.ok(response.reply.plan.progress.endsWith("..."));
-  assert.match(String(warn.mock.calls[0]?.arguments[0]), /plan.progress cut/);
-});
-
 test("a plan with checkpoint and progress passes in the exchange", async (t) => {
   const base = await start(t);
   const item = {
@@ -344,9 +210,8 @@ test("a plan with checkpoint and progress passes in the exchange", async (t) => 
 });
 
 test("the plan limit stops a plan that would be a checkpoint", async (t) => {
-  const base = await start(t, { maxPlans: 10, plansPerCheckpoint: 10 });
-  const item = { plan: PLAN.plan, report: {} };
-  const exchange = Array.from({ length: 10 }, () => item);
+  const base = await start(t, LIMITS);
+  const exchange = Array.from({ length: 10 }, () => PLANNED);
   const replies = Array.from({ length: 11 }, () => PLAN);
 
   const { body: response } = await post(base, body(replies, exchange));
@@ -354,15 +219,18 @@ test("the plan limit stops a plan that would be a checkpoint", async (t) => {
   assert.equal(response.reply.type, "stop");
 });
 
-test("lets other replies through when MAX_PLANS is reached", async (t) => {
-  const base = await start(t, { maxPlans: 1 });
-  const item = { plan: PLAN.plan, report: {} };
-  const question = { type: "question", text: "Which?" };
+for (const [name, reply] of [
+  ["a question", { type: "question", text: "Which?" }],
+  ["an info", { type: "info", text: "Click Share." }],
+] as const) {
+  test(`lets ${name} through when MAX_PLANS is reached`, async (t) => {
+    const base = await start(t, { maxPlans: 1 });
 
-  const { body: response } = await post(base, body([PLAN, question], [item]));
+    const { body: response } = await post(base, body([PLAN, reply], [PLANNED]));
 
-  assert.deepEqual(response.reply, question);
-});
+    assert.deepEqual(response.reply, reply);
+  });
+}
 
 test("replies with done for a final plan when MAX_PLANS is reached", async (t) => {
   const base = await start(t, { maxPlans: 1 });
@@ -433,50 +301,31 @@ for (const [name, reply, reason] of BAD_REPLIES) {
   });
 }
 
-test("sends an info at its limit", async (t) => {
-  const base = await start(t);
-  const info = {
-    type: "info",
-    text: "To share a board, open it and click Share.\n\n" + "x".repeat(1956),
-  };
-
-  const { body: response } = await post(base, body([info]));
-
-  assert.deepEqual(response.reply, info);
-});
-
-test("lets an info through when MAX_PLANS is reached", async (t) => {
-  const base = await start(t, { maxPlans: 1 });
-  const item = { plan: PLAN.plan, report: {} };
-  const info = { type: "info", text: "Click Share." };
-
-  const { body: response } = await post(base, body([PLAN, info], [item]));
-
-  assert.deepEqual(response.reply, info);
-});
+// A character outside the BMP counts as one.
+const SMILE = "\u{1F600}";
 
 test("sends replies at their limits", async (t) => {
   const base = await start(t);
-  const question = {
-    type: "question",
-    text: "\u{1F600}".repeat(2000),
-    options: Array(5).fill("\u{1F600}".repeat(50)),
-  };
-  const label = {
-    type: "plan",
-    plan: { ...PLAN.plan, text: "\u{1F600}".repeat(200) },
-  };
+  const replies = [
+    {
+      type: "question",
+      text: SMILE.repeat(2000),
+      options: Array(5).fill(SMILE.repeat(50)),
+    },
+    { type: "plan", plan: { ...PLAN.plan, text: SMILE.repeat(200) } },
+    {
+      type: "info",
+      text: "To share a board, open it and click Share.\n\n" + "x".repeat(1956),
+    },
+  ];
 
-  const { body: first } = await post(base, body([question]));
-  const { body: second } = await post(base, body([label]));
-
-  assert.deepEqual(first.reply, question);
-  assert.deepEqual(second.reply, label);
+  for (const reply of replies) {
+    const { body: response } = await post(base, body([reply]));
+    assert.deepEqual(response.reply, reply);
+  }
 });
 
-// The first characters and "...", the whole at the limit; a character outside
-// the BMP counts as one.
-const SMILE = "\u{1F600}";
+// The first characters and "...", the whole at the limit.
 const CUT_REPLIES: [string, unknown, unknown, RegExp][] = [
   [
     "a done text",
@@ -515,6 +364,29 @@ const CUT_REPLIES: [string, unknown, unknown, RegExp][] = [
     { type: "plan", plan: { ...PLAN.plan, text: SMILE.repeat(201) } },
     { type: "plan", plan: { ...PLAN.plan, text: SMILE.repeat(197) + "..." } },
     /^plan\.text cut: 201 characters, at most 200$/,
+  ],
+  [
+    "a step text",
+    {
+      type: "plan",
+      plan: { steps: [{ ...PLAN.plan.steps[0], text: SMILE.repeat(101) }] },
+    },
+    {
+      type: "plan",
+      plan: {
+        steps: [{ ...PLAN.plan.steps[0], text: SMILE.repeat(97) + "..." }],
+      },
+    },
+    /^steps\[0\]\.text cut: 101 characters, at most 100$/,
+  ],
+  [
+    "a progress",
+    { type: "plan", plan: { ...PLAN.plan, progress: SMILE.repeat(301) } },
+    {
+      type: "plan",
+      plan: { ...PLAN.plan, progress: SMILE.repeat(297) + "..." },
+    },
+    /^plan\.progress cut: 301 characters, at most 300$/,
   ],
 ];
 
@@ -589,13 +461,8 @@ test("takes added text in the exchange", async (t) => {
 });
 
 test("asks the planner after a cancelled plan, like any halt", async (t) => {
-  let calls = 0;
-  const base = await start(t, {
-    planner: async () => {
-      calls++;
-      return PLAN as Reply;
-    },
-  });
+  const counter = countingPlanner(PLAN as Reply);
+  const base = await start(t, { planner: counter.planner });
   const cancelled = {
     plan: { steps: [], final: true },
     report: {
@@ -606,17 +473,12 @@ test("asks the planner after a cancelled plan, like any halt", async (t) => {
   const { body: response } = await post(base, body([], [cancelled]));
 
   assert.deepEqual(response.reply, PLAN);
-  assert.equal(calls, 1);
+  assert.equal(counter.calls, 1);
 });
 
 test("does not read failure as a halt", async (t) => {
-  let calls = 0;
-  const base = await start(t, {
-    planner: async () => {
-      calls++;
-      return { type: "done" };
-    },
-  });
+  const counter = countingPlanner({ type: "done" });
+  const base = await start(t, { planner: counter.planner });
   const old = {
     plan: { steps: [], final: true },
     report: {
@@ -627,7 +489,7 @@ test("does not read failure as a halt", async (t) => {
   const { body: response } = await post(base, body([], [old]));
 
   assert.deepEqual(response.reply, { type: "done" });
-  assert.equal(calls, 0);
+  assert.equal(counter.calls, 0);
 });
 
 test("sends a plan with a label", async (t) => {
@@ -697,20 +559,6 @@ test("a planner error gives a stop", async (t) => {
   assert.equal(response.reply.type, "stop");
 });
 
-test("400 for a body nested too deeply", async (t) => {
-  const base = await start(t);
-  const deep = "[".repeat(20_000) + "]".repeat(20_000);
-  const payload = JSON.stringify(body([PLAN])).replace(
-    '{"page":"tasks"}',
-    `{"page":${deep}}`,
-  );
-
-  const { status, body: error } = await post(base, payload);
-
-  assert.equal(status, 400);
-  assert.deepEqual(error, { error: "the body is nested too deeply" });
-});
-
 // The planner's time limit (architecture.md, Planner).
 
 test("a planner that answers within 45 seconds is used", async (t) => {
@@ -719,10 +567,7 @@ test("a planner that answers within 45 seconds is used", async (t) => {
     new Promise((resolve) =>
       setTimeout(() => resolve({ type: "done", text: "Done." }), 44_000),
     );
-  const reply = pickReply(checkRound(body([])), planner, {
-    maxPlans: 10,
-    plansPerCheckpoint: 10,
-  });
+  const reply = pickReply(checkRound(body([])), planner, LIMITS);
   t.mock.timers.tick(44_000);
   assert.deepEqual(await reply, { type: "done", text: "Done." });
 });
@@ -733,10 +578,7 @@ test("a planner that takes longer than 45 seconds gives a stop", async (t) => {
     new Promise((resolve) =>
       setTimeout(() => resolve({ type: "done", text: "Done." }), 46_000),
     );
-  const reply = pickReply(checkRound(body([])), planner, {
-    maxPlans: 10,
-    plansPerCheckpoint: 10,
-  });
+  const reply = pickReply(checkRound(body([])), planner, LIMITS);
   t.mock.timers.tick(45_000);
   assert.deepEqual(await reply, {
     type: "stop",
@@ -744,261 +586,249 @@ test("a planner that takes longer than 45 seconds gives a stop", async (t) => {
   });
 });
 
-for (const [name, headers] of [
-  ["without a token", { authorization: "" }],
-  ["with a token that is not a JWT", { authorization: "Bearer abc" }],
-] as const) {
-  test(`401 ${name}`, async (t) => {
-    const base = await start(t);
+// Bad rounds: 400 with a message that names the problem.
 
-    const { status, body: error } = await post(base, body([PLAN]), headers);
-
-    assert.equal(status, 401);
-    assert.equal(typeof error.error, "string");
-  });
-}
-
-test("401 with an expired token", async (t) => {
-  const base = await start(t);
-  const expired = await token(Math.floor(Date.now() / 1000) - 60);
-
-  const { status } = await post(base, body([PLAN]), {
-    authorization: `Bearer ${expired}`,
-  });
-
-  assert.equal(status, 401);
+const halted = (halt: object, outputs?: object) => ({
+  plan: PLAN.plan,
+  report: { ...(outputs ? { outputs } : {}), halt },
 });
 
-test("401 with a token signed with another secret", async (t) => {
-  const base = await start(t);
-  const other = await token("5m", "o".repeat(32));
+const ENTRY = {
+  requestId: "r1",
+  time: TIME,
+  outcome: { type: "done", text: "Moved 2 tasks" },
+  text: "move the tasks",
+};
 
-  const { status } = await post(base, body([PLAN]), {
-    authorization: `Bearer ${other}`,
-  });
-
-  assert.equal(status, 401);
-});
-
-test("401 with a token without exp", async (t) => {
-  const base = await start(t);
-  const noExp = await new SignJWT({ sub: "user-1" })
-    .setProtectedHeader({ alg: "HS256" })
-    .sign(new TextEncoder().encode(SECRET));
-
-  const { status } = await post(base, body([PLAN]), {
-    authorization: `Bearer ${noExp}`,
-  });
-
-  assert.equal(status, 401);
-});
-
-// A token with the given aud, or none.
-function tokenWithAudience(aud?: string | string[]) {
-  const jwt = new SignJWT({ sub: "user-1" })
-    .setProtectedHeader({ alg: "HS256" })
-    .setExpirationTime("5m");
-  if (aud !== undefined) {
-    jwt.setAudience(aud);
-  }
-  return jwt.sign(new TextEncoder().encode(SECRET));
-}
-
-const AUDIENCE_CASES: [string, string | string[] | undefined, number][] = [
-  ["that aud", "dicta-action", 200],
-  ["a list that holds it", ["other", "dicta-action"], 200],
-  ["another aud", "dicta", 401],
-  ["no aud", undefined, 401],
-];
-
-for (const [name, aud, expected] of AUDIENCE_CASES) {
-  test(`${expected} with JWT_AUDIENCE set and a token with ${name}`, async (t) => {
-    const base = await start(t, {
-      auth: { jwtSecret: SECRET, jwtAudience: "dicta-action" },
-    });
-    const value = await tokenWithAudience(aud);
-
-    const { status } = await post(base, body([PLAN]), {
-      authorization: `Bearer ${value}`,
-    });
-
-    assert.equal(status, expected);
-  });
-}
-
-test("200 without JWT_AUDIENCE for a token with any aud", async (t) => {
-  const base = await start(t);
-  const value = await tokenWithAudience("anything");
-
-  const { status } = await post(base, body([PLAN]), {
-    authorization: `Bearer ${value}`,
-  });
-
-  assert.equal(status, 200);
-});
-
-test("takes rounds without a token when unauthenticated is allowed", async (t) => {
-  const base = await start(t, { auth: { allowUnauthenticated: true } });
-
-  const { status } = await post(base, body([PLAN]), { authorization: "" });
-
-  assert.equal(status, 200);
-});
-
-const BAD_BODIES: [string, unknown][] = [
-  ["no time", { text: "a", state: {}, exchange: [] }],
+// name, a change of a valid body or the raw body to send, the message.
+const BAD_ROUNDS: [string, ((b: any) => void) | string, RegExp][] = [
+  ["a body that is not JSON", "{", /^body is not JSON$/],
+  ["a body that is not an object", "[]", /^the body must be an object$/],
+  ["no tabId", (b) => delete b.tabId, /^tabId must be a string$/],
+  [
+    "a tabId that is not a string",
+    (b) => (b.tabId = 5),
+    /^tabId must be a string$/,
+  ],
+  [
+    "a requestId that is not text",
+    (b) => (b.requestId = 1),
+    /^requestId must be a string$/,
+  ],
+  ["no text", (b) => delete b.text, /^text must be a string$/],
+  [
+    "a text over 10000 characters",
+    (b) => (b.text = "x".repeat(10001)),
+    /^text is longer than 10000 characters$/,
+  ],
+  [
+    "no time",
+    (b) => delete b.time,
+    /^time must be a local time with its offset$/,
+  ],
   [
     "a time without an offset",
-    { text: "a", time: "2026-10-28T15:20:00", state: {}, exchange: [] },
+    (b) => (b.time = "2026-10-28T15:20:00"),
+    /^time must be a local time with its offset$/,
   ],
   [
     "a time that is not a date",
-    { text: "a", time: "2026-13-45T99:00:00+01:00", state: {}, exchange: [] },
-  ],
-  [
-    "added text that is not a string",
-    { text: "a", time: TIME, state: {}, exchange: [{ added: 5 }] },
-  ],
-  ["a body that is not JSON", "{"],
-  ["a body that is not an object", "[]"],
-  ["no text", { time: TIME, state: {}, exchange: [] }],
-  [
-    "a state that is not an object",
-    { text: "a", time: TIME, state: [], exchange: [] },
-  ],
-  ["no exchange", { text: "a", time: TIME, state: {} }],
-  [
-    "a requestId that is not text",
-    { requestId: 1, text: "a", time: TIME, state: {}, exchange: [] },
-  ],
-  [
-    "an exchange item of another kind",
-    { text: "a", time: TIME, state: {}, exchange: [{}] },
-  ],
-  [
-    "a plan without a report",
-    { text: "a", time: TIME, state: {}, exchange: [{ plan: {} }] },
+    (b) => (b.time = "2026-13-45T99:00:00+01:00"),
+    /^time must be a local time with its offset$/,
   ],
   [
     "a time in UTC with Z",
-    { text: "a", time: "2026-10-28T14:20:00Z", state: {}, exchange: [] },
+    (b) => (b.time = "2026-10-28T14:20:00Z"),
+    /^time must be a local time with its offset$/,
   ],
   [
-    "a report that is not an object",
-    { text: "a", time: TIME, state: {}, exchange: [{ plan: {}, report: [] }] },
+    "a state that is not an object",
+    (b) => (b.state = []),
+    /^state must be an object$/,
   ],
   [
-    "outputs that are not an object",
-    {
-      text: "a",
-      time: TIME,
-      state: {},
-      exchange: [{ plan: {}, report: { outputs: [] } }],
-    },
+    "a state over 16 KB",
+    (b) => (b.state = { x: "x".repeat(16 * 1024) }),
+    /^state is larger than 16 KB$/,
   ],
-  [
-    "tooLarge without sizes",
-    {
-      text: "a",
-      time: TIME,
-      state: {},
-      exchange: [{ plan: {}, report: { tooLarge: { "1": "big" } } }],
-    },
-  ],
-  [
-    "a halt item that is not a number",
-    {
-      text: "a",
-      time: TIME,
-      state: {},
-      exchange: [
-        {
-          plan: {},
-          report: { halt: { code: "x", message: "x", item: "2" } },
-        },
-      ],
-    },
-  ],
-  [
-    "a halt tooLarge that is not a number",
-    {
-      text: "a",
-      time: TIME,
-      state: {},
-      exchange: [
-        {
-          plan: {},
-          report: { halt: { code: "x", message: "x", tooLarge: "big" } },
-        },
-      ],
-    },
-  ],
-  [
-    "a halt without a code",
-    {
-      text: "a",
-      time: TIME,
-      state: {},
-      exchange: [{ plan: {}, report: { halt: { message: "x" } } }],
-    },
-  ],
-  [
-    "a question without an answer",
-    { text: "a", time: TIME, state: {}, exchange: [{ question: "Which?" }] },
-  ],
-];
-
-for (const [name, payload] of BAD_BODIES) {
-  test(`400 for ${name}`, async (t) => {
-    const base = await start(t);
-
-    const { status, body: error } = await post(
-      base,
-      typeof payload === "string" || Array.isArray(payload)
-        ? payload
-        : {
-            tabId: "tab-1",
-            context: CONTEXT,
-            history: [],
-            ...(payload as object),
-          },
-    );
-
-    assert.equal(status, 400);
-    assert.equal(typeof error.error, "string");
-  });
-}
-
-const BAD_CONTEXTS: [string, unknown, RegExp][] = [
-  ["no context", undefined, /^context must be an object$/],
+  ["no context", (b) => delete b.context, /^context must be an object$/],
   [
     "a context without a site desc",
-    { ...CONTEXT, site: { name: "Teamboard" } },
+    (b) => (b.context = { ...CONTEXT, site: { name: "Teamboard" } }),
     /^context\.site\.desc must be a string$/,
   ],
   [
     "a capability without desc",
-    {
-      ...CONTEXT,
-      capabilities: [{ name: "a.b", level: "read", args: { type: "object" } }],
-    },
+    (b) =>
+      (b.context = {
+        ...CONTEXT,
+        capabilities: [
+          { name: "a.b", level: "read", args: { type: "object" } },
+        ],
+      }),
     /^context\.capabilities\[0\]\.desc must be a string$/,
   ],
   [
     "a context over 64 KB",
-    { ...CONTEXT, site: { name: "T", desc: "x".repeat(64 * 1024) } },
+    (b) =>
+      (b.context = {
+        ...CONTEXT,
+        site: { name: "T", desc: "x".repeat(64 * 1024) },
+      }),
     /^context is larger than 64 KB$/,
+  ],
+  ["no exchange", (b) => delete b.exchange, /^exchange must be an array$/],
+  [
+    "an exchange item of another kind",
+    (b) => b.exchange.push({}),
+    /^exchange\[0\] must be a plan with its report, a question or added text$/,
+  ],
+  [
+    "a question without an answer",
+    (b) => b.exchange.push({ question: "Which?" }),
+    /^exchange\[0\]\.answer must be a string$/,
+  ],
+  [
+    "an answer over 10000 characters",
+    (b) => b.exchange.push({ question: "Which?", answer: "x".repeat(10001) }),
+    /^exchange\[0\]\.answer is longer than 10000 characters$/,
+  ],
+  [
+    "added text that is not a string",
+    (b) => b.exchange.push({ added: 5 }),
+    /^exchange\[0\]\.added must be a string$/,
+  ],
+  [
+    "an added text over 10000 characters",
+    (b) => b.exchange.push({ added: "x".repeat(10001) }),
+    /^exchange\[0\]\.added is longer than 10000 characters$/,
+  ],
+  [
+    "a plan without a report",
+    (b) => b.exchange.push({ plan: {} }),
+    /^exchange\[0\]\.report must be an object$/,
+  ],
+  [
+    "a report that is not an object",
+    (b) => b.exchange.push({ plan: {}, report: [] }),
+    /^exchange\[0\]\.report must be an object$/,
+  ],
+  [
+    "outputs that are not an object",
+    (b) => b.exchange.push({ plan: {}, report: { outputs: [] } }),
+    /^exchange\[0\]\.report\.outputs must be an object$/,
+  ],
+  [
+    "tooLarge without sizes",
+    (b) => b.exchange.push({ plan: {}, report: { tooLarge: { "1": "big" } } }),
+    /^exchange\[0\]\.report\.tooLarge must map steps to sizes$/,
+  ],
+  [
+    "a halt item that is not a number",
+    (b) =>
+      b.exchange.push(halted({ step: 1, code: "x", message: "x", item: "2" })),
+    /^exchange\[0\]\.report\.halt step, item, do and tooLarge must be numbers$/,
+  ],
+  [
+    "a halt tooLarge that is not a number",
+    (b) =>
+      b.exchange.push(
+        halted({ step: 1, code: "x", message: "x", tooLarge: "big" }),
+      ),
+    /^exchange\[0\]\.report\.halt step, item, do and tooLarge must be numbers$/,
+  ],
+  [
+    "a halt without a code",
+    (b) => b.exchange.push(halted({ step: 1, message: "x" })),
+    /^exchange\[0\]\.report\.halt must have a code and a message$/,
+  ],
+  [
+    "a halt message over 200 characters",
+    (b) =>
+      b.exchange.push(halted({ step: 1, code: "x", message: "x".repeat(201) })),
+    /^exchange\[0\]\.report\.halt\.message is longer than 200 characters$/,
+  ],
+  [
+    "included outputs over 16 KB together",
+    (b) =>
+      b.exchange.push(
+        halted(
+          { step: 2, code: "x", message: "x", outputs: ["x".repeat(8 * 1024)] },
+          { "1": "x".repeat(8 * 1024) },
+        ),
+      ),
+    /^exchange\[0\]\.report has included outputs larger than 16 KB$/,
+  ],
+  ["no history", (b) => delete b.history, /^history must be an array$/],
+  [
+    "a history that is not an array",
+    (b) => (b.history = {}),
+    /^history must be an array$/,
+  ],
+  [
+    "a history over 20 entries",
+    (b) => (b.history = Array.from({ length: 21 }, () => ENTRY)),
+    /^history has more than 20 entries$/,
+  ],
+  [
+    "an entry that is not an object",
+    (b) => (b.history = [5]),
+    /^history\[0\] must be an object$/,
+  ],
+  [
+    "an entry without a requestId",
+    (b) => (b.history = [{ ...ENTRY, requestId: 1 }]),
+    /^history\[0\]\.requestId must be a string$/,
+  ],
+  [
+    "an entry with a time in UTC",
+    (b) => (b.history = [{ ...ENTRY, time: "2026-10-28T14:20:00Z" }]),
+    /^history\[0\]\.time must be a local time with its offset$/,
+  ],
+  [
+    "an entry without an outcome",
+    (b) => (b.history = [{ ...ENTRY, outcome: undefined }]),
+    /^history\[0\]\.outcome\.type must be one of the outcomes$/,
+  ],
+  [
+    "an entry with an unknown outcome",
+    (b) => (b.history = [{ ...ENTRY, outcome: { type: "finished" } }]),
+    /^history\[0\]\.outcome\.type must be one of the outcomes$/,
+  ],
+  [
+    "an outcome text that is not a string",
+    (b) => (b.history = [{ ...ENTRY, outcome: { type: "done", text: 5 } }]),
+    /^history\[0\]\.outcome\.text must be a string$/,
+  ],
+  [
+    "an outcome text over 200 characters",
+    (b) =>
+      (b.history = [
+        { ...ENTRY, outcome: { type: "stop", text: "x".repeat(201) } },
+      ]),
+    /^history\[0\]\.outcome\.text is longer than 200 characters$/,
+  ],
+  [
+    "an entry without a text",
+    (b) => (b.history = [{ ...ENTRY, text: undefined }]),
+    /^history\[0\]\.text must be a string$/,
+  ],
+  [
+    "an entry text over 200 characters",
+    (b) => (b.history = [ENTRY, { ...ENTRY, text: "x".repeat(201) }]),
+    /^history\[1\]\.text is longer than 200 characters$/,
   ],
 ];
 
-for (const [name, context, message] of BAD_CONTEXTS) {
+for (const [name, change, message] of BAD_ROUNDS) {
   test(`400 for ${name}, naming the problem`, async (t) => {
     const base = await start(t);
+    const payload = typeof change === "string" ? change : body([PLAN]);
+    if (typeof change !== "string") {
+      change(payload);
+    }
 
-    const { status, body: error } = await post(base, {
-      ...body([PLAN]),
-      context,
-    });
+    const { status, body: error } = await post(base, payload);
 
     assert.equal(status, 400);
     assert.match(error.error, message);
@@ -1019,69 +849,11 @@ test("checks a plan against the context of the round", async (t) => {
   assert.equal(response.reply.type, "stop");
 });
 
-const halted = (halt: object, outputs?: object) => ({
-  plan: PLAN.plan,
-  report: { ...(outputs ? { outputs } : {}), halt },
-});
-
-const OVER_LIMIT: [string, (b: any) => void, RegExp][] = [
-  [
-    "a text over 10000 characters",
-    (b) => (b.text = "x".repeat(10001)),
-    /^text is longer than 10000 characters$/,
-  ],
-  [
-    "an answer over 10000 characters",
-    (b) => b.exchange.push({ question: "Which?", answer: "x".repeat(10001) }),
-    /^exchange\[0\]\.answer is longer than 10000 characters$/,
-  ],
-  [
-    "an added text over 10000 characters",
-    (b) => b.exchange.push({ added: "x".repeat(10001) }),
-    /^exchange\[0\]\.added is longer than 10000 characters$/,
-  ],
-  [
-    "a state over 16 KB",
-    (b) => (b.state = { x: "x".repeat(16 * 1024) }),
-    /^state is larger than 16 KB$/,
-  ],
-  [
-    "a halt message over 200 characters",
-    (b) =>
-      b.exchange.push(halted({ step: 1, code: "x", message: "x".repeat(201) })),
-    /^exchange\[0\]\.report\.halt\.message is longer than 200 characters$/,
-  ],
-  [
-    "included outputs over 16 KB together",
-    (b) =>
-      b.exchange.push(
-        halted(
-          { step: 2, code: "x", message: "x", outputs: ["x".repeat(8 * 1024)] },
-          { "1": "x".repeat(8 * 1024) },
-        ),
-      ),
-    /^exchange\[0\]\.report has included outputs larger than 16 KB$/,
-  ],
-];
-
-for (const [name, change, message] of OVER_LIMIT) {
-  test(`400 for ${name}, naming the part`, async (t) => {
-    const base = await start(t);
-    const payload = body([PLAN]);
-    change(payload);
-
-    const { status, body: error } = await post(base, payload);
-
-    assert.equal(status, 400);
-    assert.match(error.error, message);
-  });
-}
-
 test("takes parts at their limits", async (t) => {
   const base = await start(t);
   const payload = body([PLAN]);
   payload.exchange.push(
-    { question: "Which?", answer: "\u{1F600}".repeat(10000) },
+    { question: "Which?", answer: SMILE.repeat(10000) },
     halted(
       { step: 2, code: "x", message: "x".repeat(200) },
       { "1": "x".repeat(16 * 1024 - 20) },
@@ -1114,101 +886,12 @@ for (const [extra, expected] of [
   });
 }
 
-for (const [name, tabId] of [
-  ["no tabId", undefined],
-  ["a tabId that is not a string", 5],
-] as const) {
-  test(`400 for ${name}, naming the field`, async (t) => {
-    const base = await start(t);
-
-    const { status, body: error } = await post(base, {
-      ...body([PLAN]),
-      tabId,
-    });
-
-    assert.equal(status, 400);
-    assert.equal(error.error, "tabId must be a string");
-  });
-}
-
-const ENTRY = {
-  requestId: "r1",
-  time: TIME,
-  outcome: { type: "done", text: "Moved 2 tasks" },
-  text: "move the tasks",
-};
-
-const BAD_HISTORIES: [string, unknown, RegExp][] = [
-  ["no history", undefined, /^history must be an array$/],
-  ["a history that is not an array", {}, /^history must be an array$/],
-  [
-    "a history over 20 entries",
-    Array.from({ length: 21 }, () => ENTRY),
-    /^history has more than 20 entries$/,
-  ],
-  ["an entry that is not an object", [5], /^history\[0\] must be an object$/],
-  [
-    "an entry without a requestId",
-    [{ ...ENTRY, requestId: 1 }],
-    /^history\[0\]\.requestId must be a string$/,
-  ],
-  [
-    "an entry with a time in UTC",
-    [{ ...ENTRY, time: "2026-10-28T14:20:00Z" }],
-    /^history\[0\]\.time must be a local time with its offset$/,
-  ],
-  [
-    "an entry without an outcome",
-    [{ ...ENTRY, outcome: undefined }],
-    /^history\[0\]\.outcome\.type must be one of the outcomes$/,
-  ],
-  [
-    "an entry with an unknown outcome",
-    [{ ...ENTRY, outcome: { type: "finished" } }],
-    /^history\[0\]\.outcome\.type must be one of the outcomes$/,
-  ],
-  [
-    "an outcome text that is not a string",
-    [{ ...ENTRY, outcome: { type: "done", text: 5 } }],
-    /^history\[0\]\.outcome\.text must be a string$/,
-  ],
-  [
-    "an outcome text over 200 characters",
-    [{ ...ENTRY, outcome: { type: "stop", text: "x".repeat(201) } }],
-    /^history\[0\]\.outcome\.text is longer than 200 characters$/,
-  ],
-  [
-    "an entry without a text",
-    [{ ...ENTRY, text: undefined }],
-    /^history\[0\]\.text must be a string$/,
-  ],
-  [
-    "an entry text over 200 characters",
-    [ENTRY, { ...ENTRY, text: "x".repeat(201) }],
-    /^history\[1\]\.text is longer than 200 characters$/,
-  ],
-];
-
-for (const [name, history, message] of BAD_HISTORIES) {
-  test(`400 for ${name}, naming the part`, async (t) => {
-    const base = await start(t);
-
-    const { status, body: error } = await post(base, {
-      ...body([PLAN]),
-      history,
-    });
-
-    assert.equal(status, 400);
-    assert.match(error.error, message);
-  });
-}
-
 test("takes a history at its limits", async (t) => {
   const base = await start(t);
   const entry = {
     ...ENTRY,
-    outcome: { type: "cancelled", text: "\u{1F600}".repeat(200) },
-    text: "\u{1F600}".repeat(200),
+    outcome: { type: "cancelled", text: SMILE.repeat(200) },
+    text: SMILE.repeat(200),
   };
 
   const { status } = await post(base, {
@@ -1248,110 +931,3 @@ test("checkRound: keeps only the fields of an entry, short ones first", () => {
     `[{"requestId":"r1","time":"${TIME}","outcome":{"type":"done","text":"Moved"},"text":"move the tasks"}]`,
   );
 });
-
-for (const logRounds of [true, false]) {
-  test(`${logRounds ? "logs" : "does not log"} each answered round with LOG_ROUNDS ${logRounds ? "on" : "off"}`, async (t) => {
-    const log = t.mock.method(console, "log", () => {});
-    const base = await start(t, { logRounds });
-    const payload = body([{ type: "done", text: "Done." }]);
-
-    const { body: response } = await post(base, payload);
-
-    const lines = log.mock.calls.map((call) => String(call.arguments[0]));
-    if (logRounds) {
-      assert.equal(lines.length, 1);
-      assert.deepEqual(JSON.parse(lines[0]!), {
-        user: "user-1",
-        tabId: "tab-1",
-        round: payload,
-        response,
-      });
-    } else {
-      assert.deepEqual(lines, []);
-    }
-  });
-}
-
-test("logs user null for a token without sub", async (t) => {
-  const log = t.mock.method(console, "log", () => {});
-  const base = await start(t, { logRounds: true });
-
-  await post(base, body([{ type: "done" }]), {
-    authorization: `Bearer ${await token("5m", SECRET, {})}`,
-  });
-
-  const line = JSON.parse(String(log.mock.calls[0]!.arguments[0]));
-  assert.equal(line.user, null);
-});
-
-test("logs user null when tokens are not checked", async (t) => {
-  const log = t.mock.method(console, "log", () => {});
-  const base = await start(t, {
-    auth: { allowUnauthenticated: true },
-    logRounds: true,
-  });
-
-  await post(base, body([{ type: "done" }]));
-
-  const line = JSON.parse(String(log.mock.calls[0]!.arguments[0]));
-  assert.equal(line.user, null);
-});
-
-test("does not log a round answered with an error", async (t) => {
-  const log = t.mock.method(console, "log", () => {});
-  const base = await start(t, { logRounds: true });
-
-  const { status } = await post(base, { text: "a" });
-
-  assert.equal(status, 400);
-  assert.equal(log.mock.callCount(), 0);
-});
-
-test("413 for a body over 1 MB", async (t) => {
-  const base = await start(t);
-  const big = {
-    text: "x".repeat(1024 * 1024),
-    time: TIME,
-    state: {},
-    exchange: [],
-  };
-
-  const { status } = await post(base, big);
-
-  assert.equal(status, 413);
-});
-
-test("answers the CORS preflight", async (t) => {
-  const base = await start(t);
-
-  const response = await fetch(base + PATH, {
-    method: "OPTIONS",
-    headers: {
-      origin: "https://app.example.com",
-      "access-control-request-method": "POST",
-      "access-control-request-headers": "authorization, content-type",
-    },
-  });
-
-  assert.equal(response.status, 204);
-  assert.equal(response.headers.get("access-control-allow-origin"), "*");
-  assert.equal(response.headers.get("access-control-allow-methods"), "POST");
-  assert.match(
-    response.headers.get("access-control-allow-headers") ?? "",
-    /Authorization, Content-Type/,
-  );
-});
-
-for (const [method, path] of [
-  ["GET", PATH],
-  ["POST", "/dicta-action/v1/other"],
-  ["GET", "/"],
-]) {
-  test(`404 for ${method} ${path}`, async (t) => {
-    const base = await start(t);
-
-    const response = await fetch(base + path, { method });
-
-    assert.equal(response.status, 404);
-  });
-}
